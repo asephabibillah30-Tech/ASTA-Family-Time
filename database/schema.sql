@@ -11,10 +11,10 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- 2. TABEL FAMILIES (Grup Keluarga)
 CREATE TABLE IF NOT EXISTS families (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     family_name VARCHAR(150) NOT NULL,
     family_code VARCHAR(20) UNIQUE NOT NULL,
-    head_user_id UUID,
+    head_user_id TEXT,
     streak_days INT DEFAULT 1,
     total_love_points INT DEFAULT 100,
     settings JSONB DEFAULT '{"soundEnabled": true, "darkMode": false}'::jsonb,
@@ -24,15 +24,15 @@ CREATE TABLE IF NOT EXISTS families (
 
 -- 3. TABEL USERS (Pengguna & Anggota Keluarga)
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
     full_name VARCHAR(100) NOT NULL,
     role VARCHAR(30) NOT NULL DEFAULT 'member' CHECK (role IN ('head_family', 'member')),
     role_title VARCHAR(50) NOT NULL DEFAULT 'Anggota',
-    username VARCHAR(100) UNIQUE,
-    email VARCHAR(100) UNIQUE,
+    username VARCHAR(100),
+    email VARCHAR(100),
     password_hash TEXT,
-    pin VARCHAR(10) DEFAULT '1234',
+    pin VARCHAR(100) DEFAULT '1234',
     avatar VARCHAR(20) DEFAULT '👨‍💼',
     color VARCHAR(30) DEFAULT 'bg-blue-500',
     love_points INT DEFAULT 50,
@@ -47,38 +47,39 @@ ADD CONSTRAINT fk_families_head_user
 FOREIGN KEY (head_user_id) REFERENCES users(id) ON DELETE SET NULL;
 
 -- 4. TABEL CHAT_MESSAGES (Obrolan Keluarga)
+-- 4. TABEL CHAT_MESSAGES (Obrolan Keluarga)
 CREATE TABLE IF NOT EXISTS chat_messages (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
-    sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    sender_id TEXT,
     sender_name VARCHAR(100) NOT NULL,
     sender_avatar VARCHAR(20) NOT NULL,
     sender_color VARCHAR(30) NOT NULL,
     message_text TEXT NOT NULL,
-    media_type VARCHAR(20) DEFAULT 'text' CHECK (media_type IN ('text', 'sticker', 'image', 'audio')),
+    media_type VARCHAR(20) DEFAULT 'text',
     reactions JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 5. TABEL PLANNER_EVENTS (Agenda & Kalender Keluarga)
 CREATE TABLE IF NOT EXISTS planner_events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
     category VARCHAR(50) NOT NULL,
     event_date DATE NOT NULL,
     event_time VARCHAR(20),
-    assigned_to_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    assigned_to_user_id TEXT,
     is_completed BOOLEAN DEFAULT FALSE,
-    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_by TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 6. TABEL JOURNAL_ENTRIES (Jurnal & Diary Keluarga)
 CREATE TABLE IF NOT EXISTS journal_entries (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
-    author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    author_id TEXT,
     mood VARCHAR(30) NOT NULL,
     story TEXT NOT NULL,
     highlights TEXT[],
@@ -89,9 +90,9 @@ CREATE TABLE IF NOT EXISTS journal_entries (
 
 -- 7. TABEL MEMORIES (Galeri Kenangan & Foto Keluarga)
 CREATE TABLE IF NOT EXISTS memories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
-    author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    author_id TEXT,
     title VARCHAR(150) NOT NULL,
     caption TEXT,
     album VARCHAR(100) DEFAULT 'Family Moments',
@@ -103,10 +104,10 @@ CREATE TABLE IF NOT EXISTS memories (
 
 -- 8. TABEL APPRECIATIONS (Poin Cinta & Apresiasi)
 CREATE TABLE IF NOT EXISTS appreciations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
-    from_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    to_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    from_user_id TEXT,
+    to_user_id TEXT,
     category VARCHAR(50) NOT NULL,
     message TEXT NOT NULL,
     love_points INT DEFAULT 10,
@@ -115,8 +116,8 @@ CREATE TABLE IF NOT EXISTS appreciations (
 
 -- 9. TABEL HABITS (Kebiasaan Positif Harian)
 CREATE TABLE IF NOT EXISTS habits (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
     title VARCHAR(150) NOT NULL,
     category VARCHAR(50) NOT NULL,
     target_frequency VARCHAR(50) DEFAULT 'daily',
@@ -127,21 +128,21 @@ CREATE TABLE IF NOT EXISTS habits (
 
 -- 10. TABEL FINANCE_TRANSACTIONS (Pencatatan Keuangan Keluarga)
 CREATE TABLE IF NOT EXISTS finance_transactions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
     title VARCHAR(150) NOT NULL,
-    type VARCHAR(20) NOT NULL CHECK (type IN ('income', 'expense', 'savings')),
+    type VARCHAR(20) NOT NULL,
     amount BIGINT NOT NULL,
     category VARCHAR(50) NOT NULL,
     transaction_date DATE DEFAULT CURRENT_DATE,
-    logged_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    logged_by_user_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 11. TABEL SAVINGS_TARGETS (Target Tabungan Impian Keluarga)
 CREATE TABLE IF NOT EXISTS savings_targets (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
     title VARCHAR(150) NOT NULL,
     target_amount BIGINT NOT NULL,
     current_amount BIGINT DEFAULT 0,
@@ -152,10 +153,10 @@ CREATE TABLE IF NOT EXISTS savings_targets (
 
 -- 12. TABEL GAME_HISTORY (Riwayat Permainan Kartu, UNO, Ludo, Monopoli)
 CREATE TABLE IF NOT EXISTS game_history (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
-    game_type VARCHAR(50) NOT NULL CHECK (game_type IN ('cards', 'uno', 'ludo', 'snake', 'monopoly')),
-    winner_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    game_type VARCHAR(50) NOT NULL,
+    winner_user_id TEXT,
     participants JSONB DEFAULT '[]'::jsonb,
     points_awarded INT DEFAULT 50,
     played_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -171,44 +172,66 @@ CREATE INDEX IF NOT EXISTS idx_finance_family_id ON finance_transactions(family_
 CREATE INDEX IF NOT EXISTS idx_savings_family_id ON savings_targets(family_id);
 CREATE INDEX IF NOT EXISTS idx_game_history_family_id ON game_history(family_id);
 
--- 14. ROW-LEVEL SECURITY (RLS) POLICIES
-ALTER TABLE families ENABLE ROW LEVEL SECURITY;
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE planner_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE appreciations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
-ALTER TABLE finance_transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE savings_targets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE game_history ENABLE ROW LEVEL SECURITY;
-
--- Contoh RLS Policy: Pengguna hanya dapat mengakses data keluarga miliknya
-CREATE POLICY family_isolation_policy_families ON families
-    FOR ALL USING (id = current_setting('app.current_family_id', true)::uuid);
-
-CREATE POLICY family_isolation_policy_users ON users
-    FOR ALL USING (family_id = current_setting('app.current_family_id', true)::uuid);
-
-CREATE POLICY family_isolation_policy_chats ON chat_messages
-    FOR ALL USING (family_id = current_setting('app.current_family_id', true)::uuid);
-
--- 15. TABEL SECURITY_AUDIT_LOGS (Pencatatan Jejak Keamanan & Log Aktivitas)
+-- 14. TABEL SECURITY_AUDIT_LOGS
 CREATE TABLE IF NOT EXISTS security_audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    family_id UUID REFERENCES families(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    family_id TEXT,
+    user_id TEXT,
+    user_name VARCHAR(100),
     action VARCHAR(100) NOT NULL,
-    status VARCHAR(20) NOT NULL CHECK (status IN ('SUCCESS', 'FAILED', 'WARNING', 'BLOCKED')),
+    status VARCHAR(20) NOT NULL,
     details TEXT,
     ip_or_device VARCHAR(100) DEFAULT 'Web Client',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_security_logs_family ON security_audit_logs(family_id);
-CREATE INDEX IF NOT EXISTS idx_security_logs_user ON security_audit_logs(user_id);
-ALTER TABLE security_audit_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY family_isolation_policy_logs ON security_audit_logs
-    FOR ALL USING (family_id = current_setting('app.current_family_id', true)::uuid);
+-- 15. ROW LEVEL SECURITY (RLS) POLICIES - IZINKAN AKSES ANON DARI CLIENT WEB
+ALTER TABLE families ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on families" ON families;
+CREATE POLICY "Allow anon all on families" ON families FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on users" ON users;
+CREATE POLICY "Allow anon all on users" ON users FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on chat_messages" ON chat_messages;
+CREATE POLICY "Allow anon all on chat_messages" ON chat_messages FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE planner_events ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on planner_events" ON planner_events;
+CREATE POLICY "Allow anon all on planner_events" ON planner_events FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on journal_entries" ON journal_entries;
+CREATE POLICY "Allow anon all on journal_entries" ON journal_entries FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE memories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on memories" ON memories;
+CREATE POLICY "Allow anon all on memories" ON memories FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE appreciations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on appreciations" ON appreciations;
+CREATE POLICY "Allow anon all on appreciations" ON appreciations FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on habits" ON habits;
+CREATE POLICY "Allow anon all on habits" ON habits FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE finance_transactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on finance_transactions" ON finance_transactions;
+CREATE POLICY "Allow anon all on finance_transactions" ON finance_transactions FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE savings_targets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on savings_targets" ON savings_targets;
+CREATE POLICY "Allow anon all on savings_targets" ON savings_targets FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE game_history ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on game_history" ON game_history;
+CREATE POLICY "Allow anon all on game_history" ON game_history FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE security_audit_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on security_audit_logs" ON security_audit_logs;
+CREATE POLICY "Allow anon all on security_audit_logs" ON security_audit_logs FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
