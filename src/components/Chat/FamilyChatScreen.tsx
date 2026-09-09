@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Player } from '../../types/game';
 import type { ChatMessage } from '../../types/family';
-import { Send, PhoneCall, Video, Smile, Trash2, CheckCheck } from 'lucide-react';
+import { Send, PhoneCall, Video, Smile, Trash2, CheckCheck, RotateCcw } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
 
@@ -18,6 +18,7 @@ interface FamilyChatScreenProps {
   ) => void;
   onAddReaction: (msgId: string, emoji: string, userId: string) => void;
   onDeleteMessage: (msgId: string) => void;
+  onResetChat?: () => void;
 }
 
 const QUICK_BUBBLES = [
@@ -44,6 +45,7 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
   onSendMessage,
   onAddReaction,
   onDeleteMessage,
+  onResetChat,
 }) => {
   const [selectedSenderId, setSelectedSenderId] = useState<string>(players[0]?.id || '');
   const [inputText, setInputText] = useState('');
@@ -102,17 +104,17 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 pb-28 space-y-4 animate-pop-in flex flex-col h-[calc(100vh-140px)]">
+    <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 pt-1 pb-20 sm:pb-24 flex flex-col h-[calc(100dvh-75px)] sm:h-[calc(100dvh-85px)] gap-2 animate-pop-in">
       
       {/* Top Chat Header */}
-      <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-3.5 rounded-3xl border-2 border-rose-100 dark:border-slate-700 shadow-sm flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center text-2xl shadow-sm">
+      <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-3 py-2.5 rounded-2xl border-2 border-rose-100 dark:border-slate-700 shadow-sm flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center text-xl shadow-sm">
             💬
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h2 className="font-display font-black text-base text-slate-900 dark:text-white">
+              <h2 className="font-display font-black text-sm sm:text-base text-slate-900 dark:text-white">
                 Obrolan Keluarga ASTA
               </h2>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -123,14 +125,23 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
           </div>
         </div>
 
-        {/* Call simulation buttons */}
-        <div className="flex items-center gap-1.5">
+        {/* Call simulation & Reset buttons */}
+        <div className="flex items-center gap-1">
+          {onResetChat && (
+            <button
+              onClick={onResetChat}
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 transition-all active:scale-90"
+              title="Muat Ulang Pesan Contoh"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={() => {
               sound.playClick();
               setShowCallModal(true);
             }}
-            className="p-2.5 rounded-2xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 transition-all active:scale-90"
+            className="p-2 rounded-xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 transition-all active:scale-90"
             title="Panggilan Suara Keluarga"
           >
             <PhoneCall className="w-4 h-4" />
@@ -140,7 +151,7 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
               sound.playClick();
               setShowCallModal(true);
             }}
-            className="p-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-family-coral transition-all active:scale-90"
+            className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-family-coral transition-all active:scale-90"
             title="Panggilan Video Keluarga"
           >
             <Video className="w-4 h-4" />
@@ -149,8 +160,8 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
       </div>
 
       {/* Switch Sender Identity Strip */}
-      <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 overflow-x-auto shrink-0">
-        <span className="text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 px-2 shrink-0">
+      <div className="bg-white/80 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-rose-100 dark:border-slate-700 flex items-center gap-1.5 overflow-x-auto shrink-0 shadow-2xs">
+        <span className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 px-1.5 shrink-0">
           Kirim Sebagai:
         </span>
         {players.map((p) => {
@@ -162,13 +173,13 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
                 sound.playClick();
                 setSelectedSenderId(p.id);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 isSelected
-                  ? 'bg-family-coral text-white shadow-sm scale-105'
-                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600'
+                  ? 'bg-family-coral text-white shadow-sm scale-102'
+                  : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-100'
               }`}
             >
-              <span className="text-base">{p.avatar}</span>
+              <span className="text-sm">{p.avatar}</span>
               <span>{p.name}</span>
             </button>
           );
@@ -176,99 +187,128 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
       </div>
 
       {/* Chat Messages Feed Area */}
-      <div className="flex-1 overflow-y-auto space-y-3 p-3 sm:p-4 bg-white/60 dark:bg-slate-900/40 rounded-3xl border-2 border-slate-100 dark:border-slate-800/80 shadow-inner">
-        {messages.map((msg) => {
-          const isMe = msg.senderId === activeSender.id;
-
-          return (
-            <div
-              key={msg.id}
-              className={`flex gap-2.5 items-end ${isMe ? 'justify-end' : 'justify-start'}`}
-            >
-              {!isMe && (
-                <span className="text-2xl mb-1 drop-shadow-sm shrink-0" title={msg.senderName}>
-                  {msg.senderAvatar}
-                </span>
-              )}
-
-              <div
-                className={`max-w-[82%] sm:max-w-[70%] rounded-3xl p-3.5 space-y-1.5 shadow-sm relative group ${
-                  isMe
-                    ? 'bg-gradient-to-tr from-rose-500 to-family-coral text-white rounded-br-sm'
-                    : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-bl-sm'
-                }`}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-3 p-3 sm:p-4 bg-white/90 dark:bg-slate-900/80 rounded-3xl border-2 border-rose-100 dark:border-slate-800 shadow-inner">
+        {messages.length === 0 ? (
+          <div className="h-full min-h-[220px] flex flex-col items-center justify-center text-center p-6 space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center text-3xl animate-bounce">
+              💌
+            </div>
+            <div>
+              <h3 className="font-display font-black text-slate-800 dark:text-white text-base">
+                Obrolan Keluarga ASTA
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
+                Kirim pesan hangat atau gunakan tombol pesan cepat di bawah untuk menyapa keluarga ❤️
+              </p>
+            </div>
+            {onResetChat && (
+              <button
+                onClick={onResetChat}
+                className="px-4 py-2 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-family-coral dark:text-rose-300 text-xs font-bold transition-all active:scale-95 shadow-xs"
               >
-                {/* Sender Name */}
+                Muat Contoh Percakapan ✨
+              </button>
+            )}
+          </div>
+        ) : (
+          messages.map((msg) => {
+            const isMe = msg.senderId === activeSender.id;
+
+            return (
+              <div
+                key={msg.id}
+                className={`flex gap-2 items-end ${isMe ? 'justify-end' : 'justify-start'}`}
+              >
                 {!isMe && (
-                  <p className="text-[10px] font-extrabold text-family-coral dark:text-rose-400">
-                    {msg.senderName}
-                  </p>
+                  <span className="text-2xl mb-1 drop-shadow-xs shrink-0" title={msg.senderName}>
+                    {msg.senderAvatar}
+                  </span>
                 )}
 
-                {/* Content */}
-                <p className={`text-xs sm:text-sm font-medium leading-relaxed ${msg.mediaType === 'sticker' ? 'text-lg font-bold' : ''}`}>
-                  {msg.text}
-                </p>
+                <div
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 space-y-1 shadow-sm relative group ${
+                    isMe
+                      ? 'bg-gradient-to-tr from-rose-500 to-family-coral text-white rounded-br-xs'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-2 border-rose-100/80 dark:border-slate-700 rounded-bl-xs'
+                  }`}
+                >
+                  {/* Sender Name */}
+                  {!isMe && (
+                    <p className="text-[11px] font-black text-family-coral dark:text-rose-400">
+                      {msg.senderName}
+                    </p>
+                  )}
 
-                {/* Footer time & checkmark */}
-                <div className={`flex items-center justify-end gap-1 text-[9px] ${
-                  isMe ? 'text-rose-100' : 'text-slate-400'
-                }`}>
-                  <span>{msg.timestamp}</span>
-                  {isMe && <CheckCheck className="w-3 h-3 text-white" />}
-                </div>
+                  {/* Content */}
+                  <p className={`text-xs sm:text-sm font-medium leading-relaxed break-words ${msg.mediaType === 'sticker' ? 'text-xl font-bold py-1' : ''}`}>
+                    {msg.text}
+                  </p>
 
-                {/* Reaction Badges */}
-                {msg.reactions && msg.reactions.length > 0 && (
-                  <div className="flex gap-1 flex-wrap pt-1">
-                    {msg.reactions.map((r, i) => (
+                  {/* Footer time & checkmark */}
+                  <div className={`flex items-center justify-end gap-1 text-[9px] ${
+                    isMe ? 'text-rose-100' : 'text-slate-400'
+                  }`}>
+                    <span>{msg.timestamp}</span>
+                    {isMe && <CheckCheck className="w-3.5 h-3.5 text-white" />}
+                  </div>
+
+                  {/* Reaction Badges */}
+                  {msg.reactions && msg.reactions.length > 0 && (
+                    <div className="flex gap-1 flex-wrap pt-1">
+                      {msg.reactions.map((r, i) => (
+                        <button
+                          key={i}
+                          onClick={() => onAddReaction(msg.id, r.emoji, activeSender.id)}
+                          className={`text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 border shadow-2xs ${
+                            isMe 
+                              ? 'bg-white/20 border-white/30 text-white' 
+                              : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200'
+                          }`}
+                        >
+                          <span>{r.emoji}</span>
+                          <span className="font-extrabold">{r.count}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Action Reactions & Delete */}
+                  <div className={`flex items-center gap-1 pt-1 opacity-70 group-hover:opacity-100 transition-opacity ${
+                    isMe ? 'justify-end' : 'justify-start'
+                  }`}>
+                    {['❤️', '😂', '👍'].map((em) => (
                       <button
-                        key={i}
-                        onClick={() => onAddReaction(msg.id, r.emoji, activeSender.id)}
-                        className={`text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 border shadow-xs ${
-                          isMe 
-                            ? 'bg-white/20 border-white/30 text-white' 
-                            : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200'
+                        key={em}
+                        onClick={() => onAddReaction(msg.id, em, activeSender.id)}
+                        className={`text-xs p-1 rounded-lg transition-transform hover:scale-125 ${
+                          isMe ? 'hover:bg-white/20' : 'hover:bg-slate-200 dark:hover:bg-slate-700'
                         }`}
+                        title={`Beri reaksi ${em}`}
                       >
-                        <span>{r.emoji}</span>
-                        <span className="font-extrabold">{r.count}</span>
+                        {em}
                       </button>
                     ))}
-                  </div>
-                )}
-
-                {/* Action Hover Quick Reaction & Delete */}
-                <div className={`absolute top-1 hidden group-hover:flex items-center gap-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm p-1 rounded-full border border-slate-200 shadow-md text-xs z-10 ${
-                  isMe ? '-left-20' : '-right-20'
-                }`}>
-                  {['❤️', '😂', '👍'].map((em) => (
                     <button
-                      key={em}
-                      onClick={() => onAddReaction(msg.id, em, activeSender.id)}
-                      className="p-1 hover:scale-125 transition-transform"
+                      onClick={() => onDeleteMessage(msg.id)}
+                      className={`text-xs p-1 rounded-lg hover:text-red-400 transition-transform ${
+                        isMe ? 'hover:bg-white/20' : 'hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                      title="Hapus Pesan"
                     >
-                      {em}
+                      <Trash2 className="w-3 h-3" />
                     </button>
-                  ))}
-                  <button
-                    onClick={() => onDeleteMessage(msg.id)}
-                    className="p-1 text-slate-400 hover:text-red-500"
-                    title="Hapus"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
+                  </div>
                 </div>
-              </div>
 
-              {isMe && (
-                <span className="text-2xl mb-1 drop-shadow-sm shrink-0" title={msg.senderName}>
-                  {msg.senderAvatar}
-                </span>
-              )}
-            </div>
-          );
-        })}
+                {isMe && (
+                  <span className="text-2xl mb-1 drop-shadow-xs shrink-0" title={msg.senderName}>
+                    {msg.senderAvatar}
+                  </span>
+                )}
+              </div>
+            );
+          })
+        )}
         <div ref={messagesEndRef} />
       </div>
 

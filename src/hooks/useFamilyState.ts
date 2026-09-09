@@ -57,7 +57,13 @@ export function useFamilyState() {
   const [transactions, setTransactions] = useState<FinanceTransaction[]>(() => loadStorage('transactions', INITIAL_FINANCE_TRANSACTIONS));
   const [savingsTargets, setSavingsTargets] = useState<SavingsTarget[]>(() => loadStorage('savings', INITIAL_SAVINGS_TARGETS));
   const [achievements] = useState<FamilyAchievement[]>(() => loadStorage('achievements', INITIAL_ACHIEVEMENTS));
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => loadStorage('chat_msgs', INITIAL_CHAT_MESSAGES));
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+    const saved = loadStorage<ChatMessage[]>('chat_msgs', INITIAL_CHAT_MESSAGES);
+    if (!saved || !Array.isArray(saved) || saved.length === 0) {
+      return INITIAL_CHAT_MESSAGES;
+    }
+    return saved;
+  });
 
   // Calculated Family Stats
   const familyStreak = 7; // Streak days
@@ -286,11 +292,24 @@ export function useFamilyState() {
     sound.playClick();
   };
 
+  const resetChatToDemo = () => {
+    setChatMessages(INITIAL_CHAT_MESSAGES);
+    sound.playSuccess();
+    fireBurstConfetti();
+  };
+
+  const clearAllChatMessages = () => {
+    setChatMessages([]);
+    sound.playClick();
+  };
+
   return {
     chatMessages,
     sendChatMessage,
     addChatReaction,
     deleteChatMessage,
+    resetChatToDemo,
+    clearAllChatMessages,
     currentDailyIdea,
     nextDailyIdea,
     memories,
