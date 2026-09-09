@@ -58,8 +58,8 @@ export function useFamilyState() {
 
   // Calculated Family Stats
   const familyStreak = 7; // Streak days
-  const totalLovePoints = appreciations.reduce((acc, curr) => acc + curr.lovePoints, 120);
-  const currentDailyIdea = DAILY_IDEAS[currentIdeaIndex % DAILY_IDEAS.length];
+  const totalLovePoints = (Array.isArray(appreciations) ? appreciations : []).reduce((acc, curr) => acc + (curr?.lovePoints || 0), 120);
+  const currentDailyIdea = DAILY_IDEAS[Math.abs(currentIdeaIndex || 0) % DAILY_IDEAS.length] || DAILY_IDEAS[0];
 
   // Save effects
   useEffect(() => saveStorage('idea_idx', currentIdeaIndex), [currentIdeaIndex]);
