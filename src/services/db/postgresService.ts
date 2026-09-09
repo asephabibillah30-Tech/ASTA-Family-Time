@@ -26,8 +26,8 @@ class PostgresService {
       isConnected: hasCloudConfig,
       isCustomConnected: hasCloudConfig,
       statusText: hasCloudConfig 
-        ? 'Database PostgreSQL Cloud Terhubung 🟢' 
-        : 'Database PostgreSQL Terenkripsi Aman 🟢'
+        ? 'Sinkronisasi Cloud Aktif 🟢' 
+        : 'Ruang Privat Terenkripsi 🟢'
     };
 
     if (hasCloudConfig) {

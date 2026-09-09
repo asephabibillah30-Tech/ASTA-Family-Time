@@ -647,7 +647,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
           <span className="flex items-center gap-1">📅 Family Planner</span>
         </div>
         <p className="text-[10px] text-slate-400">
-          Dilindungi dengan enkripsi PostgreSQL terisolasi per keluarga.
+          Dilindungi dengan enkripsi keamanan tingkat tinggi terisolasi per keluarga.
         </p>
       </div>
 
