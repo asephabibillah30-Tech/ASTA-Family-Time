@@ -29,15 +29,15 @@ export interface Card {
   emoji: string;
   difficulty: DifficultyLevel;
   points: number;
-  duration?: number; // suggested timer in seconds (e.g. 10, 15, 30)
-  proTip?: string; // helpful or hilarious tip for the family
+  duration?: number;
+  proTip?: string;
 }
 
 export interface Player {
   id: string;
   name: string;
   avatar: string;
-  rolePreset?: string; // Ayah, Ibu, Kakak, Adik, etc.
+  rolePreset?: string;
   score: number;
   cardsCompleted: number;
   color: string;
@@ -59,10 +59,24 @@ export interface GameMode {
 
 export type AppScreen = 
   | 'home'
+  | 'game'
   | 'players_setup'
   | 'mode_select'
   | 'game_board'
-  | 'result';
+  | 'result'
+  | 'quality_time'
+  | 'memories'
+  | 'family_hub'
+  | 'planner'
+  | 'journal'
+  | 'appreciation'
+  | 'challenges'
+  | 'habits'
+  | 'finance'
+  | 'learning'
+  | 'achievements';
+
+export type MainTab = 'home' | 'game' | 'quality_time' | 'memories' | 'family_hub';
 
 export interface TurnTransition {
   show: boolean;
