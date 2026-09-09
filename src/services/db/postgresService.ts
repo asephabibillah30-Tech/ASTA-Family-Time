@@ -14,9 +14,11 @@ class PostgresService {
   private config: PostgresConfig;
 
   constructor() {
-    // Read securely only from Vite environment variables (e.g. .env or build secrets)
-    const envSupaUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || '';
-    const envSupaKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || '';
+    const storedUrl = typeof localStorage !== 'undefined' ? localStorage.getItem('asta_supabase_url') || '' : '';
+    const storedKey = typeof localStorage !== 'undefined' ? localStorage.getItem('asta_supabase_anon_key') || '' : '';
+
+    const envSupaUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || storedUrl || '').trim();
+    const envSupaKey = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || storedKey || '').trim();
 
     const hasCloudConfig = Boolean(envSupaUrl && envSupaKey);
 
@@ -36,6 +38,31 @@ class PostgresService {
       } catch (err) {
         console.warn('Gagal inisialisasi Supabase client:', err);
       }
+    }
+  }
+
+  public setCredentials(url: string, anonKey: string): boolean {
+    const cleanUrl = url.trim();
+    const cleanKey = anonKey.trim();
+    if (!cleanUrl || !cleanKey) return false;
+
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('asta_supabase_url', cleanUrl);
+        localStorage.setItem('asta_supabase_anon_key', cleanKey);
+      }
+      this.client = createClient(cleanUrl, cleanKey);
+      this.config = {
+        supabaseUrl: cleanUrl,
+        supabaseAnonKey: cleanKey,
+        isConnected: true,
+        isCustomConnected: true,
+        statusText: 'Sinkronisasi Cloud Aktif 🟢'
+      };
+      return true;
+    } catch (err) {
+      console.warn('Error setting Supabase credentials:', err);
+      return false;
     }
   }
 

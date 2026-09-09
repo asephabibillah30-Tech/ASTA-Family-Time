@@ -132,7 +132,53 @@ class DatabaseService {
       }
     ]);
     this.ensureDefaultSeeded();
-    this.syncFromCloud().catch(console.warn);
+    this.initSync().catch(console.warn);
+  }
+
+  public async initSync(): Promise<void> {
+    await this.syncLocalToCloud();
+    await this.syncFromCloud();
+  }
+
+  public async syncLocalToCloud(): Promise<void> {
+    const supabase = postgresService.getClient();
+    if (!supabase) return;
+
+    try {
+      // 1. Upsert all families
+      for (const f of this.families) {
+        if (f.id === DEFAULT_FAMILY.id) continue; // Skip default dummy template
+        await supabase.from('families').upsert({
+          id: f.id,
+          family_name: f.familyName,
+          family_code: f.familyCode,
+          head_user_id: f.headUserId || null,
+          streak_days: f.streakDays || 1,
+          total_love_points: f.totalLovePoints || 100
+        }, { onConflict: 'id' });
+      }
+
+      // 2. Upsert all users
+      for (const u of this.users) {
+        if (u.familyId === DEFAULT_FAMILY.id) continue; // Skip default dummy users
+        await supabase.from('users').upsert({
+          id: u.id,
+          family_id: u.familyId,
+          full_name: u.fullName,
+          role: u.role,
+          role_title: u.roleTitle,
+          username: u.usernameOrEmail || null,
+          password_hash: u.password || null,
+          pin: u.pin || null,
+          avatar: u.avatar || '👨‍💼',
+          color: u.color || 'bg-blue-500',
+          love_points: u.lovePoints || 50,
+          is_head: Boolean(u.isHead)
+        }, { onConflict: 'id' });
+      }
+    } catch (err) {
+      console.warn('Sync local to cloud failed:', err);
+    }
   }
 
   public async syncFromCloud(): Promise<void> {
@@ -319,28 +365,41 @@ class DatabaseService {
 
     const supabase = postgresService.getClient();
     if (supabase) {
-      Promise.resolve(supabase.from('families').insert({
-        id: familyId,
-        family_name: cleanFamilyName,
-        family_code: familyCode,
-        streak_days: 1,
-        total_love_points: 100
-      })).catch(console.warn);
+      (async () => {
+        try {
+          // 1. Insert Family First
+          const { error: fErr } = await supabase.from('families').upsert({
+            id: familyId,
+            family_name: cleanFamilyName,
+            family_code: familyCode,
+            streak_days: 1,
+            total_love_points: 100
+          });
+          if (fErr) console.warn('Supabase family upsert error:', fErr);
 
-      Promise.resolve(supabase.from('users').insert({
-        id: headUserId,
-        family_id: familyId,
-        full_name: cleanHeadName,
-        role: 'head_family',
-        role_title: dto.roleTitle || 'Ayah',
-        username: cleanUser,
-        password_hash: passwordHash,
-        pin: pinHash,
-        avatar: dto.avatar || '👨‍💼',
-        color: dto.color || 'bg-blue-500',
-        love_points: 100,
-        is_head: true
-      })).catch(console.warn);
+          // 2. Insert User Next (satisfies Foreign Key)
+          const { error: uErr } = await supabase.from('users').upsert({
+            id: headUserId,
+            family_id: familyId,
+            full_name: cleanHeadName,
+            role: 'head_family',
+            role_title: dto.roleTitle || 'Ayah',
+            username: cleanUser,
+            password_hash: passwordHash,
+            pin: pinHash,
+            avatar: dto.avatar || '👨‍💼',
+            color: dto.color || 'bg-blue-500',
+            love_points: 100,
+            is_head: true
+          });
+          if (uErr) console.warn('Supabase user upsert error:', uErr);
+
+          // 3. Link head_user_id
+          await supabase.from('families').update({ head_user_id: headUserId }).eq('id', familyId);
+        } catch (err) {
+          console.warn('Supabase registration sync failed:', err);
+        }
+      })();
     }
 
     this.logSecurity('DAFTAR_KEPALA_KELUARGA', 'SUCCESS', `Keluarga ${cleanFamilyName} dibuat dengan kode ${familyCode}`, familyId, headUserId, cleanHeadName);
