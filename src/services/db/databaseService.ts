@@ -409,10 +409,7 @@ class DatabaseService {
 
   // --- SESSION PERSISTENCE ---
   public getSavedSession(): AuthSession | null {
-    return loadData<AuthSession | null>(CURRENT_SESSION_KEY, {
-      user: DEFAULT_USERS[0],
-      family: DEFAULT_FAMILY
-    });
+    return loadData<AuthSession | null>(CURRENT_SESSION_KEY, null);
   }
 
   public saveSession(session: AuthSession | null): void {
