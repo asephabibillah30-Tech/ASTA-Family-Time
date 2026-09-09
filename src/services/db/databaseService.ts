@@ -5,7 +5,6 @@ import { postgresService } from './postgresService';
 // Storage Keys
 const FAMILIES_KEY = 'asta_db_families';
 const USERS_KEY = 'asta_db_users';
-const CURRENT_SESSION_KEY = 'asta_db_auth_session';
 const SECURITY_LOGS_KEY = 'asta_db_security_logs';
 
 export interface SecurityAuditLog {
@@ -434,17 +433,43 @@ class DatabaseService {
     return session;
   }
 
-  // --- SESSION PERSISTENCE ---
+  // --- SESSION PERSISTENCE (Tab Session: always prompts login on fresh open) ---
   public getSavedSession(): AuthSession | null {
-    return loadData<AuthSession | null>(CURRENT_SESSION_KEY, null);
+    try {
+      if (typeof window === 'undefined') return null;
+      // Clean up legacy session from previous tests
+      localStorage.removeItem('asta_db_auth_session');
+      const raw = sessionStorage.getItem('asta_active_session_v2');
+      if (raw) return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+    return null;
   }
 
   public saveSession(session: AuthSession | null): void {
-    saveData(CURRENT_SESSION_KEY, session);
+    try {
+      if (typeof window === 'undefined') return;
+      localStorage.removeItem('asta_db_auth_session');
+      if (session) {
+        sessionStorage.setItem('asta_active_session_v2', JSON.stringify(session));
+      } else {
+        sessionStorage.removeItem('asta_active_session_v2');
+      }
+    } catch (err) {
+      console.error('Error saving session:', err);
+    }
   }
 
   public clearSession(): void {
-    localStorage.removeItem(CURRENT_SESSION_KEY);
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('asta_active_session_v2');
+        localStorage.removeItem('asta_db_auth_session');
+      }
+    } catch (err) {
+      console.error('Error clearing session:', err);
+    }
   }
 }
 
