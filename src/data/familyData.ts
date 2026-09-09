@@ -4,6 +4,7 @@ import type {
   JournalMoodInfo,
   JournalEntry,
   AppreciationItem,
+  ChatMessage,
   FamilyChallenge,
   FamilyHabit,
   FinanceTransaction,
@@ -390,4 +391,47 @@ export const INITIAL_ACHIEVEMENTS: FamilyAchievement[] = [
   { id: 'ach-4', title: '📸 Memory Maker', description: 'Menyimpan 50 momen kenangan berharga keluarga.', icon: '📸', unlocked: false, progress: 12, maxProgress: 50, rewardPoints: 200 },
   { id: 'ach-5', title: '👑 Game Master', description: 'Menyelesaikan 100 kartu tantangan di seluruh mode.', icon: '🏆', unlocked: false, progress: 48, maxProgress: 100, rewardPoints: 250 },
   { id: 'ach-6', title: '🌱 Habit Champion', description: 'Menyelesaikan seluruh checklist kebiasaan harian.', icon: '🌟', unlocked: false, progress: 4, maxProgress: 6, rewardPoints: 100 }
+];
+
+export const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
+  {
+    id: 'msg-1',
+    senderId: 'p-1',
+    senderName: 'Ayah',
+    senderAvatar: '👨‍💼',
+    senderColor: 'bg-blue-500',
+    text: 'Halo semuanya! Hari ini Ayah pulang kerja jam 17.30 ya. Siapa yang mau main kartu ASTA nanti malam? ❤️',
+    timestamp: '15:15',
+    reactions: [{ emoji: '❤️', count: 3, by: ['p-2', 'p-3', 'p-4'] }]
+  },
+  {
+    id: 'msg-2',
+    senderId: 'p-2',
+    senderName: 'Ibu',
+    senderAvatar: '👩‍🍳',
+    senderColor: 'bg-rose-500',
+    text: 'Hati-hati di jalan ya Ayah! Ibu sudah siapkan sup ayam hangat kesukaan anak-anak 🍲',
+    timestamp: '15:20',
+    reactions: [{ emoji: '🥰', count: 2, by: ['p-1', 'p-3'] }]
+  },
+  {
+    id: 'msg-3',
+    senderId: 'p-3',
+    senderName: 'Kakak',
+    senderAvatar: '👦',
+    senderColor: 'bg-amber-500',
+    text: 'Aku sudah selesai PR matematika! Siap tanding Ular Tangga sama Ayah & Adik nanti! 🔥🎲',
+    timestamp: '15:30',
+    reactions: [{ emoji: '👏', count: 2, by: ['p-1', 'p-2'] }]
+  },
+  {
+    id: 'msg-4',
+    senderId: 'p-4',
+    senderName: 'Adik',
+    senderAvatar: '👧',
+    senderColor: 'bg-teal-500',
+    text: 'Adik mau pilih Kartu Suara Binatang yang lucu! 🐱🦁 Jangan lupa bawa camilan ya Ayah!',
+    timestamp: '15:35',
+    reactions: [{ emoji: '😂', count: 3, by: ['p-1', 'p-2', 'p-3'] }]
+  }
 ];

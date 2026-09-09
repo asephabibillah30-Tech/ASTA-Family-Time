@@ -59,6 +59,7 @@ export interface GameMode {
 
 export type AppScreen = 
   | 'home'
+  | 'chat'
   | 'game'
   | 'players_setup'
   | 'mode_select'
@@ -76,7 +77,7 @@ export type AppScreen =
   | 'learning'
   | 'achievements';
 
-export type MainTab = 'home' | 'game' | 'quality_time' | 'memories' | 'family_hub';
+export type MainTab = 'home' | 'chat' | 'game' | 'quality_time' | 'memories' | 'family_hub';
 
 export interface TurnTransition {
   show: boolean;

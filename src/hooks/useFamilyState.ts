@@ -4,6 +4,7 @@ import type {
   PlannerEvent,
   JournalEntry,
   AppreciationItem,
+  ChatMessage,
   FamilyChallenge,
   FamilyHabit,
   FinanceTransaction,
@@ -19,6 +20,7 @@ import {
   INITIAL_MEMORIES,
   INITIAL_JOURNAL,
   INITIAL_APPRECIATIONS,
+  INITIAL_CHAT_MESSAGES,
   INITIAL_FINANCE_TRANSACTIONS,
   INITIAL_SAVINGS_TARGETS,
   INITIAL_ACHIEVEMENTS
@@ -55,6 +57,7 @@ export function useFamilyState() {
   const [transactions, setTransactions] = useState<FinanceTransaction[]>(() => loadStorage('transactions', INITIAL_FINANCE_TRANSACTIONS));
   const [savingsTargets, setSavingsTargets] = useState<SavingsTarget[]>(() => loadStorage('savings', INITIAL_SAVINGS_TARGETS));
   const [achievements] = useState<FamilyAchievement[]>(() => loadStorage('achievements', INITIAL_ACHIEVEMENTS));
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => loadStorage('chat_msgs', INITIAL_CHAT_MESSAGES));
 
   // Calculated Family Stats
   const familyStreak = 7; // Streak days
@@ -72,6 +75,7 @@ export function useFamilyState() {
   useEffect(() => saveStorage('transactions', transactions), [transactions]);
   useEffect(() => saveStorage('savings', savingsTargets), [savingsTargets]);
   useEffect(() => saveStorage('achievements', achievements), [achievements]);
+  useEffect(() => saveStorage('chat_msgs', chatMessages), [chatMessages]);
 
   // Actions
   const nextDailyIdea = () => {
@@ -225,7 +229,68 @@ export function useFamilyState() {
     fireSmallPop(0.5, 0.4);
   };
 
+    const sendChatMessage = (
+    senderId: string,
+    senderName: string,
+    senderAvatar: string,
+    senderColor: string,
+    text: string,
+    mediaType: ChatMessage['mediaType'] = 'text'
+  ) => {
+    const newMsg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      senderId,
+      senderName,
+      senderAvatar,
+      senderColor,
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      reactions: [],
+      mediaType
+    };
+    setChatMessages(prev => [...prev, newMsg]);
+    sound.playClick();
+  };
+
+  const addChatReaction = (msgId: string, emoji: string, userId: string) => {
+    setChatMessages(prev => prev.map(m => {
+      if (m.id === msgId) {
+        const existing = m.reactions.find(r => r.emoji === emoji);
+        if (existing) {
+          if (existing.by.includes(userId)) {
+            // remove
+            return {
+              ...m,
+              reactions: m.reactions.map(r => r.emoji === emoji ? { ...r, count: Math.max(0, r.count - 1), by: r.by.filter(u => u !== userId) } : r).filter(r => r.count > 0)
+            };
+          } else {
+            return {
+              ...m,
+              reactions: m.reactions.map(r => r.emoji === emoji ? { ...r, count: r.count + 1, by: [...r.by, userId] } : r)
+            };
+          }
+        } else {
+          return {
+            ...m,
+            reactions: [...m.reactions, { emoji, count: 1, by: [userId] }]
+          };
+        }
+      }
+      return m;
+    }));
+    sound.playClick();
+  };
+
+  const deleteChatMessage = (msgId: string) => {
+    setChatMessages(prev => prev.filter(m => m.id !== msgId));
+    sound.playClick();
+  };
+
   return {
+    chatMessages,
+    sendChatMessage,
+    addChatReaction,
+    deleteChatMessage,
     currentDailyIdea,
     nextDailyIdea,
     memories,

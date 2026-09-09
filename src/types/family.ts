@@ -55,6 +55,19 @@ export interface AppreciationItem {
   badge?: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string;
+  senderColor: string;
+  text: string;
+  timestamp: string;
+  reactions: { emoji: string; count: number; by: string[] }[];
+  isQuick?: boolean;
+  mediaType?: 'text' | 'sticker' | 'call_invite' | 'voice_note';
+}
+
 export interface FamilyChallenge {
   id: string;
   title: string;

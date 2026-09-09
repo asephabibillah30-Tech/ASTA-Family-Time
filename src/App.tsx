@@ -4,6 +4,7 @@ import { useFamilyState } from './hooks/useFamilyState';
 import { Header } from './components/Header';
 import { BottomNav } from './components/Navigation/BottomNav';
 import { DashboardHome } from './components/Home/DashboardHome';
+import { FamilyChatScreen } from './components/Chat/FamilyChatScreen';
 import { GameHub } from './components/Game/GameHub';
 import { QualityTimeScreen } from './components/QualityTime/QualityTimeScreen';
 import { MemoriesScreen } from './components/Memories/MemoriesScreen';
@@ -37,6 +38,7 @@ export function App() {
   const handleSelectTab = (tab: MainTab) => {
     setCurrentTab(tab);
     setSubScreen(null);
+    game.resetToHome();
   };
 
   const handleNavigateSubScreen = (screen: AppScreen) => {
@@ -208,6 +210,16 @@ export function App() {
               />
             )}
 
+            {!subScreen && currentTab === 'chat' && (
+              <FamilyChatScreen
+                players={game.players}
+                messages={family.chatMessages}
+                onSendMessage={family.sendChatMessage}
+                onAddReaction={family.addChatReaction}
+                onDeleteMessage={family.deleteChatMessage}
+              />
+            )}
+
             {!subScreen && currentTab === 'game' && (
               <GameHub
                 players={game.players}
@@ -246,7 +258,7 @@ export function App() {
 
       </main>
 
-      {/* Persistent Bottom Navigation (visible unless playing active Card Game) */}
+      {/* Persistent Bottom Navigation */}
       {game.screen === 'home' && (
         <BottomNav
           currentTab={currentTab}
@@ -268,7 +280,7 @@ export function App() {
         onClose={() => setIsSettingsOpen(false)}
       />
 
-      {/* PWA Mobile Install Banner / Prompt */}
+      {/* PWA Mobile Install Banner */}
       <PWAInstallPrompt />
 
     </div>
