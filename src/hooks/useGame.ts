@@ -3,6 +3,7 @@ import type { Card, GameModeId, Player, AppScreen, TurnTransition, GameSettings 
 import { INITIAL_CARDS, GAME_MODES } from '../data/cards';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti, fireSmallPop, fireVictoryShower } from '../utils/confetti';
+import { personalizeCard } from '../utils/personalize';
 
 const DEFAULT_PLAYERS: Player[] = [
   { id: 'p-1', name: 'Ayah', avatar: '👨‍💼', rolePreset: 'Ayah', score: 0, cardsCompleted: 0, color: 'bg-blue-500' },
@@ -171,12 +172,14 @@ export function useGame() {
     sound.playCardShuffle();
 
     setTimeout(() => {
-      const nextCard = availableDeck[0];
+      const rawCard = availableDeck[0];
       const remainingDeck = availableDeck.slice(1);
+      const activePlayer = players[currentPlayerIndex] || players[0];
+      const personalized = personalizeCard(rawCard, activePlayer, players);
 
-      setCurrentCard(nextCard);
+      setCurrentCard(personalized);
       setAvailableDeck(remainingDeck);
-      setUsedCards(prev => [...prev, nextCard]);
+      setUsedCards(prev => [...prev, personalized]);
       setIsShuffling(false);
       setIsCardFlipped(true);
       sound.playCardFlip();
