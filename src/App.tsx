@@ -60,8 +60,11 @@ export function App() {
         {game.screen === 'mode_select' && (
           <ModeSelector
             selectedModeId={game.selectedModeId}
+            selectedCategories={game.selectedCategories}
             players={game.players}
             onSelectMode={game.selectMode}
+            onToggleCategory={game.toggleCategory}
+            onSelectAllCategories={game.selectAllCategories}
             onBackToPlayers={() => game.setScreen('players_setup')}
             onStartGame={game.startGame}
           />

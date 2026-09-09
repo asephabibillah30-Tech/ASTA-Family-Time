@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Card, GameModeId, Player, AppScreen, TurnTransition, GameSettings } from '../types/game';
+import type { Card, GameModeId, Player, AppScreen, TurnTransition, GameSettings, CategoryType } from '../types/game';
 import { INITIAL_CARDS, GAME_MODES } from '../data/cards';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti, fireSmallPop, fireVictoryShower } from '../utils/confetti';
 import { personalizeCard } from '../utils/personalize';
+
+export const ALL_CATEGORIES: CategoryType[] = ['expression', 'charades', 'word_guess', 'activity', 'trivia', 'affection', 'creative'];
 
 const DEFAULT_PLAYERS: Player[] = [
   { id: 'p-1', name: 'Ayah', avatar: '👨‍💼', rolePreset: 'Ayah', score: 0, cardsCompleted: 0, color: 'bg-blue-500' },
@@ -51,6 +53,7 @@ export function useGame() {
   const [screen, setScreen] = useState<AppScreen>('home');
   const [players, setPlayers] = useState<Player[]>(DEFAULT_PLAYERS);
   const [selectedModeId, setSelectedModeId] = useState<GameModeId>('random');
+  const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>(ALL_CATEGORIES);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(0);
 
   const [availableDeck, setAvailableDeck] = useState<Card[]>([]);
@@ -99,16 +102,23 @@ export function useGame() {
   // Helper to get active mode config
   const currentMode = GAME_MODES.find(m => m.id === selectedModeId) || GAME_MODES[0];
 
-  // Initialize deck based on game mode
-  const initializeDeck = useCallback((modeId: GameModeId) => {
+  // Initialize deck based on game mode & categories (Capped to max 100 random cards)
+  const initializeDeck = useCallback((modeId: GameModeId, cats?: CategoryType[]) => {
     const mode = GAME_MODES.find(m => m.id === modeId) || GAME_MODES[0];
-    const filtered = INITIAL_CARDS.filter(c => mode.allowedCategories.includes(c.category));
+    const targetCategories = modeId === 'custom' 
+      ? (cats && cats.length > 0 ? cats : selectedCategories) 
+      : mode.allowedCategories;
+    
+    const filtered = INITIAL_CARDS.filter(c => targetCategories.includes(c.category));
     const shuffled = shuffleArray(filtered);
-    setAvailableDeck(shuffled);
+    // Limit to maximum 100 random cards per game session
+    const limitedDeck = shuffled.slice(0, 100);
+    
+    setAvailableDeck(limitedDeck);
     setUsedCards([]);
     setCurrentCard(null);
     setIsCardFlipped(false);
-  }, []);
+  }, [selectedCategories]);
 
   // Add a player
   const addPlayer = (name: string, rolePreset: string = 'Pemain', avatar?: string) => {
@@ -145,6 +155,33 @@ export function useGame() {
   // Select Mode
   const selectMode = (modeId: GameModeId) => {
     setSelectedModeId(modeId);
+    const mode = GAME_MODES.find(m => m.id === modeId);
+    if (mode && modeId !== 'custom') {
+      setSelectedCategories(mode.allowedCategories);
+    }
+    sound.playClick();
+  };
+
+  // Toggle Category for custom selection
+  const toggleCategory = (category: CategoryType) => {
+    setSelectedCategories(prev => {
+      let next: CategoryType[];
+      if (prev.includes(category)) {
+        if (prev.length <= 1) return prev; // Keep at least 1 category
+        next = prev.filter(c => c !== category);
+      } else {
+        next = [...prev, category];
+      }
+      return next;
+    });
+    setSelectedModeId('custom');
+    sound.playClick();
+  };
+
+  // Select all categories
+  const selectAllCategories = () => {
+    setSelectedCategories(ALL_CATEGORIES);
+    setSelectedModeId('custom');
     sound.playClick();
   };
 
@@ -154,7 +191,7 @@ export function useGame() {
     // Reset player scores
     setPlayers(prev => prev.map(p => ({ ...p, score: 0, cardsCompleted: 0 })));
     setCurrentPlayerIndex(0);
-    initializeDeck(selectedModeId);
+    initializeDeck(selectedModeId, selectedCategories);
     setScreen('game_board');
     sound.playTurnSwitch();
     fireSmallPop(0.5, 0.3);
@@ -263,7 +300,7 @@ export function useGame() {
   const restartSamePlayers = () => {
     setPlayers(prev => prev.map(p => ({ ...p, score: 0, cardsCompleted: 0 })));
     setCurrentPlayerIndex(0);
-    initializeDeck(selectedModeId);
+    initializeDeck(selectedModeId, selectedCategories);
     setScreen('game_board');
     sound.playClick();
   };
@@ -286,6 +323,7 @@ export function useGame() {
     currentPlayer,
     currentPlayerIndex,
     selectedModeId,
+    selectedCategories,
     currentMode,
     availableDeck,
     usedCards,
@@ -300,6 +338,9 @@ export function useGame() {
     removePlayer,
     updatePlayer,
     selectMode,
+    toggleCategory,
+    selectAllCategories,
+    setSelectedCategories,
     startGame,
     drawCard,
     submitScore,

@@ -43,7 +43,7 @@ export interface Player {
   color: string;
 }
 
-export type GameModeId = 'random' | 'funny' | 'expression' | 'charades' | 'animal' | 'smart' | 'family' | 'speed';
+export type GameModeId = 'random' | 'funny' | 'expression' | 'charades' | 'animal' | 'smart' | 'family' | 'speed' | 'custom';
 
 export interface GameMode {
   id: GameModeId;
