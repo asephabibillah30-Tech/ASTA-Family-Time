@@ -132,6 +132,63 @@ class DatabaseService {
       }
     ]);
     this.ensureDefaultSeeded();
+    this.syncFromCloud().catch(console.warn);
+  }
+
+  public async syncFromCloud(): Promise<void> {
+    const supabase = postgresService.getClient();
+    if (!supabase) return;
+    try {
+      const { data: cloudFamilies, error: famError } = await supabase.from('families').select('*');
+      if (!famError && cloudFamilies && cloudFamilies.length > 0) {
+        const mappedFamilies: FamilyAccount[] = cloudFamilies.map(f => ({
+          id: f.id,
+          familyName: f.family_name,
+          familyCode: f.family_code,
+          headUserId: f.head_user_id,
+          streakDays: f.streak_days || 1,
+          totalLovePoints: f.total_love_points || 100,
+          createdAt: f.created_at
+        }));
+        const combined = [...this.families];
+        for (const mf of mappedFamilies) {
+          const idx = combined.findIndex(x => x.id === mf.id);
+          if (idx >= 0) combined[idx] = mf;
+          else combined.push(mf);
+        }
+        this.families = combined;
+        saveData(FAMILIES_KEY, this.families);
+      }
+
+      const { data: cloudUsers, error: usrError } = await supabase.from('users').select('*');
+      if (!usrError && cloudUsers && cloudUsers.length > 0) {
+        const mappedUsers: UserAccount[] = cloudUsers.map(u => ({
+          id: u.id,
+          familyId: u.family_id,
+          fullName: u.full_name,
+          role: u.role as any,
+          roleTitle: u.role_title,
+          usernameOrEmail: u.username || u.email,
+          password: u.password_hash,
+          pin: u.pin,
+          avatar: u.avatar || '👨‍💼',
+          color: u.color || 'bg-blue-500',
+          lovePoints: u.love_points || 50,
+          isHead: u.is_head || false,
+          createdAt: u.created_at
+        }));
+        const combinedUsers = [...this.users];
+        for (const mu of mappedUsers) {
+          const idx = combinedUsers.findIndex(x => x.id === mu.id);
+          if (idx >= 0) combinedUsers[idx] = mu;
+          else combinedUsers.push(mu);
+        }
+        this.users = combinedUsers;
+        saveData(USERS_KEY, this.users);
+      }
+    } catch (err) {
+      console.warn('Cloud sync error:', err);
+    }
   }
 
   private ensureDefaultSeeded() {
@@ -164,8 +221,22 @@ class DatabaseService {
       details,
       timestamp: new Date().toISOString()
     };
-    this.logs = [newLog, ...this.logs.slice(0, 49)]; // keep latest 50 logs
+    this.logs = [newLog, ...this.logs.slice(0, 49)];
     saveData(SECURITY_LOGS_KEY, this.logs);
+
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      Promise.resolve(supabase.from('security_audit_logs').insert({
+        id: newLog.id,
+        family_id: familyId || null,
+        user_id: userId || null,
+        user_name: userName || 'Anonim',
+        action,
+        status,
+        details,
+        ip_or_device: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 80) : 'Web Client'
+      })).catch(console.warn);
+    }
   }
 
   public getSecurityLogs(familyId?: string): SecurityAuditLog[] {
@@ -312,6 +383,22 @@ class DatabaseService {
     this.users = [...this.users, newMember];
     saveData(USERS_KEY, this.users);
 
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      Promise.resolve(supabase.from('users').insert({
+        id: newMemberId,
+        family_id: familyId,
+        full_name: cleanName,
+        role: 'member',
+        role_title: dto.roleTitle,
+        pin: pinHash,
+        avatar: dto.avatar || '👦',
+        color: dto.color || 'bg-amber-500',
+        love_points: 50,
+        is_head: false
+      })).catch(console.warn);
+    }
+
     this.logSecurity('TAMBAH_ANGGOTA', 'SUCCESS', `Anggota ${cleanName} (${dto.roleTitle}) ditambahkan oleh ${requester.fullName}`, familyId, requesterUserId, requester.fullName);
     return newMember;
   }
@@ -332,6 +419,11 @@ class DatabaseService {
     this.users = this.users.filter(u => u.id !== memberId);
     saveData(USERS_KEY, this.users);
 
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      Promise.resolve(supabase.from('users').delete().eq('id', memberId)).catch(console.warn);
+    }
+
     this.logSecurity('HAPUS_ANGGOTA', 'WARNING', `Anggota ${targetUser?.fullName} dihapus oleh ${requester.fullName}`, requester.familyId, requesterUserId, requester.fullName);
   }
 
@@ -350,6 +442,11 @@ class DatabaseService {
     this.users = this.users.map(u => u.id === userId ? { ...u, password: newHash } : u);
     saveData(USERS_KEY, this.users);
 
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      Promise.resolve(supabase.from('users').update({ password_hash: newHash }).eq('id', userId)).catch(console.warn);
+    }
+
     this.logSecurity('GANTI_PASSWORD_SUKSES', 'SUCCESS', 'Password berhasil diperbarui.', user.familyId, userId, user.fullName);
   }
 
@@ -367,6 +464,11 @@ class DatabaseService {
     const newHash = fastHashSync(newPin);
     this.users = this.users.map(u => u.id === userId ? { ...u, pin: newHash } : u);
     saveData(USERS_KEY, this.users);
+
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      Promise.resolve(supabase.from('users').update({ pin: newHash }).eq('id', userId)).catch(console.warn);
+    }
 
     this.logSecurity('GANTI_PIN_SUKSES', 'SUCCESS', 'PIN berhasil diperbarui.', user.familyId, userId, user.fullName);
   }
