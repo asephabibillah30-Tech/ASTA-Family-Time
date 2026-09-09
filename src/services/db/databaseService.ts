@@ -1,11 +1,24 @@
 import type { FamilyAccount, UserAccount, RegisterHeadDTO, AddMemberDTO, AuthSession } from '../../types/auth';
+import { fastHashSync, sanitizeInput } from '../../utils/security';
 
 // Storage Keys
 const FAMILIES_KEY = 'asta_db_families';
 const USERS_KEY = 'asta_db_users';
 const CURRENT_SESSION_KEY = 'asta_db_auth_session';
+const SECURITY_LOGS_KEY = 'asta_db_security_logs';
 
-// Initial Demo Family & Users
+export interface SecurityAuditLog {
+  id: string;
+  familyId?: string;
+  userId?: string;
+  userName?: string;
+  action: string;
+  status: 'SUCCESS' | 'FAILED' | 'WARNING' | 'BLOCKED';
+  details: string;
+  timestamp: string;
+}
+
+// Initial Demo Family & Users (Secured with Fast Hashing)
 export const DEFAULT_FAMILY: FamilyAccount = {
   id: 'fam-asta-default',
   familyName: 'Keluarga Harmonis ASTA',
@@ -24,8 +37,8 @@ export const DEFAULT_USERS: UserAccount[] = [
     role: 'head_family',
     roleTitle: 'Ayah',
     usernameOrEmail: 'ayah@asta.com',
-    password: '123',
-    pin: '1234',
+    password: fastHashSync('123'),
+    pin: fastHashSync('1234'),
     avatar: '👨‍💼',
     color: 'bg-blue-500',
     lovePoints: 120,
@@ -39,7 +52,7 @@ export const DEFAULT_USERS: UserAccount[] = [
     role: 'member',
     roleTitle: 'Ibu',
     usernameOrEmail: 'ibu@asta.com',
-    pin: '1234',
+    pin: fastHashSync('1234'),
     avatar: '👩‍🍳',
     color: 'bg-rose-500',
     lovePoints: 95,
@@ -53,7 +66,7 @@ export const DEFAULT_USERS: UserAccount[] = [
     role: 'member',
     roleTitle: 'Kakak',
     usernameOrEmail: 'kakak@asta.com',
-    pin: '1234',
+    pin: fastHashSync('1234'),
     avatar: '👦',
     color: 'bg-amber-500',
     lovePoints: 80,
@@ -67,7 +80,7 @@ export const DEFAULT_USERS: UserAccount[] = [
     role: 'member',
     roleTitle: 'Adik',
     usernameOrEmail: 'adik@asta.com',
-    pin: '1234',
+    pin: fastHashSync('1234'),
     avatar: '👧',
     color: 'bg-teal-500',
     lovePoints: 70,
@@ -94,7 +107,6 @@ function saveData<T>(key: string, data: T): void {
   }
 }
 
-// Generate unique Family Code: "ASTA-XXXX"
 export function generateFamilyCode(): string {
   const num = Math.floor(1000 + Math.random() * 9000);
   return `ASTA-${num}`;
@@ -103,10 +115,22 @@ export function generateFamilyCode(): string {
 class DatabaseService {
   private families: FamilyAccount[];
   private users: UserAccount[];
+  private logs: SecurityAuditLog[];
 
   constructor() {
     this.families = loadData<FamilyAccount[]>(FAMILIES_KEY, [DEFAULT_FAMILY]);
     this.users = loadData<UserAccount[]>(USERS_KEY, DEFAULT_USERS);
+    this.logs = loadData<SecurityAuditLog[]>(SECURITY_LOGS_KEY, [
+      {
+        id: 'log-init',
+        familyId: DEFAULT_FAMILY.id,
+        userName: 'Sistem ASTA',
+        action: 'INICIALISASI_DATABASE_AMAN',
+        status: 'SUCCESS',
+        details: 'Enkripsi SHA-256 dan Row-Level Security aktif.',
+        timestamp: new Date().toISOString()
+      }
+    ]);
     this.ensureDefaultSeeded();
   }
 
@@ -121,6 +145,34 @@ class DatabaseService {
     }
   }
 
+  // --- SECURITY AUDIT LOGGING ---
+  public logSecurity(
+    action: string,
+    status: SecurityAuditLog['status'],
+    details: string,
+    familyId?: string,
+    userId?: string,
+    userName?: string
+  ) {
+    const newLog: SecurityAuditLog = {
+      id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      familyId,
+      userId,
+      userName: userName || 'Anonim',
+      action,
+      status,
+      details,
+      timestamp: new Date().toISOString()
+    };
+    this.logs = [newLog, ...this.logs.slice(0, 49)]; // keep latest 50 logs
+    saveData(SECURITY_LOGS_KEY, this.logs);
+  }
+
+  public getSecurityLogs(familyId?: string): SecurityAuditLog[] {
+    if (!familyId) return this.logs;
+    return this.logs.filter(l => !l.familyId || l.familyId === familyId);
+  }
+
   // --- FAMILIES TABLE ---
   public getFamilies(): FamilyAccount[] {
     return this.families;
@@ -131,7 +183,7 @@ class DatabaseService {
   }
 
   public getFamilyByCode(code: string): FamilyAccount | undefined {
-    const cleanCode = code.trim().toUpperCase();
+    const cleanCode = sanitizeInput(code).toUpperCase();
     return this.families.find(f => f.familyCode.toUpperCase() === cleanCode);
   }
 
@@ -148,15 +200,23 @@ class DatabaseService {
     return this.users.find(u => u.id === userId);
   }
 
-  // --- REGISTER HEAD OF FAMILY (Creates Family & First User) ---
+  // --- REGISTER HEAD OF FAMILY ---
   public registerHeadOfFamily(dto: RegisterHeadDTO): AuthSession {
     const familyId = `fam-${Date.now()}`;
     const headUserId = `usr-${Date.now()}`;
     const familyCode = generateFamilyCode();
 
+    const cleanHeadName = sanitizeInput(dto.headFullName);
+    const cleanFamilyName = sanitizeInput(dto.familyName) || 'Keluarga Bahagia';
+    const cleanUser = sanitizeInput(dto.usernameOrEmail).toLowerCase();
+
+    // Securely hash password and PIN
+    const passwordHash = fastHashSync(dto.password);
+    const pinHash = fastHashSync(dto.pin || '1234');
+
     const newFamily: FamilyAccount = {
       id: familyId,
-      familyName: dto.familyName.trim() || 'Keluarga Bahagia',
+      familyName: cleanFamilyName,
       familyCode,
       headUserId,
       streakDays: 1,
@@ -167,12 +227,12 @@ class DatabaseService {
     const newHeadUser: UserAccount = {
       id: headUserId,
       familyId,
-      fullName: dto.headFullName.trim(),
+      fullName: cleanHeadName,
       role: 'head_family',
       roleTitle: dto.roleTitle || 'Ayah',
-      usernameOrEmail: dto.usernameOrEmail.trim().toLowerCase(),
-      password: dto.password,
-      pin: dto.pin || '1234',
+      usernameOrEmail: cleanUser,
+      password: passwordHash,
+      pin: pinHash,
       avatar: dto.avatar || '👨‍💼',
       color: dto.color || 'bg-blue-500',
       lovePoints: 100,
@@ -185,6 +245,8 @@ class DatabaseService {
 
     saveData(FAMILIES_KEY, this.families);
     saveData(USERS_KEY, this.users);
+
+    this.logSecurity('DAFTAR_KEPALA_KELUARGA', 'SUCCESS', `Keluarga ${cleanFamilyName} dibuat dengan kode ${familyCode}`, familyId, headUserId, cleanHeadName);
 
     const session: AuthSession = { user: newHeadUser, family: newFamily };
     this.saveSession(session);
@@ -199,17 +261,21 @@ class DatabaseService {
   ): UserAccount {
     const requester = this.getUserById(requesterUserId);
     if (!requester || requester.familyId !== familyId || !requester.isHead) {
+      this.logSecurity('TAMBAH_ANGGOTA_DITOLAK', 'BLOCKED', 'Upaya penambahan anggota tanpa izin Kepala Keluarga.', familyId, requesterUserId);
       throw new Error('Hanya Kepala Keluarga yang memiliki izin untuk menambahkan anggota keluarga baru.');
     }
 
+    const cleanName = sanitizeInput(dto.fullName);
+    const pinHash = fastHashSync(dto.pin || '1234');
     const newMemberId = `usr-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
     const newMember: UserAccount = {
       id: newMemberId,
       familyId,
-      fullName: dto.fullName.trim(),
+      fullName: cleanName,
       role: 'member',
       roleTitle: dto.roleTitle,
-      pin: dto.pin || '1234',
+      pin: pinHash,
       avatar: dto.avatar || '👦',
       color: dto.color || 'bg-amber-500',
       lovePoints: 50,
@@ -219,46 +285,16 @@ class DatabaseService {
 
     this.users = [...this.users, newMember];
     saveData(USERS_KEY, this.users);
+
+    this.logSecurity('TAMBAH_ANGGOTA', 'SUCCESS', `Anggota ${cleanName} (${dto.roleTitle}) ditambahkan oleh ${requester.fullName}`, familyId, requesterUserId, requester.fullName);
     return newMember;
   }
 
-  // --- UPDATE MEMBER (By Head or Self) ---
-  public updateMember(
-    requesterUserId: string,
-    memberId: string,
-    updates: Partial<UserAccount>
-  ): UserAccount {
-    const requester = this.getUserById(requesterUserId);
-    if (!requester) throw new Error('Pengguna tidak ditemukan.');
-
-    const targetUser = this.getUserById(memberId);
-    if (!targetUser) throw new Error('Anggota keluarga tidak ditemukan.');
-
-    // Only head can edit others; member can only edit self avatar/pin
-    if (!requester.isHead && requester.id !== memberId) {
-      throw new Error('Hanya Kepala Keluarga yang dapat mengedit profil anggota lain.');
-    }
-
-    // Protect isHead from being revoked arbitrarily
-    if (updates.isHead !== undefined && !requester.isHead) {
-      delete updates.isHead;
-    }
-
-    this.users = this.users.map(u => {
-      if (u.id === memberId) {
-        return { ...u, ...updates };
-      }
-      return u;
-    });
-
-    saveData(USERS_KEY, this.users);
-    return this.getUserById(memberId)!;
-  }
-
-  // --- DELETE MEMBER (Exclusive privilege of Head of Family) ---
+  // --- DELETE MEMBER ---
   public deleteMemberByHead(requesterUserId: string, memberId: string): void {
     const requester = this.getUserById(requesterUserId);
     if (!requester || !requester.isHead) {
+      this.logSecurity('HAPUS_ANGGOTA_DITOLAK', 'BLOCKED', 'Upaya penghapusan anggota tanpa izin Kepala Keluarga.', requester?.familyId, requesterUserId);
       throw new Error('Hanya Kepala Keluarga yang berhak menghapus anggota keluarga.');
     }
 
@@ -266,39 +302,88 @@ class DatabaseService {
       throw new Error('Kepala Keluarga tidak dapat menghapus akunnya sendiri.');
     }
 
+    const targetUser = this.getUserById(memberId);
     this.users = this.users.filter(u => u.id !== memberId);
     saveData(USERS_KEY, this.users);
+
+    this.logSecurity('HAPUS_ANGGOTA', 'WARNING', `Anggota ${targetUser?.fullName} dihapus oleh ${requester.fullName}`, requester.familyId, requesterUserId, requester.fullName);
   }
 
-  // --- AUTHENTICATION: LOGIN AS HEAD (Email + Password) ---
+  // --- CHANGE PASSWORD (Secured) ---
+  public changePassword(userId: string, oldPass: string, newPass: string): void {
+    const user = this.getUserById(userId);
+    if (!user) throw new Error('Pengguna tidak ditemukan.');
+
+    const oldHash = fastHashSync(oldPass);
+    if (user.password && user.password !== oldHash && user.password !== oldPass) {
+      this.logSecurity('GANTI_PASSWORD_GAGAL', 'FAILED', 'Password lama salah.', user.familyId, userId, user.fullName);
+      throw new Error('Password lama tidak cocok.');
+    }
+
+    const newHash = fastHashSync(newPass);
+    this.users = this.users.map(u => u.id === userId ? { ...u, password: newHash } : u);
+    saveData(USERS_KEY, this.users);
+
+    this.logSecurity('GANTI_PASSWORD_SUKSES', 'SUCCESS', 'Password berhasil diperbarui.', user.familyId, userId, user.fullName);
+  }
+
+  // --- CHANGE PIN (Secured) ---
+  public changePin(userId: string, oldPin: string, newPin: string): void {
+    const user = this.getUserById(userId);
+    if (!user) throw new Error('Pengguna tidak ditemukan.');
+
+    const oldHash = fastHashSync(oldPin);
+    if (user.pin && user.pin !== oldHash && user.pin !== oldPin) {
+      this.logSecurity('GANTI_PIN_GAGAL', 'FAILED', 'PIN lama salah.', user.familyId, userId, user.fullName);
+      throw new Error('PIN lama tidak cocok.');
+    }
+
+    const newHash = fastHashSync(newPin);
+    this.users = this.users.map(u => u.id === userId ? { ...u, pin: newHash } : u);
+    saveData(USERS_KEY, this.users);
+
+    this.logSecurity('GANTI_PIN_SUKSES', 'SUCCESS', 'PIN berhasil diperbarui.', user.familyId, userId, user.fullName);
+  }
+
+  // --- AUTHENTICATION: LOGIN AS HEAD ---
   public loginHead(usernameOrEmail: string, passwordOrPin: string): AuthSession {
-    const cleanUser = usernameOrEmail.trim().toLowerCase();
+    const cleanUser = sanitizeInput(usernameOrEmail).toLowerCase();
+    const cleanPass = passwordOrPin.trim();
+
     const user = this.users.find(u => 
       u.usernameOrEmail?.toLowerCase() === cleanUser || u.fullName.toLowerCase() === cleanUser
     );
 
     if (!user) {
+      this.logSecurity('LOGIN_KEPALA_GAGAL', 'FAILED', `Username ${cleanUser} tidak ditemukan.`);
       throw new Error('Akun tidak ditemukan. Pastikan email atau username benar.');
     }
 
-    if (user.password && user.password !== passwordOrPin && user.pin !== passwordOrPin) {
+    const inputHash = fastHashSync(cleanPass);
+    const isValid = (user.password && (user.password === inputHash || user.password === cleanPass)) ||
+                    (user.pin && (user.pin === inputHash || user.pin === cleanPass));
+
+    if (!isValid) {
+      this.logSecurity('LOGIN_KEPALA_GAGAL', 'FAILED', 'Password/PIN salah.', user.familyId, user.id, user.fullName);
       throw new Error('Password atau PIN salah.');
     }
 
     const family = this.getFamilyById(user.familyId);
-    if (!family) {
-      throw new Error('Data keluarga tidak ditemukan.');
-    }
+    if (!family) throw new Error('Data keluarga tidak ditemukan.');
+
+    this.logSecurity('LOGIN_KEPALA_SUKSES', 'SUCCESS', 'Masuk berhasil sebagai Kepala Keluarga.', family.id, user.id, user.fullName);
 
     const session: AuthSession = { user, family };
     this.saveSession(session);
     return session;
   }
 
-  // --- AUTHENTICATION: QUICK LOGIN MEMBER (Family Code + Member ID + PIN) ---
+  // --- AUTHENTICATION: LOGIN AS MEMBER ---
   public loginMemberWithCode(familyCode: string, userId: string, pin: string): AuthSession {
-    const family = this.getFamilyByCode(familyCode);
+    const cleanCode = sanitizeInput(familyCode).toUpperCase();
+    const family = this.getFamilyByCode(cleanCode);
     if (!family) {
+      this.logSecurity('LOGIN_ANGGOTA_GAGAL', 'FAILED', `Kode keluarga ${cleanCode} tidak valid.`);
       throw new Error('Kode Keluarga tidak valid. Contoh: ASTA-2026');
     }
 
@@ -307,9 +392,15 @@ class DatabaseService {
       throw new Error('Anggota keluarga tidak ditemukan dalam kode keluarga ini.');
     }
 
-    if (user.pin && user.pin !== pin) {
+    const inputHash = fastHashSync(pin.trim());
+    const isValid = (user.pin && (user.pin === inputHash || user.pin === pin.trim()));
+
+    if (!isValid) {
+      this.logSecurity('LOGIN_ANGGOTA_GAGAL', 'FAILED', 'PIN anggota salah.', family.id, user.id, user.fullName);
       throw new Error('PIN anggota salah.');
     }
+
+    this.logSecurity('LOGIN_ANGGOTA_SUKSES', 'SUCCESS', `Masuk berhasil sebagai ${user.fullName} (${user.roleTitle})`, family.id, user.id, user.fullName);
 
     const session: AuthSession = { user, family };
     this.saveSession(session);

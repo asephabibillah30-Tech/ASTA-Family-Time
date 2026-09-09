@@ -193,3 +193,22 @@ CREATE POLICY family_isolation_policy_users ON users
 
 CREATE POLICY family_isolation_policy_chats ON chat_messages
     FOR ALL USING (family_id = current_setting('app.current_family_id', true)::uuid);
+
+-- 15. TABEL SECURITY_AUDIT_LOGS (Pencatatan Jejak Keamanan & Log Aktivitas)
+CREATE TABLE IF NOT EXISTS security_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    family_id UUID REFERENCES families(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(100) NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('SUCCESS', 'FAILED', 'WARNING', 'BLOCKED')),
+    details TEXT,
+    ip_or_device VARCHAR(100) DEFAULT 'Web Client',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_logs_family ON security_audit_logs(family_id);
+CREATE INDEX IF NOT EXISTS idx_security_logs_user ON security_audit_logs(user_id);
+ALTER TABLE security_audit_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY family_isolation_policy_logs ON security_audit_logs
+    FOR ALL USING (family_id = current_setting('app.current_family_id', true)::uuid);

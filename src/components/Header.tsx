@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { UserAccount, FamilyAccount } from '../types/auth';
-import { Volume2, VolumeX, Moon, Sun, Settings, HelpCircle, Home, RotateCcw, Crown, Users, LogIn, UserPlus, LogOut, ChevronDown, Copy, Check } from 'lucide-react';
+import { Volume2, VolumeX, Moon, Sun, Settings, HelpCircle, Home, RotateCcw, Crown, Users, LogIn, UserPlus, LogOut, ChevronDown, Copy, Check, ShieldCheck } from 'lucide-react';
 import { sound } from '../utils/sound';
 
 interface HeaderProps {
@@ -17,6 +17,7 @@ interface HeaderProps {
   onOpenLogin: () => void;
   onOpenRegister: () => void;
   onOpenManageFamily: () => void;
+  onOpenSecurityCenter?: () => void;
   onLogout: () => void;
   onRestartGame?: () => void;
 }
@@ -35,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLogin,
   onOpenRegister,
   onOpenManageFamily,
+  onOpenSecurityCenter,
   onLogout,
   onRestartGame,
 }) => {
@@ -164,6 +166,19 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <Users className="w-4 h-4 text-family-coral" />
                     <span>Kelola Anggota Keluarga 👑</span>
+                  </button>
+                )}
+
+                {onOpenSecurityCenter && (
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      onOpenSecurityCenter();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl text-left text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 flex items-center gap-2"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Pusat Keamanan & Sandi 🛡️</span>
                   </button>
                 )}
 

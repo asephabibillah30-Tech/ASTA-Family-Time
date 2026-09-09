@@ -27,6 +27,7 @@ import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { LoginModal } from './components/Auth/LoginModal';
 import { RegisterHeadModal } from './components/Auth/RegisterHeadModal';
 import { ManageFamilyModal } from './components/Auth/ManageFamilyModal';
+import { SecurityCenterModal } from './components/Auth/SecurityCenterModal';
 import { AuthGateScreen } from './components/Auth/AuthGateScreen';
 import type { MainTab, AppScreen, Player } from './types/game';
 
@@ -44,6 +45,7 @@ export function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isManageFamilyOpen, setIsManageFamilyOpen] = useState(false);
+  const [isSecurityCenterOpen, setIsSecurityCenterOpen] = useState(false);
 
   // Map family members from auth into Game Players
   const integratedPlayers: Player[] = useMemo(() => {
@@ -109,6 +111,7 @@ export function App() {
         onOpenLogin={() => setIsLoginOpen(true)}
         onOpenRegister={() => setIsRegisterOpen(true)}
         onOpenManageFamily={() => setIsManageFamilyOpen(true)}
+        onOpenSecurityCenter={() => setIsSecurityCenterOpen(true)}
         onLogout={auth.logout}
         onRestartGame={game.restartSamePlayers}
       />
@@ -365,6 +368,13 @@ export function App() {
         onRefresh={() => {
           // Trigger refresh
         }}
+      />
+
+      <SecurityCenterModal
+        isOpen={isSecurityCenterOpen}
+        currentUser={auth.currentUser}
+        currentFamily={auth.currentFamily}
+        onClose={() => setIsSecurityCenterOpen(false)}
       />
 
       {/* PWA Mobile Install Banner */}
