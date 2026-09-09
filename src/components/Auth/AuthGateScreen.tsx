@@ -11,12 +11,13 @@ import { sound } from '../../utils/sound';
 import { fireBurstConfetti } from '../../utils/confetti';
 
 interface AuthGateScreenProps {
+  auth?: any;
   onLoginSuccess: () => void;
 }
 
 const AVATARS = ['👨‍💼', '👩‍💼', '👨‍🍳', '👩‍🍳', '👨‍🎓', '🧕', '👴', '👵'];
 
-export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ onLoginSuccess }) => {
+export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuccess }) => {
   const [activeTab, setActiveTab] = useState<'login_head' | 'login_member' | 'register'>('login_head');
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
   
@@ -61,7 +62,11 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ onLoginSuccess }
         setErrorMsg('Harap isi username/email dan password.');
         return;
       }
-      db.loginHead(headUsername, headPassword);
+      if (auth?.loginHead) {
+        auth.loginHead(headUsername, headPassword);
+      } else {
+        db.loginHead(headUsername, headPassword);
+      }
       sound.playSuccess();
       fireBurstConfetti();
       onLoginSuccess();
@@ -102,7 +107,11 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ onLoginSuccess }
         setErrorMsg('Pilih profil anggota keluarga terlebih dahulu.');
         return;
       }
-      db.loginMemberWithCode(foundFamily.familyCode, selectedMemberId, memberPin);
+      if (auth?.loginMember) {
+        auth.loginMember(foundFamily.familyCode, selectedMemberId, memberPin);
+      } else {
+        db.loginMemberWithCode(foundFamily.familyCode, selectedMemberId, memberPin);
+      }
       sound.playSuccess();
       fireBurstConfetti();
       onLoginSuccess();
@@ -122,16 +131,30 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ onLoginSuccess }
     }
 
     try {
-      const session = db.registerHeadOfFamily({
-        headFullName,
-        roleTitle,
-        familyName,
-        usernameOrEmail: regUsername,
-        password: regPassword,
-        pin: '1234',
-        avatar: regAvatar,
-        color: 'bg-blue-500'
-      });
+      let session;
+      if (auth?.registerHead) {
+        session = auth.registerHead({
+          headFullName,
+          roleTitle,
+          familyName,
+          usernameOrEmail: regUsername,
+          password: regPassword,
+          pin: '1234',
+          avatar: regAvatar,
+          color: 'bg-blue-500'
+        });
+      } else {
+        session = db.registerHeadOfFamily({
+          headFullName,
+          roleTitle,
+          familyName,
+          usernameOrEmail: regUsername,
+          password: regPassword,
+          pin: '1234',
+          avatar: regAvatar,
+          color: 'bg-blue-500'
+        });
+      }
 
       setRegFamilyCode(session.family.familyCode);
       setRegFamilyId(session.family.id);

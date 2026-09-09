@@ -82,8 +82,9 @@ export function App() {
   if (!auth.isAuthenticated) {
     return (
       <AuthGateScreen
+        auth={auth}
         onLoginSuccess={() => {
-          // Authenticated state updated automatically
+          auth.refreshSession();
         }}
       />
     );

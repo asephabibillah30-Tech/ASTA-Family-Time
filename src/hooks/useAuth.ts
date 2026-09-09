@@ -96,6 +96,19 @@ export function useAuth() {
     }
   };
 
+  // Refresh session from local storage / db
+  const refreshSession = () => {
+    const sess = db.getSavedSession();
+    if (sess && sess.user) {
+      setCurrentUser(sess.user);
+      setCurrentFamily(sess.family);
+      setIsAuthenticated(true);
+      setFamilyMembers(db.getUsersByFamily(sess.family.id));
+    } else {
+      setIsAuthenticated(false);
+    }
+  };
+
   // Logout -> Returns to Auth Gate
   const logout = () => {
     db.clearSession();
@@ -115,6 +128,7 @@ export function useAuth() {
     addFamilyMember,
     deleteFamilyMember,
     switchActiveMember,
+    refreshSession,
     logout
   };
 }
