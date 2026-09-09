@@ -26,7 +26,12 @@ export const Header: React.FC<HeaderProps> = ({
   onRestartGame,
 }) => {
   return (
-    <header className="sticky top-0 z-30 w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/85 border-b border-rose-100 dark:border-slate-800 transition-colors">
+    <header 
+      className="sticky top-0 z-30 w-full backdrop-blur-md bg-white/85 dark:bg-slate-900/90 border-b border-rose-100 dark:border-slate-800 transition-colors"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)'
+      }}
+    >
       <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
         
         {/* Logo & Brand */}

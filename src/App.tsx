@@ -96,7 +96,12 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-4 text-center text-xs text-slate-400 dark:text-slate-500 font-medium">
+      <footer 
+        className="w-full py-4 text-center text-xs text-slate-400 dark:text-slate-500 font-medium"
+        style={{
+          paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))'
+        }}
+      >
         <p className="flex items-center justify-center gap-1">
           ASTA Family Time &bull; Game Kartu Keluarga ASTA &bull; Menghangatkan Keluarga Indonesia ❤️
         </p>
