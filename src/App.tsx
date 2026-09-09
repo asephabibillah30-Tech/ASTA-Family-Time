@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGame } from './hooks/useGame';
 import { useFamilyState } from './hooks/useFamilyState';
+import { useAuth } from './hooks/useAuth';
 import { Header } from './components/Header';
 import { BottomNav } from './components/Navigation/BottomNav';
 import { DashboardHome } from './components/Home/DashboardHome';
@@ -23,16 +24,41 @@ import { ResultScreen } from './components/ResultScreen';
 import { HowToPlayModal } from './components/HowToPlayModal';
 import { SettingsModal } from './components/SettingsModal';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
-import type { MainTab, AppScreen } from './types/game';
+import { LoginModal } from './components/Auth/LoginModal';
+import { RegisterHeadModal } from './components/Auth/RegisterHeadModal';
+import { ManageFamilyModal } from './components/Auth/ManageFamilyModal';
+import type { MainTab, AppScreen, Player } from './types/game';
 
 export function App() {
   const game = useGame();
   const family = useFamilyState();
+  const auth = useAuth();
 
   const [currentTab, setCurrentTab] = useState<MainTab>('home');
   const [subScreen, setSubScreen] = useState<AppScreen | null>(null);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  // Auth Modals State
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isManageFamilyOpen, setIsManageFamilyOpen] = useState(false);
+
+  // Map family members from auth into Game Players
+  const integratedPlayers: Player[] = useMemo(() => {
+    if (auth.familyMembers && auth.familyMembers.length > 0) {
+      return auth.familyMembers.map((m) => ({
+        id: m.id,
+        name: m.fullName,
+        avatar: m.avatar,
+        rolePreset: m.roleTitle,
+        score: m.lovePoints || 0,
+        cardsCompleted: 0,
+        color: m.color || 'bg-blue-500'
+      }));
+    }
+    return game.players;
+  }, [auth.familyMembers, game.players]);
 
   // Switch tabs
   const handleSelectTab = (tab: MainTab) => {
@@ -52,11 +78,13 @@ export function App() {
   return (
     <div className="min-h-screen flex flex-col bg-grid-pattern transition-colors select-none">
       
-      {/* Universal Header */}
+      {/* Universal Header with Auth Status */}
       <Header
         soundEnabled={game.settings.soundEnabled}
         darkMode={game.settings.darkMode}
         currentScreen={game.screen}
+        currentUser={auth.currentUser}
+        currentFamily={auth.currentFamily}
         onToggleSound={() => game.updateSettings({ soundEnabled: !game.settings.soundEnabled })}
         onToggleDarkMode={() => game.updateSettings({ darkMode: !game.settings.darkMode })}
         onOpenSettings={() => setIsSettingsOpen(true)}
@@ -66,6 +94,10 @@ export function App() {
           setCurrentTab('home');
           setSubScreen(null);
         }}
+        onOpenLogin={() => setIsLoginOpen(true)}
+        onOpenRegister={() => setIsRegisterOpen(true)}
+        onOpenManageFamily={() => setIsManageFamilyOpen(true)}
+        onLogout={auth.logout}
         onRestartGame={game.restartSamePlayers}
       />
 
@@ -75,7 +107,7 @@ export function App() {
         {/* If in Active Card Game flow (Player Setup, Mode Select, Game Board, Result) */}
         {game.screen === 'players_setup' && (
           <PlayerSetup
-            players={game.players}
+            players={integratedPlayers}
             onAddPlayer={game.addPlayer}
             onRemovePlayer={game.removePlayer}
             onProceedToMode={() => game.setScreen('mode_select')}
@@ -86,7 +118,7 @@ export function App() {
           <ModeSelector
             selectedModeId={game.selectedModeId}
             selectedCategories={game.selectedCategories}
-            players={game.players}
+            players={integratedPlayers}
             onSelectMode={game.selectMode}
             onToggleCategory={game.toggleCategory}
             onSelectAllCategories={game.selectAllCategories}
@@ -98,7 +130,7 @@ export function App() {
         {game.screen === 'game_board' && (
           <GameBoard
             currentMode={game.currentMode}
-            players={game.players}
+            players={integratedPlayers}
             currentPlayer={game.currentPlayer}
             currentPlayerIndex={game.currentPlayerIndex}
             currentCard={game.currentCard}
@@ -116,7 +148,7 @@ export function App() {
 
         {game.screen === 'result' && (
           <ResultScreen
-            players={game.players}
+            players={integratedPlayers}
             onPlayAgain={game.restartSamePlayers}
             onGoHome={() => {
               game.resetToHome();
@@ -126,10 +158,10 @@ export function App() {
           />
         )}
 
-        {/* Standard Tab Navigation (when not inside active Card Game session) */}
+        {/* Standard Tab Navigation */}
         {game.screen === 'home' && (
           <>
-            {/* Sub Screens (from Family Hub or Dashboard) */}
+            {/* Sub Screens */}
             {subScreen === 'planner' && (
               <FamilyPlannerScreen
                 events={family.plannerEvents}
@@ -142,7 +174,7 @@ export function App() {
 
             {subScreen === 'journal' && (
               <FamilyJournalScreen
-                players={game.players}
+                players={integratedPlayers}
                 entries={family.journalEntries}
                 onAddEntry={family.addJournalEntry}
                 onBack={() => setSubScreen(null)}
@@ -151,7 +183,7 @@ export function App() {
 
             {subScreen === 'appreciation' && (
               <AppreciationScreen
-                players={game.players}
+                players={integratedPlayers}
                 appreciations={family.appreciations}
                 totalLovePoints={family.totalLovePoints}
                 onSendAppreciation={family.sendAppreciation}
@@ -191,10 +223,10 @@ export function App() {
               />
             )}
 
-            {/* Main Tabs (when no subscreen is active) */}
+            {/* Main Tabs */}
             {!subScreen && currentTab === 'home' && (
               <DashboardHome
-                players={game.players}
+                players={integratedPlayers}
                 dailyIdea={family.currentDailyIdea}
                 familyStreak={family.familyStreak}
                 totalLovePoints={family.totalLovePoints}
@@ -212,7 +244,7 @@ export function App() {
 
             {!subScreen && currentTab === 'chat' && (
               <FamilyChatScreen
-                players={game.players}
+                players={integratedPlayers}
                 messages={family.chatMessages}
                 onSendMessage={family.sendChatMessage}
                 onAddReaction={family.addChatReaction}
@@ -223,7 +255,7 @@ export function App() {
 
             {!subScreen && currentTab === 'game' && (
               <GameHub
-                players={game.players}
+                players={integratedPlayers}
                 onStartCardGame={handleStartCardGame}
               />
             )}
@@ -246,12 +278,18 @@ export function App() {
 
             {!subScreen && currentTab === 'family_hub' && (
               <FamilyHubScreen
-                players={game.players}
+                players={integratedPlayers}
                 familyStreak={family.familyStreak}
                 totalLovePoints={family.totalLovePoints}
                 onNavigateScreen={handleNavigateSubScreen}
                 onOpenSettings={() => setIsSettingsOpen(true)}
-                onOpenPlayerSetup={() => game.setScreen('players_setup')}
+                onOpenPlayerSetup={() => {
+                  if (auth.isHead) {
+                    setIsManageFamilyOpen(true);
+                  } else {
+                    alert('Hanya Kepala Keluarga yang dapat menambah/mengedit anggota keluarga.');
+                  }
+                }}
               />
             )}
           </>
@@ -279,6 +317,42 @@ export function App() {
         onUpdateSettings={game.updateSettings}
         onResetGame={game.resetToHome}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* Auth & Family Management Modals */}
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onOpenRegister={() => {
+          setIsLoginOpen(false);
+          setIsRegisterOpen(true);
+        }}
+        onLoginSuccess={() => {
+          // Success handled in useAuth
+        }}
+      />
+
+      <RegisterHeadModal
+        isOpen={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+        onOpenLogin={() => {
+          setIsRegisterOpen(false);
+          setIsLoginOpen(true);
+        }}
+        onRegisterSuccess={() => {
+          // Success handled in useAuth
+        }}
+      />
+
+      <ManageFamilyModal
+        isOpen={isManageFamilyOpen}
+        currentUser={auth.currentUser}
+        currentFamily={auth.currentFamily}
+        familyMembers={auth.familyMembers}
+        onClose={() => setIsManageFamilyOpen(false)}
+        onRefresh={() => {
+          // Trigger refresh
+        }}
       />
 
       {/* PWA Mobile Install Banner */}
