@@ -1,6 +1,7 @@
 import React from 'react';
-import { X, Volume2, VolumeX, Moon, Sun, Clock, RotateCcw } from 'lucide-react';
+import { X, Volume2, VolumeX, Moon, Sun, Clock, RotateCcw, Music } from 'lucide-react';
 import type { GameSettings } from '../types/game';
+import { sound } from '../utils/sound';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -18,6 +19,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
 }) => {
   if (!isOpen) return null;
+
+  const handleToggleSound = () => {
+    const nextState = !settings.soundEnabled;
+    onUpdateSettings({ soundEnabled: nextState });
+    if (nextState) {
+      setTimeout(() => {
+        sound.playSuccess();
+      }, 50);
+    }
+  };
+
+  const handleTestSound = () => {
+    sound.init();
+    sound.playFunnyBonus();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-pop-in">
@@ -46,33 +62,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="space-y-4">
           
           {/* Sound Toggle */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-700/50">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-rose-100 dark:bg-rose-950 text-family-coral">
-                {settings.soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-700/50 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-rose-100 dark:bg-rose-950 text-family-coral">
+                  {settings.soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                </div>
+                <div>
+                  <strong className="text-sm font-bold text-slate-800 dark:text-slate-100 block">
+                    Efek Suara (SFX)
+                  </strong>
+                  <span className="text-xs text-slate-400">
+                    {settings.soundEnabled ? 'Suara aktif' : 'Suara dibisukan'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <strong className="text-sm font-bold text-slate-800 dark:text-slate-100 block">
-                  Efek Suara (SFX)
-                </strong>
-                <span className="text-xs text-slate-400">
-                  {settings.soundEnabled ? 'Suara aktif' : 'Suara dibisukan'}
-                </span>
-              </div>
+
+              <button
+                onClick={handleToggleSound}
+                className={`w-12 h-7 rounded-full transition-colors relative p-1 ${
+                  settings.soundEnabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                    settings.soundEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
 
-            <button
-              onClick={() => onUpdateSettings({ soundEnabled: !settings.soundEnabled })}
-              className={`w-12 h-7 rounded-full transition-colors relative p-1 ${
-                settings.soundEnabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                  settings.soundEnabled ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
+            {/* Test Sound Button */}
+            {settings.soundEnabled && (
+              <button
+                onClick={handleTestSound}
+                className="w-full py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors border border-amber-200 dark:border-amber-800 active:scale-95"
+              >
+                <Music className="w-3.5 h-3.5" />
+                <span>Tes Bunyi Suara 🔔</span>
+              </button>
+            )}
           </div>
 
           {/* Dark Mode Toggle */}
@@ -86,7 +115,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   Mode Gelap (Dark Mode)
                 </strong>
                 <span className="text-xs text-slate-400">
-                  {settings.darkMode ? 'Tema Gelap Aktif' : 'Tema Terang Ceria'}
+                  {settings.darkMode ? 'Tema Gelap Aktic' : 'Tema Terang Ceria'}
                 </span>
               </div>
             </div>
@@ -118,7 +147,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {[10, 15, 20, 30].map((sec) => (
                 <button
                   key={sec}
-                  onClick={() => onUpdateSettings({ customTimerSeconds: sec })}
+                  onClick={() => {
+                    onUpdateSettings({ customTimerSeconds: sec });
+                    sound.playClick();
+                  }}
                   className={`py-2 rounded-xl text-xs font-black transition-all ${
                     settings.customTimerSeconds === sec
                       ? 'bg-amber-400 text-amber-950 shadow-sm'
