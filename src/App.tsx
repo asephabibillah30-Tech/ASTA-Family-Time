@@ -27,6 +27,7 @@ import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { LoginModal } from './components/Auth/LoginModal';
 import { RegisterHeadModal } from './components/Auth/RegisterHeadModal';
 import { ManageFamilyModal } from './components/Auth/ManageFamilyModal';
+import { AuthGateScreen } from './components/Auth/AuthGateScreen';
 import type { MainTab, AppScreen, Player } from './types/game';
 
 export function App() {
@@ -74,6 +75,17 @@ export function App() {
   const handleStartCardGame = () => {
     game.setScreen('players_setup');
   };
+
+  // Mandatory Authentication Gate: Must login or register first
+  if (!auth.isAuthenticated) {
+    return (
+      <AuthGateScreen
+        onLoginSuccess={() => {
+          // Authenticated state updated automatically
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-grid-pattern transition-colors select-none">

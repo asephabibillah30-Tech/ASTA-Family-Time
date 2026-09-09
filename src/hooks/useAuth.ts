@@ -15,6 +15,11 @@ export function useAuth() {
     return sess?.family || DEFAULT_FAMILY;
   });
 
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const sess = db.getSavedSession();
+    return Boolean(sess && sess.user);
+  });
+
   const [familyMembers, setFamilyMembers] = useState<UserAccount[]>(() => {
     return db.getUsersByFamily(currentFamily?.id || DEFAULT_FAMILY.id);
   });
@@ -31,6 +36,7 @@ export function useAuth() {
     const session = db.loginHead(usernameOrEmail, passwordOrPin);
     setCurrentUser(session.user);
     setCurrentFamily(session.family);
+    setIsAuthenticated(true);
     setFamilyMembers(db.getUsersByFamily(session.family.id));
     sound.playSuccess();
     fireBurstConfetti();
@@ -42,6 +48,7 @@ export function useAuth() {
     const session = db.loginMemberWithCode(familyCode, userId, pin);
     setCurrentUser(session.user);
     setCurrentFamily(session.family);
+    setIsAuthenticated(true);
     setFamilyMembers(db.getUsersByFamily(session.family.id));
     sound.playSuccess();
     fireBurstConfetti();
@@ -53,6 +60,7 @@ export function useAuth() {
     const session = db.registerHeadOfFamily(dto);
     setCurrentUser(session.user);
     setCurrentFamily(session.family);
+    setIsAuthenticated(true);
     setFamilyMembers(db.getUsersByFamily(session.family.id));
     sound.playSuccess();
     fireBurstConfetti();
@@ -88,13 +96,10 @@ export function useAuth() {
     }
   };
 
-  // Logout
+  // Logout -> Returns to Auth Gate
   const logout = () => {
     db.clearSession();
-    // Default fallback to demo
-    setCurrentUser(DEFAULT_USERS[0]);
-    setCurrentFamily(DEFAULT_FAMILY);
-    setFamilyMembers(DEFAULT_USERS);
+    setIsAuthenticated(false);
     sound.playClick();
   };
 
@@ -102,7 +107,8 @@ export function useAuth() {
     currentUser,
     currentFamily,
     familyMembers,
-    isHead: currentUser.isHead,
+    isAuthenticated,
+    isHead: currentUser?.isHead || false,
     loginHead,
     loginMember,
     registerHead,
