@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, Heart } from 'lucide-react';
 import type { Player } from '../types/game';
+import { INITIAL_CARDS } from '../data/cards';
 import { sound } from '../utils/sound';
 
 interface HomePageProps {
@@ -94,7 +95,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           {/* Mini Feature Highlights */}
           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-700 text-center">
             <div>
-              <span className="font-display font-black text-lg text-family-coral">50</span>
+              <span className="font-display font-black text-lg text-family-coral">{INITIAL_CARDS.length}</span>
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block -mt-1">Kartu Seru</span>
             </div>
             <div>
