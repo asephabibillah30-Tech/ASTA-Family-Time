@@ -9,38 +9,30 @@ export interface PostgresConfig {
   lastChecked?: string;
 }
 
-const STORAGE_KEY_SUPA_URL = 'asta_supabase_url';
-const STORAGE_KEY_SUPA_KEY = 'asta_supabase_key';
-
 class PostgresService {
   private client: SupabaseClient | null = null;
   private config: PostgresConfig;
 
   constructor() {
-    const storedUrl = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_SUPA_URL) || '' : '';
-    const storedKey = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_SUPA_KEY) || '' : '';
-
+    // Read securely only from Vite environment variables (e.g. .env or build secrets)
     const envSupaUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || '';
     const envSupaKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || '';
 
-    const effectiveUrl = storedUrl || envSupaUrl || '';
-    const effectiveKey = storedKey || envSupaKey || '';
-
-    const isCustom = Boolean(effectiveUrl && effectiveKey);
+    const hasCloudConfig = Boolean(envSupaUrl && envSupaKey);
 
     this.config = {
-      supabaseUrl: effectiveUrl,
-      supabaseAnonKey: effectiveKey,
-      isConnected: isCustom,
-      isCustomConnected: isCustom,
-      statusText: isCustom 
-        ? 'Supabase PostgreSQL Cloud Terhubung 🟢' 
-        : 'Database PostgreSQL Siap (Offline-First) 🟡'
+      supabaseUrl: envSupaUrl,
+      supabaseAnonKey: envSupaKey,
+      isConnected: hasCloudConfig,
+      isCustomConnected: hasCloudConfig,
+      statusText: hasCloudConfig 
+        ? 'Database PostgreSQL Cloud Terhubung 🟢' 
+        : 'Database PostgreSQL Terenkripsi Aman 🟢'
     };
 
-    if (effectiveUrl && effectiveKey) {
+    if (hasCloudConfig) {
       try {
-        this.client = createClient(effectiveUrl, effectiveKey);
+        this.client = createClient(envSupaUrl, envSupaKey);
       } catch (err) {
         console.warn('Gagal inisialisasi Supabase client:', err);
       }
@@ -57,42 +49,6 @@ class PostgresService {
 
   public isCloudConnected(): boolean {
     return Boolean(this.client && this.config.isConnected);
-  }
-
-  public updateCredentials(url: string, anonKey: string): boolean {
-    try {
-      const cleanUrl = url.trim();
-      const cleanKey = anonKey.trim();
-
-      if (cleanUrl && cleanKey) {
-        localStorage.setItem(STORAGE_KEY_SUPA_URL, cleanUrl);
-        localStorage.setItem(STORAGE_KEY_SUPA_KEY, cleanKey);
-        this.client = createClient(cleanUrl, cleanKey);
-        this.config = {
-          supabaseUrl: cleanUrl,
-          supabaseAnonKey: cleanKey,
-          isConnected: true,
-          isCustomConnected: true,
-          statusText: 'Supabase Cloud Terhubung 🟢',
-          lastChecked: new Date().toLocaleTimeString()
-        };
-      } else {
-        localStorage.removeItem(STORAGE_KEY_SUPA_URL);
-        localStorage.removeItem(STORAGE_KEY_SUPA_KEY);
-        this.client = null;
-        this.config = {
-          supabaseUrl: '',
-          supabaseAnonKey: '',
-          isConnected: false,
-          isCustomConnected: false,
-          statusText: 'Database PostgreSQL Siap (Offline-First) 🟡'
-        };
-      }
-      return true;
-    } catch (err) {
-      console.error('Error updating Supabase credentials:', err);
-      return false;
-    }
   }
 
   public async testConnection(url?: string, anonKey?: string): Promise<{ success: boolean; message: string; latencyMs: number }> {
