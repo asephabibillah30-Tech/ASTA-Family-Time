@@ -3,6 +3,7 @@ import type { Player } from '../../types/game';
 import { SnakeLaddersGame } from './SnakeLaddersGame';
 import { FamilyMonopolyGame } from './FamilyMonopolyGame';
 import { FamilyLudoGame } from './FamilyLudoGame';
+import { FamilyUnoGame } from './FamilyUnoGame';
 import { Play } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
@@ -12,7 +13,11 @@ interface GameHubProps {
 }
 
 export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) => {
-  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'snake' | 'monopoly'>('hub');
+  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly'>('hub');
+
+  if (activeGame === 'uno') {
+    return <FamilyUnoGame players={players} onBack={() => setActiveGame('hub')} />;
+  }
 
   if (activeGame === 'ludo') {
     return <FamilyLudoGame players={players} onBack={() => setActiveGame('hub')} />;
@@ -72,14 +77,43 @@ export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) =>
           </button>
         </div>
 
-        {/* 2. Ludo Keluarga ASTA (Baru: 2, 3, 4 Pemain) */}
+        {/* 2. UNO Keluarga ASTA (Baru: 2, 3, 4 Pemain) */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-red-300 dark:border-red-800 shadow-bubbly-coral flex flex-col justify-between space-y-4 hover:scale-[1.01] transition-all">
+          <div>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-red-500 via-amber-400 to-blue-500 text-white flex items-center justify-center text-2xl sm:text-3xl shadow-md mb-3">
+              🃏
+            </div>
+            <div className="inline-block px-2.5 py-0.5 rounded-full bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 text-[10px] font-extrabold mb-1">
+              BARU • 2, 3, 4 PEMAIN
+            </div>
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
+              UNO Keluarga ASTA
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2 font-medium">
+              Game kartu UNO seru! Cocokkan warna & angka, keluarkan kartu Skip, Reverse, Draw 2, Wild Draw 4, dan Kartu Kasih Sayang!
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              setActiveGame('uno');
+            }}
+            className="w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-red-500 via-amber-500 to-rose-600 hover:opacity-90 text-white font-display font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>MAIN UNO KELUARGA</span>
+          </button>
+        </div>
+
+        {/* 3. Ludo Keluarga ASTA (2, 3, 4 Pemain) */}
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-amber-300 dark:border-amber-700 shadow-bubbly-amber flex flex-col justify-between space-y-4 hover:scale-[1.01] transition-all">
           <div>
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-amber-400 to-rose-500 text-white flex items-center justify-center text-2xl sm:text-3xl shadow-md mb-3">
               🎲
             </div>
             <div className="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[10px] font-extrabold mb-1">
-              BARU • 2, 3, 4 PEMAIN
+              2, 3, 4 PEMAIN
             </div>
             <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
               Ludo Keluarga ASTA
