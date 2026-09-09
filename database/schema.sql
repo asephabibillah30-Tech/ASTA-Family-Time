@@ -41,10 +41,17 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Add Foreign Key for head_user_id on families
-ALTER TABLE families 
-ADD CONSTRAINT fk_families_head_user 
-FOREIGN KEY (head_user_id) REFERENCES users(id) ON DELETE SET NULL;
+-- 4. Hubungkan Foreign Key head_user_id pada tabel families
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'fk_families_head_user'
+    ) THEN 
+        ALTER TABLE families 
+        ADD CONSTRAINT fk_families_head_user 
+        FOREIGN KEY (head_user_id) REFERENCES users(id) ON DELETE SET NULL;
+    END IF; 
+END $$;
 
 -- 4. TABEL CHAT_MESSAGES (Obrolan Keluarga)
 -- 4. TABEL CHAT_MESSAGES (Obrolan Keluarga)
