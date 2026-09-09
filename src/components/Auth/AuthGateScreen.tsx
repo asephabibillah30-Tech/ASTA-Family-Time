@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { FamilyRoleTitle, UserAccount, FamilyAccount } from '../../types/auth';
 import { db } from '../../services/db/databaseService';
 import { postgresService } from '../../services/db/postgresService';
+import { SupabaseConfigModal } from './SupabaseConfigModal';
 import { 
   Users, ArrowRight, UserCheck, AlertCircle, 
   UserPlus, CheckCircle2, Database
@@ -17,6 +18,7 @@ const AVATARS = ['👨‍💼', '👩‍💼', '👨‍🍳', '👩‍🍳', '�
 
 export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ onLoginSuccess }) => {
   const [activeTab, setActiveTab] = useState<'login_head' | 'login_member' | 'register'>('login_head');
+  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
   
   // Head Login State
   const [headUsername, setHeadUsername] = useState('ayah@asta.com');
@@ -184,10 +186,19 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ onLoginSuccess }
         </div>
 
         {/* PostgreSQL Database Badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-[10px] font-black shadow-2xs">
+        <button
+          type="button"
+          onClick={() => {
+            sound.playClick();
+            setIsSupabaseModalOpen(true);
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-[10px] font-black shadow-2xs transition-all cursor-pointer active:scale-95"
+          title="Klik untuk konfigurasi cloud database Supabase"
+        >
           <Database className="w-3.5 h-3.5 text-emerald-600" />
           <span>{pgConfig.statusText}</span>
-        </div>
+          <span className="text-[9px] bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.2 rounded font-bold">⚙️ Setup</span>
+        </button>
       </div>
 
       {/* Main Authentication Card */}
@@ -620,7 +631,6 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ onLoginSuccess }
           <span className="flex items-center gap-1">🎴 350 Kartu ASTA</span> &bull;
           <span className="flex items-center gap-1">🃏 Game UNO</span> &bull;
           <span className="flex items-center gap-1">🎲 Game Ludo</span> &bull;
-          <span className="flex items-center gap-1">🐍 Ular Tangga</span> &bull;
           <span className="flex items-center gap-1">💬 Obrolan Jarak Jauh</span> &bull;
           <span className="flex items-center gap-1">📅 Family Planner</span>
         </div>
@@ -628,6 +638,12 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ onLoginSuccess }
           Dilindungi dengan enkripsi PostgreSQL terisolasi per keluarga.
         </p>
       </div>
+
+      {/* Supabase Config Modal */}
+      <SupabaseConfigModal
+        isOpen={isSupabaseModalOpen}
+        onClose={() => setIsSupabaseModalOpen(false)}
+      />
 
     </div>
   );
