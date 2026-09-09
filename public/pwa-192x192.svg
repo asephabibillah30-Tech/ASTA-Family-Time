@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="192" height="192">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B6B" />
+      <stop offset="50%" stop-color="#FF85A1" />
+      <stop offset="100%" stop-color="#9B5DE5" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#FFF9EB" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded Background -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+
+  <!-- Main Central Card -->
+  <rect x="146" y="105" width="220" height="290" rx="36" fill="url(#cardGrad)" stroke="#FFFFFF" stroke-width="8" />
+
+  <!-- Central Emoji Icon -->
+  <text x="256" y="255" font-size="110" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif">🎴</text>
+
+  <!-- Stars and Hearts -->
+  <text x="256" y="350" font-size="44" text-anchor="middle" dominant-baseline="middle">❤️</text>
+
+  <!-- App Brand Text -->
+  <text x="256" y="445" font-size="38" font-weight="900" text-anchor="middle" fill="#FFFFFF" font-family="'Fredoka', 'Plus Jakarta Sans', sans-serif" letter-spacing="2">ASTA FAMILY</text>
+</svg>

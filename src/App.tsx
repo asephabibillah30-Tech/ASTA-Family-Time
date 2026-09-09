@@ -9,6 +9,7 @@ import { ResultScreen } from './components/ResultScreen';
 import { HowToPlayModal } from './components/HowToPlayModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ScoreBoard } from './components/ScoreBoard';
+import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { X } from 'lucide-react';
 import { sound } from './utils/sound';
 
@@ -146,6 +147,9 @@ export function App() {
           </div>
         </div>
       )}
+
+      {/* PWA Mobile Install Banner / Prompt */}
+      <PWAInstallPrompt />
 
     </div>
   );
