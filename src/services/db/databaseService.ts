@@ -1,5 +1,6 @@
 import type { FamilyAccount, UserAccount, RegisterHeadDTO, AddMemberDTO, AuthSession } from '../../types/auth';
 import { fastHashSync, sanitizeInput } from '../../utils/security';
+import { postgresService } from './postgresService';
 
 // Storage Keys
 const FAMILIES_KEY = 'asta_db_families';
@@ -245,6 +246,32 @@ class DatabaseService {
 
     saveData(FAMILIES_KEY, this.families);
     saveData(USERS_KEY, this.users);
+
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      Promise.resolve(supabase.from('families').insert({
+        id: familyId,
+        family_name: cleanFamilyName,
+        family_code: familyCode,
+        streak_days: 1,
+        total_love_points: 100
+      })).catch(console.warn);
+
+      Promise.resolve(supabase.from('users').insert({
+        id: headUserId,
+        family_id: familyId,
+        full_name: cleanHeadName,
+        role: 'head_family',
+        role_title: dto.roleTitle || 'Ayah',
+        username: cleanUser,
+        password_hash: passwordHash,
+        pin: pinHash,
+        avatar: dto.avatar || '👨‍💼',
+        color: dto.color || 'bg-blue-500',
+        love_points: 100,
+        is_head: true
+      })).catch(console.warn);
+    }
 
     this.logSecurity('DAFTAR_KEPALA_KELUARGA', 'SUCCESS', `Keluarga ${cleanFamilyName} dibuat dengan kode ${familyCode}`, familyId, headUserId, cleanHeadName);
 
