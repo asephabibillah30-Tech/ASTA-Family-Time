@@ -102,8 +102,8 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
                 }`}>
                   {ev.title}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {ev.date} {ev.time ? `ull; ${ev.time}` : ''}
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  {ev.date} {ev.time ? `• ${ev.time} WIB` : '• Sepanjang Hari'}
                 </p>
               </div>
             </div>

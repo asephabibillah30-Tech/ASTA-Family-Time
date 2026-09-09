@@ -164,7 +164,7 @@ export const FamilyJournalScreen: React.FC<FamilyJournalScreenProps> = ({
                       {item.playerName}
                     </h4>
                     <span className="text-[10px] text-slate-400">
-                      {item.date} &bull; {item.createdAt}
+                      {item.date} • {item.createdAt}
                     </span>
                   </div>
                 </div>

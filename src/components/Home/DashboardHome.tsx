@@ -285,7 +285,9 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                 <span className="text-xl">{ev.emoji}</span>
                 <div>
                   <p className="font-bold text-slate-800 dark:text-slate-200">{ev.title}</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">{ev.time || 'Sepanjang Hari'} &bull; {ev.date}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                    {ev.date} • {ev.time ? `${ev.time} WIB` : 'Sepanjang Hari'}
+                  </p>
                 </div>
               </div>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
