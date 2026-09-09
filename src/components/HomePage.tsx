@@ -1,7 +1,7 @@
 import React from 'react';
 import { Play, Heart } from 'lucide-react';
 import type { Player } from '../types/game';
-import { INITIAL_CARDS } from '../data/cards';
+import { INITIAL_CARDS, GAME_MODES } from '../data/cards';
 import { sound } from '../utils/sound';
 
 interface HomePageProps {
@@ -103,7 +103,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block -mt-1">Kategori</span>
             </div>
             <div>
-              <span className="font-display font-black text-lg text-family-purple">5</span>
+              <span className="font-display font-black text-lg text-family-purple">{GAME_MODES.length}</span>
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block -mt-1">Mode Game</span>
             </div>
           </div>
