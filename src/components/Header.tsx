@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { UserAccount, FamilyAccount } from '../types/auth';
 import { 
   Volume2, VolumeX, Moon, Sun, Settings, HelpCircle, Home, RotateCcw, 
-  Crown, Users, LogIn, UserPlus, LogOut, ChevronDown, Copy, Check, 
+  Crown, Users, LogOut, ChevronDown, Copy, Check, 
   ShieldCheck, Bell, RefreshCw, Clock, X, Megaphone
 } from 'lucide-react';
 import { sound } from '../utils/sound';
@@ -37,8 +37,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onOpenHowToPlay,
   onGoHome,
-  onOpenLogin,
-  onOpenRegister,
   onOpenManageFamily,
   onOpenSecurityCenter,
   onLogout,
@@ -449,28 +447,6 @@ export const Header: React.FC<HeaderProps> = ({
                         <span>{darkMode ? 'Terang' : 'Gelap'}</span>
                       </button>
                     </div>
-
-                    <button
-                      onClick={() => {
-                        sound.playClick();
-                        onOpenLogin();
-                      }}
-                      className="w-full px-3 py-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                    >
-                      <LogIn className="w-4 h-4 text-teal-600" />
-                      <span>Masuk Akun / Ganti Profil</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        sound.playClick();
-                        onOpenRegister();
-                      }}
-                      className="w-full px-3 py-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                    >
-                      <UserPlus className="w-4 h-4 text-amber-600" />
-                      <span>Daftar Kepala Keluarga Baru</span>
-                    </button>
 
                     <button
                       onClick={() => {
