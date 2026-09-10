@@ -286,6 +286,20 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
+            {/* Game Restart Button when in card game board */}
+            {currentScreen === 'game_board' && onRestartGame && (
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  onRestartGame();
+                }}
+                className="p-2 rounded-2xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-90 shadow-2xs"
+                title="Mulai Ulang Game Kartu"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            )}
+
             {/* 6. Settings */}
             <button
               onClick={() => {
