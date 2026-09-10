@@ -216,19 +216,18 @@ class DatabaseService {
     saveData(SECURITY_LOGS_KEY, this.logs);
 
     const supabase = postgresService.getClient();
-    if (supabase) {
+    if (supabase && familyId) {
       const payload: Record<string, any> = {
         id: newLog.id,
+        family_id: familyId,
         user_name: userName || 'Anonim',
         action: action || 'AUDIT',
         status: status || 'SUCCESS',
-        details: details || '',
-        ip_or_device: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 80) : 'Web Client'
+        details: details || ''
       };
-      if (familyId) payload.family_id = familyId;
       if (userId) payload.user_id = userId;
 
-      Promise.resolve(supabase.from('security_audit_logs').insert(payload)).catch(console.warn);
+      Promise.resolve(supabase.from('security_audit_logs').insert(payload)).catch(() => {});
     }
   }
 
