@@ -42,7 +42,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
     <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6 animate-pop-in">
       
       {/* Top Greeting & Stats Bar */}
-      <div className="bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 rounded-3xl p-6 text-white shadow-bubbly-coral relative overflow-hidden">
+      <div className="bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 rounded-3xl p-4 sm:p-6 text-white shadow-bubbly-coral relative overflow-hidden">
         {/* Floating subtle emojis */}
         <span className="absolute -top-4 -right-4 text-7xl opacity-20 pointer-events-none">❤️</span>
         <span className="absolute bottom-1 right-24 text-4xl opacity-25 pointer-events-none">✨</span>

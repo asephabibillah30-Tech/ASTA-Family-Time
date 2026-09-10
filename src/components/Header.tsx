@@ -111,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 rounded-2xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 shadow-2xs"
           >
             <span className="text-xl sm:text-2xl">{currentUser?.avatar || '👨‍💼'}</span>
-            <div className="text-left hidden md:block">
+            <div className="text-left hidden sm:block">
               <div className="flex items-center gap-1">
                 <span className="font-display font-black text-xs text-slate-900 dark:text-white truncate max-w-[100px]">
                   {currentUser?.fullName || 'Ayah'}
