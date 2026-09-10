@@ -11,22 +11,14 @@ if (typeof document !== 'undefined') {
   document.title = APP_TITLE;
 }
 
-// Register PWA service worker and enforce immediate update
+// Force unregister stale PWA service workers to ensure immediate live updates
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(registrations => {
     for (const registration of registrations) {
-      registration.update();
+      registration.unregister();
     }
   }).catch(() => {});
 }
-
-registerSW({ 
-  immediate: true,
-  onNeedRefresh() {
-    console.log('PWA updated to latest version.');
-    window.location.reload();
-  }
-})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
