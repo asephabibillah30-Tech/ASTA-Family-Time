@@ -98,19 +98,32 @@ export function useFamilyState(familyId?: string | null) {
     message: string,
     category: ActivityNotification['category'],
     icon?: string,
-    title?: string
+    title?: string,
+    senderId?: string,
+    targetUserId?: string,
+    dedupKey?: string
   ) => {
-    const newNotif: ActivityNotification = {
-      id: 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
-      title: title || 'Aktivitas Keluarga',
-      message,
-      category,
-      icon: icon || '🔔',
-      timestamp: Date.now(),
-      read: false
-    };
-
     setNotifications((prev) => {
+      if (dedupKey && prev.some((n) => n.dedupKey === dedupKey)) {
+        return prev;
+      }
+      if (!dedupKey && prev.some((n) => n.message === message && Math.abs(n.timestamp - Date.now()) < 5000)) {
+        return prev;
+      }
+
+      const newNotif: ActivityNotification = {
+        id: 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+        title: title || 'Aktivitas Keluarga',
+        message,
+        category,
+        icon: icon || '🔔',
+        timestamp: Date.now(),
+        read: false,
+        senderId,
+        targetUserId,
+        dedupKey
+      };
+
       const updated = [newNotif, ...prev];
       const pruned = pruneNotifications(updated);
       if (familyId) {

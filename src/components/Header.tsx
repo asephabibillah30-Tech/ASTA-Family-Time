@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   currentUser,
   currentFamily,
   notifications = [],
-  unreadNotifCount = 0,
+  unreadNotifCount: _unreadNotifCount = 0,
   onMarkAllNotifsRead,
   onClearNotifs,
   onToggleSound,
@@ -55,6 +55,18 @@ export const Header: React.FC<HeaderProps> = ({
   const [currentTimeStr, setCurrentTimeStr] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showNotifToast, setShowNotifToast] = useState(false);
+
+  const userNotifications = notifications.filter((n) => {
+    if (n.targetUserId && currentUser?.id && n.targetUserId !== currentUser.id) {
+      return false;
+    }
+    if (n.senderId && currentUser?.id && n.senderId === currentUser.id && n.category === 'chat') {
+      return false;
+    }
+    return true;
+  });
+
+  const activeUnreadCount = userNotifications.filter((n) => !n.read).length;
 
   const getCacheSizeText = (notifs?: ActivityNotification[]) => {
     if (!notifs || notifs.length === 0) return '0.01 MB / 5.0 MB';
@@ -195,25 +207,21 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Refresh Sync Button */}
             <button
               onClick={handleSyncRefresh}
-              className={`p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all active:scale-90 shadow-2xs ${
-                isRefreshing ? 'animate-spin text-family-coral' : ''
-              }`}
+              className={`p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all active:scale-90 shadow-2xs border border-slate-200 dark:border-slate-700`}
               title="Sinkronkan Data Cloud"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-family-coral' : ''}`} />
             </button>
 
-            {/* Cloud Status Badge */}
-            <div className="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-[10px] font-black flex items-center gap-1 shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>Cloud Active</span>
-            </div>
+          <div className="px-3 py-1 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Cloud Active</span>
           </div>
+        </div>
 
-          {/* Right: Quick Action Pill Buttons & User Profile */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Controls & User Profile Dropdown */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
             
-            {/* Desktop-only action buttons */}
             <button
               onClick={() => {
                 sound.playClick();
@@ -233,7 +241,7 @@ export const Header: React.FC<HeaderProps> = ({
                   sound.playClick();
                   const nextState = !showNotifToast;
                   setShowNotifToast(nextState);
-                  if (nextState && unreadNotifCount > 0 && onMarkAllNotifsRead) {
+                  if (nextState && activeUnreadCount > 0 && onMarkAllNotifsRead) {
                     onMarkAllNotifsRead();
                   }
                 }}
@@ -241,9 +249,9 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Notifikasi Aktivitas"
               >
                 <Bell className="w-4 h-4" />
-                {unreadNotifCount > 0 && (
+                {activeUnreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white font-extrabold text-[9px] flex items-center justify-center animate-bounce shadow-xs">
-                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                    {activeUnreadCount > 9 ? '9+' : activeUnreadCount}
                   </span>
                 )}
               </button>
@@ -258,12 +266,12 @@ export const Header: React.FC<HeaderProps> = ({
                       <Bell className="w-4 h-4 text-amber-500" /> Notifikasi Aktivitas
                     </span>
                     <div className="flex items-center gap-1.5">
-                      {unreadNotifCount > 0 && (
+                      {activeUnreadCount > 0 && (
                         <span className="text-[10px] bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded-full font-black">
-                          {unreadNotifCount} Baru
+                          {activeUnreadCount} Baru
                         </span>
                       )}
-                      {onClearNotifs && notifications.length > 0 && (
+                      {onClearNotifs && userNotifications.length > 0 && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -279,12 +287,12 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
 
                   <div className="space-y-2 overflow-y-auto max-h-64 pr-1 text-slate-600 dark:text-slate-300">
-                    {notifications.length === 0 ? (
+                    {userNotifications.length === 0 ? (
                       <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs font-medium">
-                        Belum ada notifikasi aktivitas baru.
+                        Belum ada notifikasi aktivitas baru untuk Anda.
                       </div>
                     ) : (
-                      notifications.map((n) => (
+                      userNotifications.map((n) => (
                         <div
                           key={n.id}
                           className={`p-2.5 rounded-2xl border transition-all flex items-start gap-2.5 ${
@@ -315,7 +323,7 @@ export const Header: React.FC<HeaderProps> = ({
                   {/* PWA Cache Info Footer */}
                   <div className="border-t pt-2 dark:border-slate-700 flex items-center justify-between text-[10px] text-slate-400 font-bold shrink-0">
                     <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                      ⚡ Cache PWA: {getCacheSizeText(notifications)}
+                      ⚡ Cache PWA: {getCacheSizeText(userNotifications)}
                     </span>
                     <span className="text-slate-400">Auto-Evict Max 5 MB</span>
                   </div>

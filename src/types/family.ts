@@ -162,4 +162,7 @@ export interface ActivityNotification {
   icon?: string;
   timestamp: number;
   read: boolean;
+  senderId?: string;
+  targetUserId?: string;
+  dedupKey?: string;
 }
