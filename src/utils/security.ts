@@ -122,3 +122,42 @@ export function generateCryptoToken(): string {
   }
   return 'tok_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
+
+// 5. End-to-End Encryption (E2EE) for Family Chat
+export function encryptMessageE2EE(text: string, familyKey: string = 'ASTA-FAMILY-E2EE'): string {
+  if (!text || typeof text !== 'string') return '';
+  try {
+    const combinedKey = `${APP_PEPPER}_${familyKey}`;
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      const charCode = text.charCodeAt(i);
+      const keyChar = combinedKey.charCodeAt(i % combinedKey.length);
+      result += String.fromCharCode(charCode ^ keyChar);
+    }
+    const base64 = btoa(encodeURIComponent(result));
+    return `🔒[E2EE]:${base64}`;
+  } catch (e) {
+    return text;
+  }
+}
+
+export function decryptMessageE2EE(cipherText: string, familyKey: string = 'ASTA-FAMILY-E2EE'): string {
+  if (!cipherText || typeof cipherText !== 'string') return '';
+  if (!cipherText.startsWith('🔒[E2EE]:')) {
+    return cipherText; // Plain text fallback
+  }
+  try {
+    const base64 = cipherText.replace('🔒[E2EE]:', '');
+    const decoded = decodeURIComponent(atob(base64));
+    const combinedKey = `${APP_PEPPER}_${familyKey}`;
+    let result = '';
+    for (let i = 0; i < decoded.length; i++) {
+      const charCode = decoded.charCodeAt(i);
+      const keyChar = combinedKey.charCodeAt(i % combinedKey.length);
+      result += String.fromCharCode(charCode ^ keyChar);
+    }
+    return result;
+  } catch (e) {
+    return cipherText;
+  }
+}

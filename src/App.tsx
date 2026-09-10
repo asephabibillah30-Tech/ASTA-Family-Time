@@ -267,6 +267,7 @@ export function App() {
               <FamilyChatScreen
                 players={integratedPlayers}
                 messages={family.chatMessages}
+                currentUser={auth.currentUser}
                 onSendMessage={family.sendChatMessage}
                 onAddReaction={family.addChatReaction}
                 onDeleteMessage={family.deleteChatMessage}

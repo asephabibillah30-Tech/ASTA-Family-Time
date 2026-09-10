@@ -1,4 +1,5 @@
 import { postgresService } from './postgresService';
+import { encryptMessageE2EE, decryptMessageE2EE } from '../../utils/security';
 import type {
   MemoryItem,
   PlannerEvent,
@@ -344,7 +345,7 @@ class SupabaseFamilyService {
         senderName: r.sender_name,
         senderAvatar: r.sender_avatar,
         senderColor: r.sender_color,
-        text: r.message_text,
+        text: decryptMessageE2EE(r.message_text, familyId),
         timestamp: r.created_at
           ? new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : '',
@@ -365,7 +366,7 @@ class SupabaseFamilyService {
         sender_name: msg.senderName,
         sender_avatar: msg.senderAvatar,
         sender_color: msg.senderColor,
-        message_text: msg.text,
+        message_text: encryptMessageE2EE(msg.text, familyId),
         media_type: msg.mediaType || 'text',
         reactions: msg.reactions || []
       });
