@@ -2,6 +2,9 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const isVercel = Boolean(process.env.VERCEL);
+const basePath = isVercel ? '/' : '/ASTA-Family-Time/';
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -17,8 +20,8 @@ export default defineConfig({
         background_color: '#FFF9EB',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/ASTA-Family-Time/',
-        start_url: '/ASTA-Family-Time/',
+        scope: basePath,
+        start_url: basePath,
         icons: [
           {
             src: 'pwa-192x192.svg',
@@ -48,5 +51,5 @@ export default defineConfig({
       }
     })
   ],
-  base: '/ASTA-Family-Time/',
+  base: basePath,
 })
