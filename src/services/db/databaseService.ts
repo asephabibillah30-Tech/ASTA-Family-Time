@@ -375,7 +375,8 @@ class DatabaseService {
             streak_days: 1,
             total_love_points: 100
           }, { onConflict: 'id' });
-          if (fErr) console.error('Supabase family registration error:', fErr.message, fErr.details);
+          if (fErr) console.error('❌ Supabase family registration error:', fErr.message, fErr.details);
+          else console.log('✅ Supabase family registered:', familyId);
 
           // 2. Insert User Next (satisfies Foreign Key)
           const { error: uErr } = await supabase.from('users').upsert({
@@ -392,14 +393,17 @@ class DatabaseService {
             love_points: 100,
             is_head: true
           }, { onConflict: 'id' });
-          if (uErr) console.error('Supabase user registration error:', uErr.message, uErr.details);
+          if (uErr) console.error('❌ Supabase user registration error:', uErr.message, uErr.details);
+          else console.log('✅ Supabase user registered:', headUserId);
 
           // 3. Link head_user_id
           await supabase.from('families').update({ head_user_id: headUserId }).eq('id', familyId);
         } catch (err) {
-          console.error('Supabase registration sync failed:', err);
+          console.error('❌ Supabase registration sync failed:', err);
         }
       })();
+    } else {
+      console.warn('⚠️ Cannot sync registration to Supabase: Supabase client is null.');
     }
 
     this.logSecurity('DAFTAR_KEPALA_KELUARGA', 'SUCCESS', `Keluarga ${cleanFamilyName} dibuat dengan kode ${familyCode}`, familyId, headUserId, cleanHeadName);

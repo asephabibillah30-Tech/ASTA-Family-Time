@@ -35,9 +35,12 @@ class PostgresService {
     if (hasCloudConfig) {
       try {
         this.client = createClient(envSupaUrl, envSupaKey);
+        console.log('✅ Supabase Client initialized successfully with URL:', envSupaUrl);
       } catch (err) {
-        console.warn('Gagal inisialisasi Supabase client:', err);
+        console.warn('❌ Gagal inisialisasi Supabase client:', err);
       }
+    } else {
+      console.warn('⚠️ Supabase credentials missing from import.meta.env (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). Vercel rebuild required.');
     }
   }
 
