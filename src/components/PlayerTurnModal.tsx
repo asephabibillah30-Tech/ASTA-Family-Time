@@ -14,7 +14,7 @@ export const PlayerTurnModal: React.FC<PlayerTurnModalProps> = ({
   if (!transition.show || !transition.nextPlayer) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-pop-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-pop-in">
       <div className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-800 p-6 text-center shadow-bubbly-lg border-4 border-rose-100 dark:border-slate-700 overflow-hidden">
         
         {/* Top Glow Background */}

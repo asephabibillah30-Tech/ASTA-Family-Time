@@ -157,8 +157,8 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
 
       {/* Add Memory Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-pop-in">
-          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-bubbly-lg border-4 border-rose-200 dark:border-slate-700">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-md animate-pop-in overflow-y-auto">
+          <div className="relative w-full max-w-lg my-auto rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 shadow-bubbly-lg border-4 border-rose-200 dark:border-slate-700 max-h-[85vh] overflow-y-auto">
             <button
               onClick={() => setIsAddModalOpen(false)}
               className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300"

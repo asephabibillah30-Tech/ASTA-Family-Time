@@ -203,8 +203,8 @@ export const QualityTimeScreen: React.FC<QualityTimeScreenProps> = ({
 
       {/* Random Picker Result Modal */}
       {randomModal?.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-pop-in">
-          <div className="relative w-full max-w-md rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-bubbly-lg border-4 border-rose-200 dark:border-slate-700 text-center space-y-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-md animate-pop-in overflow-y-auto">
+          <div className="relative w-full max-w-md my-auto rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-bubbly-lg border-4 border-rose-200 dark:border-slate-700 text-center space-y-4 max-h-[85vh] overflow-y-auto">
             <span className="text-6xl inline-block animate-bounce">{randomModal.emoji}</span>
             <span className="text-xs font-extrabold uppercase px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600">
               REKOMENDASI SPONTAN KELUARGA
