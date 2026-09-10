@@ -137,9 +137,13 @@ class DatabaseService {
     const supabase = postgresService.getClient();
     if (!supabase) return;
     try {
-      const { data: cloudFamilies, error: famError } = await supabase.from('families').select('*');
-      if (!famError && cloudFamilies && cloudFamilies.length > 0) {
-        const mappedFamilies: FamilyAccount[] = cloudFamilies
+      const { data: cloudFamilies, error: famError } = await supabase
+        .from('families')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!famError && cloudFamilies) {
+        this.families = cloudFamilies
           .filter(f => f.id !== 'fam-asta-default')
           .map(f => ({
             id: f.id,
@@ -150,19 +154,16 @@ class DatabaseService {
             totalLovePoints: f.total_love_points || 100,
             createdAt: f.created_at
           }));
-        const combined = [...this.families.filter(f => f.id !== 'fam-asta-default')];
-        for (const mf of mappedFamilies) {
-          const idx = combined.findIndex(x => x.id === mf.id);
-          if (idx >= 0) combined[idx] = mf;
-          else combined.push(mf);
-        }
-        this.families = combined;
         saveData(FAMILIES_KEY, this.families);
       }
 
-      const { data: cloudUsers, error: usrError } = await supabase.from('users').select('*');
-      if (!usrError && cloudUsers && cloudUsers.length > 0) {
-        const mappedUsers: UserAccount[] = cloudUsers
+      const { data: cloudUsers, error: usrError } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!usrError && cloudUsers) {
+        this.users = cloudUsers
           .filter(u => u.family_id !== 'fam-asta-default' && u.id !== 'usr-ayah' && u.id !== 'usr-ibu' && u.id !== 'usr-kakak' && u.id !== 'usr-adik')
           .map(u => ({
             id: u.id,
@@ -179,13 +180,6 @@ class DatabaseService {
             isHead: u.is_head || false,
             createdAt: u.created_at
           }));
-        const combinedUsers = [...this.users.filter(u => u.familyId !== 'fam-asta-default' && u.id !== 'usr-ayah' && u.id !== 'usr-ibu' && u.id !== 'usr-kakak' && u.id !== 'usr-adik')];
-        for (const mu of mappedUsers) {
-          const idx = combinedUsers.findIndex(x => x.id === mu.id);
-          if (idx >= 0) combinedUsers[idx] = mu;
-          else combinedUsers.push(mu);
-        }
-        this.users = combinedUsers;
         saveData(USERS_KEY, this.users);
       }
     } catch (err) {
