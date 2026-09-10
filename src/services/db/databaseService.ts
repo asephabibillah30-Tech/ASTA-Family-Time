@@ -598,10 +598,27 @@ class DatabaseService {
   public getSavedSession(): AuthSession | null {
     try {
       if (typeof window === 'undefined') return null;
-      // Clean up legacy session from previous tests
+      // Clean up legacy session keys from localStorage
       localStorage.removeItem('asta_db_auth_session');
+      localStorage.removeItem('asta_active_session_v2');
+
       const raw = sessionStorage.getItem('asta_active_session_v2');
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed: AuthSession = JSON.parse(raw);
+        // Tolak dan bersihkan jika sesi merupakan akun demo/default template
+        if (
+          !parsed ||
+          !parsed.user ||
+          !parsed.family ||
+          parsed.family.id === 'fam-asta-default' ||
+          parsed.user.familyId === 'fam-asta-default' ||
+          parsed.user.id === 'usr-ayah'
+        ) {
+          sessionStorage.removeItem('asta_active_session_v2');
+          return null;
+        }
+        return parsed;
+      }
     } catch {
       return null;
     }

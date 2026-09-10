@@ -84,7 +84,7 @@ export function App() {
   };
 
   // Mandatory Authentication Gate: Must login or register first
-  if (!auth.isAuthenticated) {
+  if (!auth.isAuthenticated || !auth.currentUser || !auth.currentFamily) {
     return (
       <AuthGateScreen
         auth={auth}
