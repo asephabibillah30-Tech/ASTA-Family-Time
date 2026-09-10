@@ -68,10 +68,20 @@ Platform & Super-App Game Keluarga Indonesia yang ceria, hangat, lucu, edukatif,
    http://localhost:5173
    ```
 
-5. **Build untuk produksi:**
+5. **Build & Deploy:**
+   Semua pembaruan secara otomatis ter-deploy ke Vercel setiap kali Anda melakukan push ke branch `main`:
    ```bash
-   npm run build
+   git add .
+   git commit -m "update feature"
+   git push origin main
    ```
+
+---
+
+## 🌐 Live Deployment
+
+- ⚡ **Vercel (Utama):** [asta-family-time.vercel.app](https://asta-family-time.vercel.app)
+- 🐙 **GitHub Pages:** [asephabibillah30-tech.github.io/ASTA-Family-Time/](https://asephabibillah30-tech.github.io/ASTA-Family-Time/)
 
 ---
 
