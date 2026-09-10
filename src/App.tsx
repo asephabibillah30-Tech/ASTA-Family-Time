@@ -102,8 +102,8 @@ export function App() {
         soundEnabled={game.settings.soundEnabled}
         darkMode={game.settings.darkMode}
         currentScreen={game.screen}
-        currentUser={auth.currentUser}
-        currentFamily={auth.currentFamily}
+        currentUser={auth.currentUser ?? undefined}
+        currentFamily={auth.currentFamily ?? undefined}
         onToggleSound={() => game.updateSettings({ soundEnabled: !game.settings.soundEnabled })}
         onToggleDarkMode={() => game.updateSettings({ darkMode: !game.settings.darkMode })}
         onOpenSettings={() => setIsSettingsOpen(true)}
@@ -366,8 +366,8 @@ export function App() {
 
       <ManageFamilyModal
         isOpen={isManageFamilyOpen}
-        currentUser={auth.currentUser}
-        currentFamily={auth.currentFamily}
+        currentUser={auth.currentUser ?? undefined as any}
+        currentFamily={auth.currentFamily ?? undefined as any}
         familyMembers={auth.familyMembers}
         onClose={() => setIsManageFamilyOpen(false)}
         onRefresh={() => {
@@ -377,8 +377,8 @@ export function App() {
 
       <SecurityCenterModal
         isOpen={isSecurityCenterOpen}
-        currentUser={auth.currentUser}
-        currentFamily={auth.currentFamily}
+        currentUser={auth.currentUser ?? undefined as any}
+        currentFamily={auth.currentFamily ?? undefined as any}
         onClose={() => setIsSecurityCenterOpen(false)}
       />
 

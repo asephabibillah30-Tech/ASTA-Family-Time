@@ -1,27 +1,32 @@
 import { useState, useEffect } from 'react';
 import type { UserAccount, FamilyAccount, RegisterHeadDTO, AddMemberDTO } from '../types/auth';
-import { db, DEFAULT_FAMILY, DEFAULT_USERS } from '../services/db/databaseService';
+import { db } from '../services/db/databaseService';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti } from '../utils/confetti';
 
 export function useAuth() {
-  const [currentUser, setCurrentUser] = useState<UserAccount>(() => {
+  // PENTING: Tidak pernah auto-login dengan DEFAULT_USERS.
+  // currentUser hanya diisi jika ada sesi valid di sessionStorage.
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
     const sess = db.getSavedSession();
-    return sess?.user || DEFAULT_USERS[0];
+    return sess?.user || null;
   });
 
-  const [currentFamily, setCurrentFamily] = useState<FamilyAccount>(() => {
+  const [currentFamily, setCurrentFamily] = useState<FamilyAccount | null>(() => {
     const sess = db.getSavedSession();
-    return sess?.family || DEFAULT_FAMILY;
+    return sess?.family || null;
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     const sess = db.getSavedSession();
-    return Boolean(sess && sess.user);
+    // Hanya true jika sesi valid DAN user bukan dari default template
+    return Boolean(sess && sess.user && sess.user.id);
   });
 
   const [familyMembers, setFamilyMembers] = useState<UserAccount[]>(() => {
-    return db.getUsersByFamily(currentFamily?.id || DEFAULT_FAMILY.id);
+    const sess = db.getSavedSession();
+    if (!sess?.family) return [];
+    return db.getUsersByFamily(sess.family.id);
   });
 
   // Refresh members whenever current family changes
@@ -69,6 +74,7 @@ export function useAuth() {
 
   // Add Member (Head only)
   const addFamilyMember = (dto: AddMemberDTO) => {
+    if (!currentUser || !currentFamily) throw new Error('Silakan masuk terlebih dahulu.');
     if (!currentUser.isHead) {
       throw new Error('Hanya Kepala Keluarga yang dapat menambahkan anggota keluarga.');
     }
@@ -81,6 +87,7 @@ export function useAuth() {
 
   // Delete Member (Head only)
   const deleteFamilyMember = (memberId: string) => {
+    if (!currentUser || !currentFamily) throw new Error('Silakan masuk terlebih dahulu.');
     db.deleteMemberByHead(currentUser.id, memberId);
     setFamilyMembers(db.getUsersByFamily(currentFamily.id));
     sound.playClick();
@@ -88,6 +95,7 @@ export function useAuth() {
 
   // Switch active profile within the same family
   const switchActiveMember = (memberId: string) => {
+    if (!currentFamily) return;
     const member = familyMembers.find(m => m.id === memberId);
     if (member) {
       setCurrentUser(member);
@@ -105,6 +113,8 @@ export function useAuth() {
       setIsAuthenticated(true);
       setFamilyMembers(db.getUsersByFamily(sess.family.id));
     } else {
+      setCurrentUser(null);
+      setCurrentFamily(null);
       setIsAuthenticated(false);
     }
   };
@@ -112,6 +122,9 @@ export function useAuth() {
   // Logout -> Returns to Auth Gate
   const logout = () => {
     db.clearSession();
+    setCurrentUser(null);
+    setCurrentFamily(null);
+    setFamilyMembers([]);
     setIsAuthenticated(false);
     sound.playClick();
   };

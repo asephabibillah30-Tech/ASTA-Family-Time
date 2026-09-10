@@ -7,8 +7,8 @@ interface HeaderProps {
   soundEnabled: boolean;
   darkMode: boolean;
   currentScreen: string;
-  currentUser: UserAccount;
-  currentFamily: FamilyAccount;
+  currentUser?: UserAccount;
+  currentFamily?: FamilyAccount;
   onToggleSound: () => void;
   onToggleDarkMode: () => void;
   onOpenSettings: () => void;
