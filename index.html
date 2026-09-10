@@ -12,17 +12,6 @@
     <meta name="author" content="ASTA Family" />
     <meta name="theme-color" content="#FF6B6B" />
 
-    <script>
-      (function() {
-        try {
-          var s = sessionStorage.getItem('asta_active_session_v2');
-          if (s && (s.indexOf('fam-asta-default') !== -1 || s.indexOf('usr-ayah') !== -1)) {
-            sessionStorage.removeItem('asta_active_session_v2');
-          }
-          localStorage.removeItem('asta_db_auth_session');
-        } catch(e) {}
-      })();
-    </script>
 
     <!-- Open Graph / Facebook / WhatsApp / Telegram -->
     <meta property="og:type" content="website" />

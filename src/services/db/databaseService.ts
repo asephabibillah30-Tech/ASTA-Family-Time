@@ -594,15 +594,11 @@ class DatabaseService {
     return session;
   }
 
-  // --- SESSION PERSISTENCE (Tab Session: always prompts login on fresh open) ---
+  // --- PERSISTENT SESSION MANAGEMENT ---
   public getSavedSession(): AuthSession | null {
     try {
       if (typeof window === 'undefined') return null;
-      // Clean up legacy session keys from localStorage (forces fresh login on new browser window)
-      localStorage.removeItem('asta_db_auth_session');
-      localStorage.removeItem('asta_active_session_v2');
-
-      const raw = sessionStorage.getItem('asta_active_session_v2');
+      const raw = localStorage.getItem('asta_active_session_v2') || sessionStorage.getItem('asta_active_session_v2');
       if (raw) {
         const parsed: AuthSession = JSON.parse(raw);
         if (parsed && parsed.user && parsed.user.id && parsed.family && parsed.family.id) {
@@ -618,11 +614,12 @@ class DatabaseService {
   public saveSession(session: AuthSession | null): void {
     try {
       if (typeof window === 'undefined') return;
-      localStorage.removeItem('asta_db_auth_session');
       if (session) {
-        sessionStorage.setItem('asta_active_session_v2', JSON.stringify(session));
+        const json = JSON.stringify(session);
+        localStorage.setItem('asta_active_session_v2', json);
+        sessionStorage.setItem('asta_active_session_v2', json);
       } else {
-        sessionStorage.removeItem('asta_active_session_v2');
+        this.clearSession();
       }
     } catch (err) {
       console.error('Error saving session:', err);
@@ -632,6 +629,7 @@ class DatabaseService {
   public clearSession(): void {
     try {
       if (typeof window !== 'undefined') {
+        localStorage.removeItem('asta_active_session_v2');
         sessionStorage.removeItem('asta_active_session_v2');
         localStorage.removeItem('asta_db_auth_session');
       }
