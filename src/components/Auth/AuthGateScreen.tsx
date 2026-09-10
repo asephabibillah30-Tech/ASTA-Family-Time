@@ -192,19 +192,22 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   };
 
   return (
-    <div className="min-h-dvh bg-family-bg dark:bg-slate-950 flex flex-col justify-between p-3 sm:p-6 lg:p-8 font-body antialiased selection:bg-rose-200">
+    <div 
+      className="min-h-dvh bg-family-bg dark:bg-slate-950 flex flex-col justify-between p-3 sm:p-6 lg:p-8 font-body antialiased selection:bg-rose-200"
+      style={{ paddingTop: 'max(2.75rem, env(safe-area-inset-top, 1.5rem))' }}
+    >
       
-      {/* Top Mobile & Desktop Header */}
-      <header className="w-full max-w-md sm:max-w-xl lg:max-w-6xl mx-auto flex items-center justify-between gap-2 pt-1 sm:pt-2 pb-2">
+      {/* Top Mobile & Desktop Header with Safe Area Notch Clearance */}
+      <header className="w-full max-w-md sm:max-w-xl lg:max-w-6xl mx-auto flex items-center justify-between gap-2 pt-2 sm:pt-4 pb-3 border-b border-rose-200/40 dark:border-slate-800/60 mb-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-family-coral to-family-pink flex items-center justify-center text-white text-2xl shadow-md shrink-0">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-family-coral via-rose-500 to-purple-600 flex items-center justify-center text-white text-xl sm:text-2xl shadow-md shrink-0">
             🎴
           </div>
           <div>
             <h1 className="font-display font-black text-base sm:text-xl text-slate-900 dark:text-white tracking-tight leading-tight">
               ASTA Family Time
             </h1>
-            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold truncate max-w-[200px] sm:max-w-none">
+            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold truncate max-w-[180px] sm:max-w-none">
               Satu aplikasi, lebih banyak waktu bersama. ❤️
             </p>
           </div>
