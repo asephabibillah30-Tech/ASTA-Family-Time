@@ -47,12 +47,13 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   const [memberRole, setMemberRole] = useState<FamilyRoleTitle>('Ibu');
   const [memberAvatar, setMemberAvatar] = useState('👩‍🍳');
   const [addedMembersList, setAddedMembersList] = useState<string[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState('');
   const pgConfig = postgresService.getConfig();
 
   // 1. Submit Head Login
-  const handleHeadLogin = (e: React.FormEvent) => {
+  const handleHeadLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     try {
@@ -61,9 +62,9 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
         return;
       }
       if (auth?.loginHead) {
-        auth.loginHead(headUsername, headPassword);
+        await auth.loginHead(headUsername, headPassword);
       } else {
-        db.loginHead(headUsername, headPassword);
+        await db.loginHeadAsync(headUsername, headPassword);
       }
       sound.playSuccess();
       fireBurstConfetti();
@@ -75,11 +76,12 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   };
 
   // 2. Search Family Code
-  const handleSearchFamily = (e: React.FormEvent) => {
+  const handleSearchFamily = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setIsSearching(true);
     try {
-      const fam = db.getFamilyByCode(familyCode);
+      const fam = await db.findFamilyByCodeAsync(familyCode);
       if (!fam) {
         setErrorMsg('Kode Keluarga tidak ditemukan. Contoh: ASTA-2026');
         return;
@@ -92,7 +94,9 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
       }
       sound.playClick();
     } catch (err: any) {
-      setErrorMsg(err.message);
+      setErrorMsg(err.message || 'Gagal mencari Kode Keluarga.');
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -349,10 +353,11 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 sm:py-4 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-display font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
+                    disabled={isSearching}
+                    className="w-full py-3.5 sm:py-4 rounded-2xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-display font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
                     <Users className="w-4 h-4" />
-                    <span>TEMUKAN PROFIL KELUARGA</span>
+                    <span>{isSearching ? 'MENCARI KODE KELUARGA...' : 'TEMUKAN PROFIL KELUARGA'}</span>
                   </button>
                 </form>
               ) : (

@@ -38,8 +38,8 @@ export function useAuth() {
   }, [currentFamily]);
 
   // Login as Head of Family
-  const loginHead = (usernameOrEmail: string, passwordOrPin: string) => {
-    const session = db.loginHead(usernameOrEmail, passwordOrPin);
+  const loginHead = async (usernameOrEmail: string, passwordOrPin: string) => {
+    const session = await db.loginHeadAsync(usernameOrEmail, passwordOrPin);
     setCurrentUser(session.user);
     setCurrentFamily(session.family);
     setIsAuthenticated(true);

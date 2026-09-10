@@ -234,6 +234,38 @@ class DatabaseService {
     return this.families.find(f => f.familyCode.toUpperCase() === cleanCode);
   }
 
+  public async findFamilyByCodeAsync(code: string): Promise<FamilyAccount | undefined> {
+    const cleanCode = sanitizeInput(code).toUpperCase();
+    if (!cleanCode) return undefined;
+
+    const localFam = this.getFamilyByCode(cleanCode);
+    if (localFam) {
+      await this.syncActiveFamily(localFam.id).catch(() => {});
+      return this.getFamilyByCode(cleanCode) || localFam;
+    }
+
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      try {
+        const { data: cloudFam, error } = await supabase
+          .from('families')
+          .select('*')
+          .eq('family_code', cleanCode)
+          .maybeSingle();
+
+        if (!error && cloudFam) {
+          await this.syncActiveFamily(cloudFam.id);
+          return this.getFamilyByCode(cleanCode);
+        }
+      } catch (err) {
+        // Gagal pencarian cloud diam-diam
+      }
+    }
+
+    return undefined;
+  }
+
+
   // --- USERS TABLE ---
   public getUsers(): UserAccount[] {
     return this.users;
@@ -503,6 +535,35 @@ class DatabaseService {
     this.saveSession(session);
     return session;
   }
+
+  public async loginHeadAsync(usernameOrEmail: string, passwordOrPin: string): Promise<AuthSession> {
+    try {
+      return this.loginHead(usernameOrEmail, passwordOrPin);
+    } catch (err: any) {
+      const cleanUser = sanitizeInput(usernameOrEmail).toLowerCase();
+      const supabase = postgresService.getClient();
+      if (supabase && cleanUser) {
+        try {
+          const { data: cloudUsers } = await supabase
+            .from('users')
+            .select('*')
+            .or(`username.eq.${cleanUser},full_name.ilike.${cleanUser}`);
+
+          if (cloudUsers && cloudUsers.length > 0) {
+            const familyId = cloudUsers[0].family_id;
+            if (familyId) {
+              await this.syncActiveFamily(familyId);
+              return this.loginHead(usernameOrEmail, passwordOrPin);
+            }
+          }
+        } catch {
+          // ignore cloud fetch error
+        }
+      }
+      throw err;
+    }
+  }
+
 
   // --- AUTHENTICATION: LOGIN AS MEMBER ---
   public loginMemberWithCode(familyCode: string, userId: string, pin: string): AuthSession {

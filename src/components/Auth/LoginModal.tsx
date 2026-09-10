@@ -31,10 +31,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [memberPin, setMemberPin] = useState('');
   
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleHeadLogin = (e: React.FormEvent) => {
+  const handleHeadLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     try {
@@ -42,7 +43,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         setErrorMsg('Harap isi username/email dan password.');
         return;
       }
-      db.loginHead(headUsername, headPassword);
+      await db.loginHeadAsync(headUsername, headPassword);
       onLoginSuccess();
       onClose();
     } catch (err: any) {
@@ -51,11 +52,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     }
   };
 
-  const handleSearchFamilyCode = (e: React.FormEvent) => {
+  const handleSearchFamilyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setIsSearching(true);
     try {
-      const fam = db.getFamilyByCode(familyCode);
+      const fam = await db.findFamilyByCodeAsync(familyCode);
       if (!fam) {
         setErrorMsg('Kode Keluarga tidak ditemukan. Contoh: ASTA-2026');
         return;
@@ -68,7 +70,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       }
       sound.playClick();
     } catch (err: any) {
-      setErrorMsg(err.message);
+      setErrorMsg(err.message || 'Gagal mencari Kode Keluarga.');
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -215,10 +219,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-display font-black text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                  disabled={isSearching}
+                  className="w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-display font-black text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5"
                 >
                   <Users className="w-4 h-4" />
-                  <span>CARI KELUARGA</span>
+                  <span>{isSearching ? 'MENCARI KODE KELUARGA...' : 'CARI KELUARGA'}</span>
                 </button>
               </form>
             ) : (
