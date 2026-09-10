@@ -139,16 +139,18 @@ class DatabaseService {
     try {
       const { data: cloudFamilies, error: famError } = await supabase.from('families').select('*');
       if (!famError && cloudFamilies && cloudFamilies.length > 0) {
-        const mappedFamilies: FamilyAccount[] = cloudFamilies.map(f => ({
-          id: f.id,
-          familyName: f.family_name,
-          familyCode: f.family_code,
-          headUserId: f.head_user_id,
-          streakDays: f.streak_days || 1,
-          totalLovePoints: f.total_love_points || 100,
-          createdAt: f.created_at
-        }));
-        const combined = [...this.families];
+        const mappedFamilies: FamilyAccount[] = cloudFamilies
+          .filter(f => f.id !== 'fam-asta-default')
+          .map(f => ({
+            id: f.id,
+            familyName: f.family_name,
+            familyCode: f.family_code,
+            headUserId: f.head_user_id,
+            streakDays: f.streak_days || 1,
+            totalLovePoints: f.total_love_points || 100,
+            createdAt: f.created_at
+          }));
+        const combined = [...this.families.filter(f => f.id !== 'fam-asta-default')];
         for (const mf of mappedFamilies) {
           const idx = combined.findIndex(x => x.id === mf.id);
           if (idx >= 0) combined[idx] = mf;
@@ -160,22 +162,24 @@ class DatabaseService {
 
       const { data: cloudUsers, error: usrError } = await supabase.from('users').select('*');
       if (!usrError && cloudUsers && cloudUsers.length > 0) {
-        const mappedUsers: UserAccount[] = cloudUsers.map(u => ({
-          id: u.id,
-          familyId: u.family_id,
-          fullName: u.full_name,
-          role: u.role as any,
-          roleTitle: u.role_title,
-          usernameOrEmail: u.username || u.email,
-          password: u.password_hash,
-          pin: u.pin,
-          avatar: u.avatar || '👨‍💼',
-          color: u.color || 'bg-blue-500',
-          lovePoints: u.love_points || 50,
-          isHead: u.is_head || false,
-          createdAt: u.created_at
-        }));
-        const combinedUsers = [...this.users];
+        const mappedUsers: UserAccount[] = cloudUsers
+          .filter(u => u.family_id !== 'fam-asta-default' && u.id !== 'usr-ayah' && u.id !== 'usr-ibu' && u.id !== 'usr-kakak' && u.id !== 'usr-adik')
+          .map(u => ({
+            id: u.id,
+            familyId: u.family_id,
+            fullName: u.full_name,
+            role: u.role as any,
+            roleTitle: u.role_title,
+            usernameOrEmail: u.username || u.email,
+            password: u.password_hash,
+            pin: u.pin,
+            avatar: u.avatar || '👨‍💼',
+            color: u.color || 'bg-blue-500',
+            lovePoints: u.love_points || 50,
+            isHead: u.is_head || false,
+            createdAt: u.created_at
+          }));
+        const combinedUsers = [...this.users.filter(u => u.familyId !== 'fam-asta-default' && u.id !== 'usr-ayah' && u.id !== 'usr-ibu' && u.id !== 'usr-kakak' && u.id !== 'usr-adik')];
         for (const mu of mappedUsers) {
           const idx = combinedUsers.findIndex(x => x.id === mu.id);
           if (idx >= 0) combinedUsers[idx] = mu;
