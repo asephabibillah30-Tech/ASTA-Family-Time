@@ -73,8 +73,8 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-md animate-pop-in">
-      <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 space-y-5 border-2 border-rose-100 dark:border-slate-700 shadow-bubbly-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-900/75 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-lg my-auto rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 space-y-5 border-2 border-rose-100 dark:border-slate-700 shadow-bubbly-lg max-h-[90vh] overflow-y-auto animate-pop-in">
         
         {/* Header */}
         <div className="flex items-center justify-between">
