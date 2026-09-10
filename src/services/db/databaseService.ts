@@ -149,23 +149,23 @@ class DatabaseService {
       for (const f of this.families) {
         const { error } = await supabase.from('families').upsert({
           id: f.id,
-          family_name: f.familyName,
-          family_code: f.familyCode,
+          family_name: f.familyName || 'Keluarga ASTA',
+          family_code: f.familyCode || 'ASTA-2026',
           head_user_id: f.headUserId || null,
           streak_days: f.streakDays || 1,
           total_love_points: f.totalLovePoints || 100
         }, { onConflict: 'id' });
-        if (error) console.error('Supabase families upsert error:', error.message, error.details);
+        if (error) console.error('❌ Supabase families upsert error:', error.message, error.details);
       }
 
       // 2. Upsert all users (termasuk pengguna demo & pengguna baru)
       for (const u of this.users) {
-        const { error } = await supabase.from('users').upsert({
+        const payload: Record<string, any> = {
           id: u.id,
           family_id: u.familyId,
-          full_name: u.fullName,
-          role: u.role,
-          role_title: u.roleTitle,
+          full_name: u.fullName || 'Anggota Keluarga',
+          role: u.role || 'member',
+          role_title: u.roleTitle || 'Anggota',
           username: u.usernameOrEmail || null,
           password_hash: u.password || null,
           pin: u.pin || null,
@@ -173,8 +173,10 @@ class DatabaseService {
           color: u.color || 'bg-blue-500',
           love_points: u.lovePoints || 50,
           is_head: Boolean(u.isHead)
-        }, { onConflict: 'id' });
-        if (error) console.error('Supabase users upsert error:', error.message, error.details);
+        };
+        const { error } = await supabase.from('users').upsert(payload, { onConflict: 'id' });
+        if (error) console.error(`❌ Supabase user (${u.fullName}) upsert error:`, error.message, error.details);
+        else console.log(`✅ Supabase user synced: ${u.fullName} (${u.id})`);
       }
     } catch (err) {
       console.warn('Sync local to cloud failed:', err);
