@@ -503,6 +503,29 @@ class DatabaseService {
     this.logSecurity('GANTI_PIN_SUKSES', 'SUCCESS', 'PIN berhasil diperbarui.', user.familyId, userId, user.fullName);
   }
 
+  // --- UPDATE MEMBER PIN BY HEAD ---
+  public updateMemberPinByHead(headUserId: string, targetUserId: string, newPin: string): void {
+    const headUser = this.getUserById(headUserId);
+    if (!headUser?.isHead) throw new Error('Hanya Kepala Keluarga yang memiliki akses mereset PIN anggota.');
+
+    const targetUser = this.getUserById(targetUserId);
+    if (!targetUser) throw new Error('Anggota tidak ditemukan.');
+
+    const cleanPin = newPin.trim();
+    if (cleanPin.length < 4) throw new Error('PIN minimal 4 digit.');
+
+    const newHash = fastHashSync(cleanPin);
+    this.users = this.users.map(u => u.id === targetUserId ? { ...u, pin: newHash } : u);
+    saveData(USERS_KEY, this.users);
+
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      Promise.resolve(supabase.from('users').update({ pin: newHash }).eq('id', targetUserId)).catch(console.warn);
+    }
+
+    this.logSecurity('RESET_PIN_ANGGOTA', 'SUCCESS', `PIN untuk ${targetUser.fullName} diperbarui oleh ${headUser.fullName}.`, headUser.familyId, headUserId, headUser.fullName);
+  }
+
   // --- AUTHENTICATION: LOGIN AS HEAD ---
   public loginHead(usernameOrEmail: string, passwordOrPin: string): AuthSession {
     const cleanUser = sanitizeInput(usernameOrEmail).toLowerCase();

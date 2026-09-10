@@ -3,7 +3,7 @@ import type { UserAccount, FamilyAccount } from '../../types/auth';
 import { db } from '../../services/db/databaseService';
 import type { SecurityAuditLog } from '../../services/db/databaseService';
 import { postgresService } from '../../services/db/postgresService';
-import { X, ShieldCheck, KeyRound, Lock, History, AlertTriangle, CheckCircle } from 'lucide-react';
+import { X, ShieldCheck, KeyRound, Lock, History, AlertTriangle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
 
@@ -26,6 +26,7 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
   const [oldSecret, setOldSecret] = useState('');
   const [newSecret, setNewSecret] = useState('');
   const [confirmSecret, setConfirmSecret] = useState('');
+  const [showSecret, setShowSecret] = useState(false);
   
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [logs, setLogs] = useState<SecurityAuditLog[]>(() => db.getSecurityLogs(currentFamily?.id));
@@ -163,40 +164,76 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
         {/* TAB 1: GANTI PASSWORD / PIN */}
         {activeTab === 'password' && (
           <form onSubmit={handleChangeSecret} className="space-y-3.5 animate-pop-in">
-            <div>
-              <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
-                {currentUser.isHead ? 'Password Lama (Default Demo: 123)' : 'PIN Lama (Default Demo: 1234)'}
-              </label>
-              <input
-                type="password"
-                value={oldSecret}
-                onChange={e => setOldSecret(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold outline-none focus:border-family-coral"
-              />
+            <div className="p-3 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-900 text-xs text-indigo-900 dark:text-indigo-200">
+              💡 {currentUser.isHead 
+                ? 'Sebagai Kepala Keluarga, Anda dapat memperbarui password utama akun keluarga Anda.' 
+                : `Sebagai ${currentUser.roleTitle} (${currentUser.fullName}), Anda dapat menentukan PIN Rahasia unik Anda sendiri (4-6 digit) agar profil Anda terlindungi.`}
             </div>
 
             <div>
               <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
-                {currentUser.isHead ? 'Password Baru' : 'PIN Baru (4-6 Digit)'}
+                {currentUser.isHead ? 'Password Lama (Default: 123)' : 'PIN Lama (Default: 1234)'}
               </label>
-              <input
-                type="password"
-                value={newSecret}
-                onChange={e => setNewSecret(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold outline-none focus:border-family-coral"
-              />
+              <div className="relative">
+                <input
+                  type={showSecret ? 'text' : 'password'}
+                  value={oldSecret}
+                  onChange={e => setOldSecret(e.target.value)}
+                  placeholder={currentUser.isHead ? 'Masukkan password lama' : 'Masukkan PIN lama (default: 1234)'}
+                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold outline-none focus:border-family-coral"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSecret(!showSecret)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
+                {currentUser.isHead ? 'Password Baru' : 'PIN Baru Mandiri (4-6 Digit)'}
+              </label>
+              <div className="relative">
+                <input
+                  type={showSecret ? 'text' : 'password'}
+                  value={newSecret}
+                  onChange={e => setNewSecret(e.target.value)}
+                  placeholder={currentUser.isHead ? 'Masukkan password baru' : 'Contoh: 5678 (4-6 digit)'}
+                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold outline-none focus:border-family-coral"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSecret(!showSecret)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div>
               <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">
                 Konfirmasi {currentUser.isHead ? 'Password Baru' : 'PIN Baru'}
               </label>
-              <input
-                type="password"
-                value={confirmSecret}
-                onChange={e => setConfirmSecret(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold outline-none focus:border-family-coral"
-              />
+              <div className="relative">
+                <input
+                  type={showSecret ? 'text' : 'password'}
+                  value={confirmSecret}
+                  onChange={e => setConfirmSecret(e.target.value)}
+                  placeholder={currentUser.isHead ? 'Ulangi password baru' : 'Ulangi PIN baru'}
+                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold outline-none focus:border-family-coral"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSecret(!showSecret)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
@@ -204,7 +241,7 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-black text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5"
             >
               <Lock className="w-4 h-4" />
-              <span>SIMPAN KEAMANAN BARU</span>
+              <span>SIMPAN {currentUser.isHead ? 'PASSWORD' : 'PIN'} BARU</span>
             </button>
           </form>
         )}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { UserAccount, FamilyAccount, FamilyRoleTitle } from '../../types/auth';
 import { db } from '../../services/db/databaseService';
-import { X, UserPlus, Trash2, Copy, Check } from 'lucide-react';
+import { X, UserPlus, Trash2, Copy, Check, KeyRound } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
 
@@ -33,6 +33,11 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
   const [newMemberRole, setNewMemberRole] = useState<FamilyRoleTitle>('Kakak');
   const [newMemberAvatar, setNewMemberAvatar] = useState('👦');
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // Member PIN Edit State
+  const [editingPinMemberId, setEditingPinMemberId] = useState<string | null>(null);
+  const [newPinValue, setNewPinValue] = useState('');
 
   if (!isOpen) return null;
 
@@ -107,6 +112,27 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
     }
   };
 
+  const handleSaveMemberPin = (targetMember: UserAccount) => {
+    setErrorMsg('');
+    setSuccessMsg('');
+    if (!newPinValue.trim() || newPinValue.trim().length < 4) {
+      setErrorMsg('PIN baru minimal 4 digit.');
+      return;
+    }
+
+    try {
+      db.updateMemberPinByHead(currentUser.id, targetMember.id, newPinValue.trim());
+      setSuccessMsg(`PIN baru untuk ${targetMember.fullName} berhasil disimpan! 🔒`);
+      setEditingPinMemberId(null);
+      setNewPinValue('');
+      onRefresh();
+      sound.playSuccess();
+      fireSmallPop(0.5, 0.4);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Gagal mengubah PIN anggota.');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-md animate-pop-in">
       <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 space-y-5 border-2 border-rose-100 dark:border-slate-700 shadow-bubbly-lg max-h-[90vh] overflow-y-auto">
@@ -161,6 +187,12 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
         {errorMsg && (
           <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 text-rose-600 text-xs font-bold">
             {errorMsg}
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 text-emerald-700 text-xs font-bold">
+            {successMsg}
           </div>
         )}
 
@@ -239,33 +271,88 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
             {familyMembers.map((m) => (
               <div
                 key={m.id}
-                className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between shadow-2xs"
+                className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">{m.avatar}</span>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-display font-black text-xs text-slate-900 dark:text-white">
-                        {m.fullName}
-                      </span>
-                      {m.isHead && (
-                        <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[8px] font-black rounded-md">
-                          👑 Kepala Keluarga
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">{m.avatar}</span>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-display font-black text-xs text-slate-900 dark:text-white">
+                          {m.fullName}
                         </span>
-                      )}
+                        {m.isHead && (
+                          <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[8px] font-black rounded-md">
+                            👑 Kepala Keluarga
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-bold">{m.roleTitle}</span>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-bold">{m.roleTitle}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    {/* Change/Reset PIN Button for Member */}
+                    {currentUser.isHead && (
+                      <button
+                        onClick={() => {
+                          setErrorMsg('');
+                          setSuccessMsg('');
+                          if (editingPinMemberId === m.id) {
+                            setEditingPinMemberId(null);
+                          } else {
+                            setEditingPinMemberId(m.id);
+                            setNewPinValue('');
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                        title="Atur PIN Anggota Ini"
+                      >
+                        <KeyRound className="w-3 h-3 text-amber-500" />
+                        <span>Ganti PIN</span>
+                      </button>
+                    )}
+
+                    {currentUser.isHead && !m.isHead && (
+                      <button
+                        onClick={() => handleDeleteMember(m.id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                        title="Hapus Anggota"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {currentUser.isHead && !m.isHead && (
-                  <button
-                    onClick={() => handleDeleteMember(m.id)}
-                    className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-                    title="Hapus Anggota"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                {/* Inline PIN Editor Form */}
+                {editingPinMemberId === m.id && (
+                  <div className="p-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 animate-pop-in">
+                    <div className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                      Set PIN Baru untuk <strong>{m.fullName}</strong>:
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        placeholder="PIN Baru (4-6 Digit)"
+                        value={newPinValue}
+                        onChange={e => setNewPinValue(e.target.value)}
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-bold outline-none"
+                      />
+                      <button
+                        onClick={() => handleSaveMemberPin(m)}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs shadow-xs"
+                      >
+                        Simpan
+                      </button>
+                      <button
+                        onClick={() => setEditingPinMemberId(null)}
+                        className="px-2 py-1.5 text-xs text-slate-400 hover:text-slate-600"
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             ))}
