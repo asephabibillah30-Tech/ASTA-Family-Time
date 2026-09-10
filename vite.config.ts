@@ -7,6 +7,7 @@ const basePath = isVercel ? '/' : '/ASTA-Family-Time/';
 
 // https://vite.dev/config/
 export default defineConfig({
+  envPrefix: ['VITE_', 'SUPABASE_', 'NEXT_PUBLIC_'],
   plugins: [
     react(),
     VitePWA({
