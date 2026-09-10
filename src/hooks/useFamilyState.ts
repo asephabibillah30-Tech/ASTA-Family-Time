@@ -66,7 +66,19 @@ export function useFamilyState(familyId?: string | null) {
         setHabits(cloud.habits.length > 0 ? cloud.habits : loadStorage('habits', fid, []));
         setTransactions(cloud.transactions.length > 0 ? cloud.transactions : loadStorage('transactions', fid, []));
         setSavingsTargets(cloud.savingsTargets.length > 0 ? cloud.savingsTargets : loadStorage('savings', fid, []));
-        setChatMessages(cloud.chatMessages.length > 0 ? cloud.chatMessages : loadStorage('chat_msgs', fid, []));
+        // Merge local chat messages with cloud chat messages to preserve read receipts
+        const localMsgs = loadStorage<ChatMessage[]>('chat_msgs', fid, []);
+        const mergedMsgs = (cloud.chatMessages || []).map((cMsg) => {
+          const lMsg = localMsgs.find(m => m.id === cMsg.id);
+          if (!lMsg) return cMsg;
+          const cloudReadBy = cMsg.readBy || [];
+          const localReadBy = lMsg.readBy || [];
+          const map = new Map();
+          cloudReadBy.forEach(r => map.set(r.userId, r));
+          localReadBy.forEach(r => { if (!map.has(r.userId)) map.set(r.userId, r); });
+          return { ...cMsg, readBy: Array.from(map.values()) };
+        });
+        setChatMessages(mergedMsgs.length > 0 ? mergedMsgs : localMsgs);
       } else {
         setMemories(loadStorage('memories', fid, []));
         setPlannerEvents(loadStorage('planner', fid, []));
@@ -128,8 +140,24 @@ export function useFamilyState(familyId?: string | null) {
         const cloudMsgs = await supabaseFamilyService.loadChatMessages(familyId);
         if (cloudMsgs && Array.isArray(cloudMsgs) && cloudMsgs.length > 0) {
           setChatMessages((prev) => {
-            if (JSON.stringify(prev) !== JSON.stringify(cloudMsgs)) {
-              return cloudMsgs;
+            const merged = cloudMsgs.map((cMsg) => {
+              const localMsg = prev.find((p) => p.id === cMsg.id);
+              if (!localMsg) return cMsg;
+              const cloudReadBy = cMsg.readBy || [];
+              const localReadBy = localMsg.readBy || [];
+              const map = new Map();
+              cloudReadBy.forEach(r => map.set(r.userId, r));
+              localReadBy.forEach(r => {
+                if (!map.has(r.userId)) {
+                  map.set(r.userId, r);
+                  supabaseFamilyService.updateChatReadBy(cMsg.id, Array.from(map.values())).catch(() => {});
+                }
+              });
+              return { ...cMsg, readBy: Array.from(map.values()) };
+            });
+
+            if (JSON.stringify(prev) !== JSON.stringify(merged)) {
+              return merged;
             }
             return prev;
           });
