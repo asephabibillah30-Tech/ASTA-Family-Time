@@ -104,36 +104,36 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full flex flex-col shadow-sm select-none transition-colors">
+    <header 
+      className="sticky top-0 z-30 w-full flex flex-col shadow-md select-none transition-colors"
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+    >
       
       {/* 1. TOP ANNOUNCEMENT BAR (Ref: KayPOS Top Announcement Bar) */}
       {showAnnouncement && (
-        <div className="w-full bg-gradient-to-r from-indigo-600 via-rose-600 to-purple-600 text-white text-[11px] font-bold px-3 py-1 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <span className="px-2 py-0.5 rounded-full bg-sky-400 text-slate-900 font-extrabold text-[9px] uppercase tracking-wider shrink-0 flex items-center gap-1">
-              <Megaphone className="w-3 h-3 text-slate-900" />
+        <div className="w-full bg-gradient-to-r from-indigo-600 via-rose-600 to-purple-600 text-white text-[11px] font-bold px-3.5 py-1.5 flex items-center justify-between shadow-xs border-b border-white/20">
+          <div className="flex items-center gap-2 overflow-hidden min-w-0 flex-1">
+            <span className="px-2.5 py-0.5 rounded-full bg-sky-400 text-slate-900 font-black text-[9px] uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
+              <Megaphone className="w-3.5 h-3.5 text-slate-900" />
               PENGUMUMAN
             </span>
-            <p className="truncate text-rose-100 font-medium">
-              📣 Selamat Datang di Platform ASTA Family Time: Satu Aplikasi, Lebih Banyak Waktu Bersama Keluarga. ❤️
+            <p className="text-white font-bold text-[11px] sm:text-xs truncate drop-shadow-xs">
+              📢 Selamat Datang di Platform ASTA Family Time: Satu Aplikasi, Lebih Banyak Waktu Bersama Keluarga. ❤️
             </p>
           </div>
 
           <button
             onClick={() => setShowAnnouncement(false)}
-            className="p-0.5 rounded-md hover:bg-white/20 transition-all text-white/80 hover:text-white shrink-0 ml-2"
+            className="p-1 rounded-lg hover:bg-white/20 transition-all text-white shrink-0 ml-2 active:scale-90"
             title="Tutup Pengumuman"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* 2. MAIN HEADER TOOLBAR */}
-      <div 
-        className="w-full backdrop-blur-md bg-white/95 dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 transition-colors"
-        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))' }}
-      >
+      <div className="w-full backdrop-blur-md bg-white/95 dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 transition-colors">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-2">
           
           {/* Left: Brand Logo & Title */}

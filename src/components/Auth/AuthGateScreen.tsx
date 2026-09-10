@@ -197,6 +197,18 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
       style={{ paddingTop: 'max(2.75rem, env(safe-area-inset-top, 1.5rem))' }}
     >
       
+      {/* 0. Top Announcement Bar */}
+      <div className="w-full max-w-md sm:max-w-xl lg:max-w-6xl mx-auto mb-2 bg-gradient-to-r from-indigo-600 via-rose-600 to-purple-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-2xl flex items-center justify-between shadow-xs border border-white/20">
+        <div className="flex items-center gap-2 overflow-hidden min-w-0 flex-1">
+          <span className="px-2.5 py-0.5 rounded-full bg-sky-400 text-slate-900 font-black text-[9px] uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
+            📢 PENGUMUMAN
+          </span>
+          <p className="text-white font-bold text-[11px] sm:text-xs truncate drop-shadow-xs">
+            Selamat Datang di Platform ASTA Family Time: Satu Aplikasi, Lebih Banyak Waktu Bersama Keluarga. ❤️
+          </p>
+        </div>
+      </div>
+
       {/* Top Mobile & Desktop Header with Safe Area Notch Clearance */}
       <header className="w-full max-w-md sm:max-w-xl lg:max-w-6xl mx-auto flex items-center justify-between gap-2 pt-2 sm:pt-4 pb-3 border-b border-rose-200/40 dark:border-slate-800/60 mb-2">
         <div className="flex items-center gap-2.5">
