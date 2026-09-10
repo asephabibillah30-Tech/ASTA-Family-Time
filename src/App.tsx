@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useGame } from './hooks/useGame';
 import { useFamilyState } from './hooks/useFamilyState';
 import { useAuth } from './hooks/useAuth';
@@ -35,6 +35,10 @@ export function App() {
   const game = useGame();
   const family = useFamilyState();
   const auth = useAuth();
+
+  useEffect(() => {
+    document.title = 'ASTA Family Time - Satu aplikasi, lebih banyak waktu bersama keluarga.';
+  }, []);
 
   const [currentTab, setCurrentTab] = useState<MainTab>('home');
   const [subScreen, setSubScreen] = useState<AppScreen | null>(null);
