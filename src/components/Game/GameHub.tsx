@@ -5,6 +5,7 @@ import { FamilyMonopolyGame } from './FamilyMonopolyGame';
 import { FamilyLudoGame } from './FamilyLudoGame';
 import { FamilyUnoGame } from './FamilyUnoGame';
 import { CountingGame } from './CountingGame';
+import { AlphabetGame } from './AlphabetGame';
 import { Play } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
@@ -14,7 +15,11 @@ interface GameHubProps {
 }
 
 export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) => {
-  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting'>('hub');
+  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet'>('hub');
+
+  if (activeGame === 'alphabet') {
+    return <AlphabetGame onBack={() => setActiveGame('hub')} />;
+  }
 
   if (activeGame === 'counting') {
     return <CountingGame onBack={() => setActiveGame('hub')} />;
@@ -224,6 +229,35 @@ export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) =>
           >
             <Play className="w-4 h-4 fill-white" />
             <span>MAIN BERHITUNG CERIA</span>
+          </button>
+        </div>
+
+        {/* 6. Game Abjad Ceria (A-Z) */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-pink-300 dark:border-pink-800 shadow-bubbly-coral flex flex-col justify-between space-y-4 hover:scale-[1.01] transition-all">
+          <div>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 text-white flex items-center justify-center text-2xl sm:text-3xl shadow-md mb-3">
+              🔤
+            </div>
+            <div className="inline-block px-2.5 py-0.5 rounded-full bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-300 text-[10px] font-extrabold mb-1">
+              SUARA INDONESIA • A-Z
+            </div>
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
+              Abjad Ceria A - Z
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2 font-medium">
+              Belajar mengenal & mengucapkan huruf A sampai Z dengan audio Bahasa Indonesia, contoh kata bergambar, putar otomatis, & kuis tebak huruf!
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              setActiveGame('alphabet');
+            }}
+            className="w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-indigo-600 hover:opacity-90 text-white font-display font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>MAIN ABJAD CERIA</span>
           </button>
         </div>
 
