@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { Player } from '../../types/game';
 import type { ChatMessage } from '../../types/family';
 import type { UserAccount } from '../../types/auth';
-import { Send, PhoneCall, Video, Smile, Trash2, CheckCheck, RotateCcw, ShieldCheck, CheckCircle2, Clock, X } from 'lucide-react';
+import { Send, PhoneCall, Video, Smile, Trash2, Check, CheckCheck, RotateCcw, ShieldCheck, CheckCircle2, Clock, X } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
 
@@ -241,7 +241,9 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
             const isMe = msg.senderId === activeSender.id;
             const readList = msg.readBy || [];
             const readByOthers = readList.filter(r => r.userId !== msg.senderId);
-            const isRead = readByOthers.length > 0;
+            const otherPlayers = players.filter(p => p.id !== msg.senderId);
+            const isReadByAll = otherPlayers.length > 0 && readByOthers.length >= otherPlayers.length;
+            const isReadBySome = readByOthers.length > 0;
 
             return (
               <div
@@ -273,7 +275,7 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
                     {msg.text}
                   </p>
 
-                  {/* Footer time & checkmark (Hanya pengirim yang dapat melihat/menglik info status dibaca) */}
+                  {/* Footer time & checkmark (Centang 1 = Belum dibaca semua, Centang 2 = Sudah dibaca semua) */}
                   <div className={`flex items-center justify-end gap-1.5 text-[9px] ${
                     isMe ? 'text-rose-100' : 'text-slate-400'
                   }`}>
@@ -287,12 +289,20 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
                           setSelectedMessageInfo(msg);
                         }}
                         className="flex items-center gap-0.5 hover:scale-110 transition-transform"
-                        title={isRead ? `Dibaca oleh ${readByOthers.map(r => r.userName).join(', ')}` : 'Terkirim (Belum dibaca)'}
+                        title={
+                          isReadByAll
+                            ? 'Sudah dibaca oleh seluruh anggota keluarga ✓✓'
+                            : isReadBySome
+                            ? `Dibaca oleh ${readByOthers.length}/${otherPlayers.length} anggota`
+                            : 'Terkirim (Belum dibaca)'
+                        }
                       >
-                        {isRead ? (
+                        {isReadByAll ? (
                           <CheckCheck className="w-3.5 h-3.5 text-sky-300 font-black drop-shadow-xs" />
+                        ) : isReadBySome ? (
+                          <Check className="w-3.5 h-3.5 text-rose-100 font-bold" />
                         ) : (
-                          <CheckCheck className="w-3.5 h-3.5 text-white/50" />
+                          <Check className="w-3.5 h-3.5 text-white/50" />
                         )}
                       </button>
                     )}
