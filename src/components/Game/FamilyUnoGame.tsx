@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Player } from '../../types/game';
-import { ArrowLeft, RotateCcw, HelpCircle, X, Sparkles } from 'lucide-react';
+import { ArrowLeft, RotateCcw, HelpCircle, X, Sparkles, Layers } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireBurstConfetti, fireVictoryShower, fireSmallPop } from '../../utils/confetti';
 
@@ -177,7 +177,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
     setShowColorPicker(false);
     setSpecialActionText(null);
     setIsGameStarted(true);
-    setMessage(`Game dimulai! Giliran ${activeConfigs[0].name}. Cocokkan warna ${COLOR_MAP[startColor].name} atau angka ${firstCard.value}!`);
+    setMessage(`Game dimulai! Giliran ${activeConfigs[0].name}. Cocokkan warna ${COLOR_MAP[startColor].name} atau angka/simbol ${firstCard.value.toUpperCase()}!`);
     sound.playSuccess();
     fireBurstConfetti();
   };
@@ -194,13 +194,28 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
     return false;
   };
 
+  // Sort hand by color
+  const sortHandByColor = () => {
+    if (!activePlayer) return;
+    sound.playClick();
+    const colorOrder: Record<UnoColor, number> = { red: 1, blue: 2, green: 3, yellow: 4, wild: 5 };
+    const sorted = [...activePlayer.hand].sort((a, b) => {
+      if (colorOrder[a.color] !== colorOrder[b.color]) {
+        return colorOrder[a.color] - colorOrder[b.color];
+      }
+      return a.value.localeCompare(b.value);
+    });
+
+    setUnoPlayers(prev => prev.map(p => p.id === activePlayer.id ? { ...p, hand: sorted } : p));
+  };
+
   // Play a Card
   const handlePlayCard = (card: UnoCard) => {
     if (!activePlayer || !topDiscard || winner) return;
 
     if (!isCardPlayable(card)) {
       sound.playClick();
-      setMessage(`Kartu tidak cocok! Pilih kartu berwarna ${COLOR_MAP[activeColor].name} atau bernilai ${topDiscard.value}.`);
+      setMessage(`Kartu tidak cocok! Pilih kartu berwarna ${COLOR_MAP[activeColor].name} atau bernilai ${topDiscard.value.toUpperCase()}.`);
       return;
     }
 
@@ -272,7 +287,6 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
       sound.playFunnyBonus();
     } else if (card.value === 'reverse') {
       if (playerCount === 2) {
-        // In 2 player UNO, reverse acts like a Skip
         const skippedPlayer = currentPlayersList[nextIdx];
         effectMsg = `🔄 Putar Balik! ${skippedPlayer.name} dilewati gilirannya!`;
         extraStep = 2;
@@ -285,7 +299,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
     } else if (card.value === 'draw2') {
       const targetPlayer = currentPlayersList[nextIdx];
       drawCardsForPlayer(targetPlayer.id, 2);
-      effectMsg = `➕2 ${targetPlayer.name} mengambil 2 kartu dan dilewati gilirannya!`;
+      effectMsg = `➕2 ${targetPlayer.name} mengambil 2 kartu & dilewati!`;
       extraStep = 2;
       sound.playFunnyBonus();
     } else if (card.value === 'wild4') {
@@ -332,7 +346,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
     }
   };
 
-  // Draw cards from draw pile (replenishing if needed)
+  // Draw cards from draw pile
   const drawCardsForPlayer = (playerId: string, count: number) => {
     let currentDraw = [...drawPile];
     let currentDiscard = [...discardPile];
@@ -343,7 +357,6 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
         if (currentDiscard.length > 1) {
           const top = currentDiscard.pop()!;
           currentDraw = [...currentDiscard];
-          // Reshuffle
           for (let k = currentDraw.length - 1; k > 0; k--) {
             const j = Math.floor(Math.random() * (k + 1));
             [currentDraw[k], currentDraw[j]] = [currentDraw[j], currentDraw[k]];
@@ -425,32 +438,34 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
     setMessage(`🗣️ "${activePlayer.name} BERTERIAK: UNOOO!" ❤️`);
   };
 
+  const hasAnyPlayableCard = activePlayer?.hand?.some(c => isCardPlayable(c));
+
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 pb-24 space-y-4 animate-pop-in">
+    <div className="max-w-4xl mx-auto px-2.5 sm:px-4 py-2 sm:py-4 pb-20 space-y-3 sm:space-y-4 animate-pop-in select-none">
       
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-800 p-3 rounded-2xl border-2 border-rose-100 dark:border-slate-700 shadow-sm">
+      <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-800 p-2.5 sm:p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
         <button
           onClick={() => {
             sound.playClick();
             onBack();
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-extrabold transition-all active:scale-95"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-black transition-all active:scale-95 shrink-0"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Kembali</span>
         </button>
 
-        <div className="text-center">
-          <h2 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white flex items-center justify-center gap-1.5">
-            <span>🃏 UNO Keluarga ASTA</span>
+        <div className="text-center min-w-0 flex-1">
+          <h2 className="font-display font-black text-sm sm:text-base text-slate-900 dark:text-white truncate">
+            🃏 UNO Keluarga ASTA
           </h2>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-            {isGameStarted ? `${unoPlayers.length} Pemain • Arah ${isClockwise ? 'Searah ↻' : 'Berlawanan ↺'}` : 'Pilih Jumlah Pemain'}
+          <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold truncate">
+            {isGameStarted ? `${unoPlayers.length} Pemain • ${isClockwise ? 'Searah ↻' : 'Berlawanan ↺'}` : 'Pilih Jumlah Pemain'}
           </p>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => {
               sound.playClick();
@@ -478,25 +493,25 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
 
       {/* SETUP SCREEN */}
       {!isGameStarted ? (
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border-3 border-rose-200 dark:border-slate-700 shadow-bubbly-coral space-y-6 animate-pop-in">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-rose-200 dark:border-slate-700 shadow-bubbly-coral space-y-5 animate-pop-in">
           <div className="text-center space-y-2">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-red-500 via-yellow-400 to-blue-500 text-white flex items-center justify-center text-3xl mx-auto shadow-md">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-gradient-to-tr from-red-500 via-yellow-400 to-blue-500 text-white flex items-center justify-center text-3xl mx-auto shadow-md">
               🃏
             </div>
-            <h3 className="font-display font-black text-2xl text-slate-900 dark:text-white">
+            <h3 className="font-display font-black text-xl sm:text-2xl text-slate-900 dark:text-white">
               Pengaturan Game UNO Keluarga
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-md mx-auto">
-              Permainan kartu UNO penuh keseruan, aksi Skip, Reverse, Draw 2, Wild Draw 4, dan Kartu Spesial Kasih Sayang ASTA!
+            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
+              Permainan kartu UNO seru dengan kartu Skip, Reverse, Draw 2, Wild Draw 4, & Kartu Spesial Kasih Sayang ASTA!
             </p>
           </div>
 
           {/* 1. Pilih Jumlah Pemain */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <label className="block text-xs font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
               1. Pilih Jumlah Pemain
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2.5">
               {[2, 3, 4].map((num) => (
                 <button
                   key={num}
@@ -504,18 +519,18 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
                     sound.playClick();
                     setPlayerCount(num as 2 | 3 | 4);
                   }}
-                  className={`p-4 rounded-2xl border-3 flex flex-col items-center gap-2 transition-all active:scale-95 ${
+                  className={`p-3 sm:p-4 rounded-2xl border-3 flex flex-col items-center gap-1.5 transition-all active:scale-95 ${
                     playerCount === num
                       ? 'border-family-coral bg-rose-50 dark:bg-rose-950/50 shadow-md scale-102'
                       : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:border-slate-300'
                   }`}
                 >
                   <span className="text-2xl">{num === 2 ? '👥' : num === 3 ? '👨‍👩‍👦' : '👨‍👩‍👧‍👦'}</span>
-                  <span className="font-display font-black text-base text-slate-900 dark:text-white">
+                  <span className="font-display font-black text-sm sm:text-base text-slate-900 dark:text-white">
                     {num} Pemain
                   </span>
-                  <span className="text-[10px] text-slate-500 font-bold">
-                    {num === 2 ? 'Duel 1 lawan 1' : num === 3 ? 'Segitiga Seru' : 'Keluarga Lengkap'}
+                  <span className="text-[9px] text-slate-500 font-bold">
+                    {num === 2 ? 'Duel 1 lawan 1' : num === 3 ? '3 Pemain' : 'Keluarga Lengkap'}
                   </span>
                 </button>
               ))}
@@ -523,29 +538,29 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
           </div>
 
           {/* 2. Pilih Jumlah Kartu Awal */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <label className="block text-xs font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
-              2. Jumlah Kartu di Tangan
+              2. Jumlah Kartu Awal di Tangan
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <button
                 onClick={() => {
                   sound.playClick();
                   setCardsPerHand(5);
                 }}
-                className={`p-3.5 rounded-2xl border-2 flex items-center gap-3 transition-all active:scale-95 ${
+                className={`p-3 rounded-2xl border-2 flex items-center gap-2.5 transition-all active:scale-95 ${
                   cardsPerHand === 5
                     ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 shadow-sm'
                     : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
                 }`}
               >
                 <div className="text-2xl">⚡</div>
-                <div className="text-left">
-                  <div className="font-display font-black text-sm text-slate-900 dark:text-white">
-                    Mode Kilat (5 Kartu)
+                <div className="text-left min-w-0">
+                  <div className="font-display font-black text-xs sm:text-sm text-slate-900 dark:text-white">
+                    Mode Cepat (5 Kartu)
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium">
-                    Selesai cepat ~5-10 menit.
+                  <div className="text-[10px] text-slate-500 font-medium truncate">
+                    Selesai ~5 menit
                   </div>
                 </div>
               </button>
@@ -555,19 +570,19 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
                   sound.playClick();
                   setCardsPerHand(7);
                 }}
-                className={`p-3.5 rounded-2xl border-2 flex items-center gap-3 transition-all active:scale-95 ${
+                className={`p-3 rounded-2xl border-2 flex items-center gap-2.5 transition-all active:scale-95 ${
                   cardsPerHand === 7
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 shadow-sm'
                     : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
                 }`}
               >
                 <div className="text-2xl">👑</div>
-                <div className="text-left">
-                  <div className="font-display font-black text-sm text-slate-900 dark:text-white">
+                <div className="text-left min-w-0">
+                  <div className="font-display font-black text-xs sm:text-sm text-slate-900 dark:text-white">
                     Mode Standar (7 Kartu)
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium">
-                    Aturan resmi UNO dunia.
+                  <div className="text-[10px] text-slate-500 font-medium truncate">
+                    Aturan resmi UNO
                   </div>
                 </div>
               </button>
@@ -577,7 +592,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
           {/* Start Game Button */}
           <button
             onClick={initializeGame}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-red-500 via-amber-500 to-rose-600 hover:opacity-95 text-white font-display font-black text-base shadow-bubbly-coral active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-red-500 via-amber-500 to-rose-600 hover:opacity-95 text-white font-display font-black text-sm sm:text-base shadow-bubbly-coral active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <Sparkles className="w-5 h-5" />
             <span>BAGIKAN KARTU & MULAI MAIN</span>
@@ -585,7 +600,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
         </div>
       ) : (
         /* ACTIVE UNO GAMEPLAY */
-        <div className="space-y-4">
+        <div className="space-y-3">
           
           {/* Players Turn Strip */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
@@ -595,20 +610,18 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
               return (
                 <div
                   key={p.id}
-                  className={`p-2 sm:p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2 relative ${
+                  className={`p-2 rounded-2xl border-2 transition-all flex items-center gap-2 relative ${
                     isCurrentTurn
-                      ? 'border-family-coral bg-rose-50 dark:bg-rose-950/60 shadow-md scale-102 ring-2 ring-rose-400/50'
-                      : 'border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 opacity-80'
+                      ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/70 shadow-md ring-2 ring-rose-400/50'
+                      : 'border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 opacity-80'
                   }`}
                 >
-                  <span className="text-xl sm:text-2xl shrink-0">{p.avatar}</span>
+                  <span className="text-xl shrink-0">{p.avatar}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1">
-                      <span className="font-display font-black text-[11px] sm:text-xs text-slate-900 dark:text-white truncate">
-                        {p.name}
-                      </span>
+                    <div className="font-display font-black text-xs text-slate-900 dark:text-white truncate">
+                      {p.name}
                     </div>
-                    <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500 font-bold">
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold">
                       <span>{p.hand.length} Kartu</span>
                       {p.hand.length === 1 && (
                         <span className="text-rose-600 font-extrabold animate-pulse">UNO! 🔥</span>
@@ -616,7 +629,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
                     </div>
                   </div>
                   {isCurrentTurn && (
-                    <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black uppercase shadow-xs">
+                    <span className="absolute -top-2 -right-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[9px] font-black uppercase shadow-xs">
                       Giliran
                     </span>
                   )}
@@ -625,16 +638,17 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
             })}
           </div>
 
-          {/* Action Message Bar */}
-          <div className="bg-white/95 dark:bg-slate-800/95 p-3 rounded-2xl border-2 border-rose-100 dark:border-slate-700 shadow-sm flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
-              <span className="text-base sm:text-lg shrink-0">📢</span>
-              <span>{message}</span>
+          {/* Action Message & Shout UNO Bar */}
+          <div className="bg-white dark:bg-slate-800 p-2.5 sm:p-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex-1 min-w-0">
+              <span className="text-base shrink-0">📢</span>
+              <span className="leading-snug break-words">{message}</span>
             </div>
+
             {activePlayer.hand.length === 2 && (
               <button
                 onClick={handleShoutUno}
-                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-black shadow-md hover:scale-105 active:scale-95 transition-all shrink-0 animate-bounce text-center"
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-black shadow-md hover:scale-105 active:scale-95 transition-all shrink-0 animate-bounce text-center"
               >
                 TERIAK "UNO!" 🗣️
               </button>
@@ -642,73 +656,99 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
           </div>
 
           {/* Table Center (Discard Pile & Draw Deck & Active Color) */}
-          <div className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-3xl p-3.5 sm:p-6 border-3 sm:border-4 border-slate-700 shadow-bubbly-lg flex flex-col items-center justify-center space-y-3.5 text-white relative min-h-[190px] sm:min-h-[220px]">
+          <div className="bg-gradient-to-b from-slate-900 via-slate-850 to-slate-900 rounded-3xl p-3 sm:p-5 border-3 border-slate-700 shadow-xl flex flex-col items-center justify-between gap-3 text-white relative min-h-[175px] sm:min-h-[210px]">
             
-            {/* Active Color Badge */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
-              <span className="font-black uppercase text-slate-400">Warna Aktif:</span>
-              <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-black uppercase shadow-sm ${COLOR_MAP[activeColor].bg} text-white`}>
+            {/* Active Color & Direction Badge */}
+            <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+              <span className="font-extrabold text-slate-300">Warna Aktif:</span>
+              <span className={`px-3 py-0.5 rounded-full font-black uppercase shadow-sm ${COLOR_MAP[activeColor].bg} text-white text-xs`}>
                 {COLOR_MAP[activeColor].name}
               </span>
-              <span className="text-slate-400 font-bold ml-1">
+              <span className="text-slate-400 font-bold text-[11px] bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-700">
                 Arah: {isClockwise ? 'Searah ↻' : 'Berlawanan ↺'}
               </span>
             </div>
 
             {/* Piles Center */}
-            <div className="flex items-center justify-center gap-4 sm:gap-10">
+            <div className="flex items-center justify-center gap-6 sm:gap-12 my-1">
               
               {/* Draw Deck */}
-              <div
-                onClick={handlePlayerDrawCard}
-                className="w-20 h-30 sm:w-28 sm:h-40 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-slate-700 to-slate-900 border-2 sm:border-3 border-amber-400/80 shadow-2xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all group relative shrink-0"
-                title="Klik untuk ambil 1 kartu"
-              >
-                <div className="w-13 h-20 sm:w-16 sm:h-24 rounded-lg sm:rounded-xl bg-gradient-to-tr from-red-600 via-yellow-500 to-blue-600 flex items-center justify-center text-white font-black text-sm sm:text-xl shadow-inner transform -rotate-6 group-hover:rotate-0 transition-transform">
-                  UNO
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  onClick={handlePlayerDrawCard}
+                  className="w-18 h-26 sm:w-24 sm:h-36 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-slate-800 to-slate-950 border-2 sm:border-3 border-amber-400 shadow-xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all group relative shrink-0"
+                  title="Klik untuk ambil 1 kartu"
+                >
+                  <div className="w-12 h-18 sm:w-16 sm:h-24 rounded-lg bg-gradient-to-tr from-red-600 via-yellow-500 to-blue-600 flex items-center justify-center text-white font-black text-xs sm:text-lg shadow-inner transform -rotate-6 group-hover:rotate-0 transition-transform">
+                    UNO
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] font-black text-amber-300 mt-1 uppercase tracking-wider">
+                    (+1) Ambil
+                  </span>
                 </div>
-                <span className="text-[9px] sm:text-[10px] font-black text-amber-300 mt-1 uppercase tracking-wide">
-                  Ambil (+1)
-                </span>
-                <span className="absolute -bottom-2 px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] shadow-sm">
-                  {drawPile.length} Kartu
+                <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-amber-300 font-black text-[9px] sm:text-[10px]">
+                  {drawPile.length} Kartu Dek
                 </span>
               </div>
 
               {/* Top Discard Card */}
               {topDiscard && (
-                <div className={`w-20 h-30 sm:w-28 sm:h-40 rounded-xl sm:rounded-2xl bg-gradient-to-br ${COLOR_MAP[topDiscard.color === 'wild' ? activeColor : topDiscard.color].gradient} border-2 sm:border-4 border-white shadow-2xl flex flex-col items-center justify-between p-1.5 sm:p-2 text-white relative animate-pop-in shrink-0`}>
-                  <div className="self-start font-black text-xs sm:text-sm">
-                    {topDiscard.value === 'draw2' ? '+2' : topDiscard.value === 'wild4' ? '+4' : topDiscard.value === 'asta_love' ? '❤️' : topDiscard.value.toUpperCase()}
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`w-18 h-26 sm:w-24 sm:h-36 rounded-xl sm:rounded-2xl bg-gradient-to-br ${COLOR_MAP[topDiscard.color === 'wild' ? activeColor : topDiscard.color].gradient} border-2 sm:border-3 border-white shadow-xl flex flex-col items-center justify-between p-1.5 sm:p-2 text-white relative animate-pop-in shrink-0`}>
+                    <div className="self-start font-black text-xs">
+                      {topDiscard.value === 'draw2' ? '+2' : topDiscard.value === 'wild4' ? '+4' : topDiscard.value === 'asta_love' ? '❤️' : topDiscard.value.toUpperCase()}
+                    </div>
+                    <div className="w-10 h-14 sm:w-14 sm:h-20 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-lg sm:text-2xl drop-shadow-md">
+                      {topDiscard.value === 'skip' ? '🚫' : topDiscard.value === 'reverse' ? '🔄' : topDiscard.value === 'draw2' ? '+2' : topDiscard.value === 'wild4' ? '+4' : topDiscard.value === 'asta_love' ? '💖' : topDiscard.value === 'wild' ? '🌈' : topDiscard.value}
+                    </div>
+                    <div className="self-end font-black text-[10px]">
+                      {topDiscard.value === 'draw2' ? '+2' : topDiscard.value === 'wild4' ? '+4' : topDiscard.value === 'asta_love' ? '❤️' : topDiscard.value.toUpperCase()}
+                    </div>
                   </div>
-                  <div className="w-12 h-16 sm:w-16 sm:h-22 rounded-md sm:rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-xl sm:text-3xl drop-shadow-md">
-                    {topDiscard.value === 'skip' ? '🚫' : topDiscard.value === 'reverse' ? '🔄' : topDiscard.value === 'draw2' ? '+2' : topDiscard.value === 'wild4' ? '+4' : topDiscard.value === 'asta_love' ? '💖' : topDiscard.value === 'wild' ? '🌈' : topDiscard.value}
-                  </div>
-                  <div className="self-end font-black text-xs sm:text-sm transform rotate-180">
-                    {topDiscard.value === 'draw2' ? '+2' : topDiscard.value === 'wild4' ? '+4' : topDiscard.value === 'asta_love' ? '❤️' : topDiscard.value.toUpperCase()}
-                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[9px] sm:text-[10px]">
+                    Kartu Meja
+                  </span>
                 </div>
               )}
 
             </div>
           </div>
 
-          {/* Active Player Hand */}
-          <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-3xl border-3 border-rose-100 dark:border-slate-700 shadow-sm space-y-2.5">
-            <div className="flex flex-wrap items-center justify-between gap-1">
+          {/* Active Player Hand Container */}
+          <div className="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+            
+            {/* Hand Header & Quick Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-slate-700/60">
               <div className="flex items-center gap-2">
-                <span className="text-lg sm:text-xl">{activePlayer.avatar}</span>
-                <span className="font-display font-black text-xs sm:text-base text-slate-900 dark:text-white">
+                <span className="text-lg">{activePlayer.avatar}</span>
+                <span className="font-display font-black text-xs sm:text-sm text-slate-900 dark:text-white">
                   Tangan {activePlayer.name} ({activePlayer.hand.length} Kartu)
                 </span>
               </div>
-              <span className="text-[11px] sm:text-xs text-slate-500 font-bold">
-                Pilih kartu yang cocok untuk dimainkan:
-              </span>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={sortHandByColor}
+                  className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-extrabold flex items-center gap-1 transition-all active:scale-95"
+                  title="Urutkan kartu berdasarkan warna"
+                >
+                  <Layers className="w-3 h-3 text-amber-500" />
+                  <span>Urutkan Warna</span>
+                </button>
+
+                {!hasAnyPlayableCard && (
+                  <button
+                    onClick={handlePlayerDrawCard}
+                    className="px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black flex items-center gap-1 shadow-sm active:scale-95 transition-all animate-pulse"
+                  >
+                    <span>➕ AMBIL (+1)</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Cards Scroll List */}
-            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-3 pt-2 px-1 scrollbar-thin scrollbar-thumb-rose-300 dark:scrollbar-thumb-slate-700 min-h-[135px] sm:min-h-[160px] items-end">
+            {/* Cards Horizontal Scrollable List */}
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 pt-1 px-1 custom-scrollbar min-h-[125px] sm:min-h-[145px] items-end">
               {activePlayer.hand.map((card) => {
                 const playable = isCardPlayable(card);
 
@@ -716,22 +756,28 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
                   <button
                     key={card.id}
                     onClick={() => handlePlayCard(card)}
-                    className={`w-18 h-28 xs:w-20 xs:h-32 sm:w-24 sm:h-36 rounded-xl sm:rounded-2xl bg-gradient-to-br ${COLOR_MAP[card.color].gradient} p-1.5 sm:p-2 text-white flex flex-col justify-between items-center shrink-0 transition-all border-2 border-white shadow-md active:scale-95 relative ${
+                    className={`w-16 h-24 sm:w-22 sm:h-32 rounded-xl sm:rounded-2xl bg-gradient-to-br ${COLOR_MAP[card.color].gradient} p-1.5 text-white flex flex-col justify-between items-center shrink-0 transition-all border-2 border-white/90 shadow-md active:scale-95 relative ${
                       playable
-                        ? 'hover:-translate-y-2 hover:shadow-xl ring-3 ring-amber-400 cursor-pointer animate-pulse-subtle scale-102'
-                        : 'opacity-45 grayscale-30 cursor-not-allowed'
+                        ? 'hover:-translate-y-1.5 hover:shadow-xl ring-3 ring-amber-400 cursor-pointer scale-102 z-10'
+                        : 'opacity-50 grayscale-20 cursor-not-allowed'
                     }`}
                   >
-                    <div className="self-start font-black text-[10px] sm:text-xs">
-                      {card.value === 'draw2' ? '+2' : card.value === 'wild4' ? '+4' : card.value === 'asta_love' ? '❤️' : card.value.toUpperCase()}
-                    </div>
-                    <div className="w-9 h-13 sm:w-12 sm:h-16 rounded-md sm:rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-lg sm:text-2xl">
-                      {card.value === 'skip' ? '🚫' : card.value === 'reverse' ? '🔄' : card.value === 'draw2' ? '+2' : card.value === 'wild4' ? '+4' : card.value === 'asta_love' ? '💖' : card.value === 'wild' ? '🌈' : card.value}
-                    </div>
-                    <div className="self-end font-black text-[10px] sm:text-xs transform rotate-180">
+                    {/* Top corner label */}
+                    <div className="self-start font-black text-[10px] leading-none">
                       {card.value === 'draw2' ? '+2' : card.value === 'wild4' ? '+4' : card.value === 'asta_love' ? '❤️' : card.value.toUpperCase()}
                     </div>
 
+                    {/* Big Center Symbol */}
+                    <div className="w-8 h-11 sm:w-11 sm:h-15 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-base sm:text-xl drop-shadow-sm">
+                      {card.value === 'skip' ? '🚫' : card.value === 'reverse' ? '🔄' : card.value === 'draw2' ? '+2' : card.value === 'wild4' ? '+4' : card.value === 'asta_love' ? '💖' : card.value === 'wild' ? '🌈' : card.value}
+                    </div>
+
+                    {/* Bottom corner label (Clean Right-side-up) */}
+                    <div className="self-end font-black text-[9px] leading-none opacity-90">
+                      {card.value === 'draw2' ? '+2' : card.value === 'wild4' ? '+4' : card.value === 'asta_love' ? '❤️' : card.value.toUpperCase()}
+                    </div>
+
+                    {/* Playable Badge */}
                     {playable && (
                       <span className="absolute -top-2 px-1.5 py-0.2 rounded-full bg-amber-400 text-amber-950 font-black text-[8px] uppercase shadow-xs">
                         Bisa
@@ -749,18 +795,18 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
       {/* COLOR PICKER MODAL (When Wild Card is played) */}
       {showColorPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-md animate-pop-in">
-          <div className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-800 p-6 text-center space-y-4 border-4 border-purple-500 shadow-bubbly-lg">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-r from-red-500 via-yellow-400 to-blue-500 text-white flex items-center justify-center text-3xl mx-auto shadow-md">
+          <div className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 text-center space-y-4 border-4 border-purple-500 shadow-2xl">
+            <div className="w-14 h-14 rounded-3xl bg-gradient-to-r from-red-500 via-yellow-400 to-blue-500 text-white flex items-center justify-center text-3xl mx-auto shadow-md">
               🌈
             </div>
-            <h3 className="font-display font-black text-xl text-slate-900 dark:text-white">
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
               Pilih Warna Berikutnya!
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300">
-              Pilih warna kartu yang harus dimainkan oleh pemain selanjutnya:
+              Pilih warna kartu yang harus dimainkan selanjutnya:
             </p>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
               {(['red', 'blue', 'green', 'yellow'] as UnoColor[]).map((c) => (
                 <button
                   key={c}
@@ -769,7 +815,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
                       executePlayCard(pendingWildCard, c);
                     }
                   }}
-                  className={`p-4 rounded-2xl font-display font-black text-sm text-white shadow-md active:scale-95 transition-all ${COLOR_MAP[c].bg}`}
+                  className={`p-3.5 rounded-2xl font-display font-black text-sm text-white shadow-md active:scale-95 transition-all ${COLOR_MAP[c].bg}`}
                 >
                   {COLOR_MAP[c].name}
                 </button>
@@ -782,14 +828,14 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
       {/* ASTA SPECIAL ACTION POPUP */}
       {specialActionText && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-md animate-pop-in">
-          <div className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-800 p-6 text-center space-y-4 border-4 border-rose-500 shadow-bubbly-coral">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center text-3xl mx-auto shadow-md animate-bounce">
+          <div className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 text-center space-y-4 border-4 border-rose-500 shadow-2xl">
+            <div className="w-14 h-14 rounded-3xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center text-3xl mx-auto shadow-md animate-bounce">
               💖
             </div>
-            <h3 className="font-display font-black text-xl text-slate-900 dark:text-white">
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
               Kasih Sayang Keluarga ASTA!
             </h3>
-            <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed bg-rose-50 dark:bg-rose-950/50 p-3.5 rounded-2xl border border-rose-200 dark:border-rose-900">
+            <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed bg-rose-50 dark:bg-rose-950/50 p-3 rounded-2xl border border-rose-200 dark:border-rose-900">
               {specialActionText}
             </p>
             <button
@@ -798,7 +844,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
                 setSpecialActionText(null);
                 fireSmallPop(0.5, 0.4);
               }}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-black text-sm shadow-md active:scale-95 transition-all"
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all"
             >
               SUDAH KAMI LAKUKAN! 🥰
             </button>
@@ -809,29 +855,29 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
       {/* WINNER MODAL 🏆 */}
       {winner && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-pop-in">
-          <div className="relative w-full max-w-md rounded-3xl bg-white dark:bg-slate-800 p-6 text-center space-y-5 border-4 border-rose-500 shadow-bubbly-lg">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 text-white flex items-center justify-center mx-auto text-4xl shadow-lg animate-bounce">
+          <div className="relative w-full max-w-md rounded-3xl bg-white dark:bg-slate-800 p-6 text-center space-y-4 border-4 border-rose-500 shadow-2xl">
+            <div className="w-18 h-18 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 text-white flex items-center justify-center mx-auto text-4xl shadow-lg animate-bounce">
               🏆
             </div>
             <div>
               <span className="text-xs font-black uppercase tracking-wider text-family-coral">
                 JUARA 1 UNO KELUARGA ASTA
               </span>
-              <h3 className="font-display font-black text-2xl text-slate-900 dark:text-white mt-1">
+              <h3 className="font-display font-black text-xl sm:text-2xl text-slate-900 dark:text-white mt-1">
                 {winner.name}
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
-                Kartu di tangan habis lebih dahulu! Kemenangan spektakuler untuk keluarga tercinta 🎉
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                Kartu di tangan habis lebih dahulu! Kemenangan luar biasa untuk keluarga 🎉
               </p>
             </div>
 
-            <div className="p-3.5 bg-rose-50 dark:bg-rose-950/60 rounded-2xl border border-rose-200 dark:border-rose-900 flex items-center justify-center gap-3">
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/60 rounded-2xl border border-rose-200 dark:border-rose-900 flex items-center justify-center gap-3">
               <span className="text-3xl">{winner.avatar}</span>
               <div className="text-left">
-                <div className="font-display font-black text-sm text-slate-900 dark:text-white">
+                <div className="font-display font-black text-xs sm:text-sm text-slate-900 dark:text-white">
                   Pemenang Utama UNO 🥇
                 </div>
-                <div className="text-xs text-family-coral font-bold">
+                <div className="text-[11px] text-family-coral font-bold">
                   +100 Poin Kasih Sayang Keluarga
                 </div>
               </div>
@@ -861,11 +907,11 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
       {/* RULES MODAL */}
       {showRulesModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-pop-in">
-          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 space-y-4 border-2 border-slate-200 dark:border-slate-700 shadow-bubbly-lg max-h-[85vh] overflow-y-auto">
+          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 space-y-4 border-2 border-slate-200 dark:border-slate-700 shadow-2xl max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">📜</span>
-                <h3 className="font-display font-black text-lg text-slate-900 dark:text-white">
+                <h3 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white">
                   Aturan Main UNO Keluarga
                 </h3>
               </div>
@@ -877,27 +923,27 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
               </button>
             </div>
 
-            <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-              <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900 space-y-1">
+            <div className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+              <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900 space-y-0.5">
                 <div className="font-bold text-family-coral">🎨 1. Mencocokkan Kartu</div>
                 <p>Keluarkan kartu yang memiliki <strong>warna yang sama</strong> ATAU <strong>angka/simbol yang sama</strong> dengan kartu teratas di meja.</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900 space-y-1">
+              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900 space-y-0.5">
                 <div className="font-bold text-amber-700 dark:text-amber-400">⚡ 2. Kartu Aksi Seru</div>
                 <p>• <strong>🚫 Skip</strong>: Pemain berikutnya dilewati.</p>
                 <p>• <strong>🔄 Reverse</strong>: Arah putaran giliran dibalik.</p>
-                <p>• <strong>➕2 Draw Two</strong>: Lawan ambil 2 kartu dan dilewati.</p>
+                <p>• <strong>➕2 Draw Two</strong>: Lawan ambil 2 kartu & dilewati.</p>
                 <p>• <strong>🔥 Wild Draw 4</strong>: Ganti warna & lawan ambil 4 kartu!</p>
                 <p>• <strong>💖 Kasih Sayang ASTA</strong>: Ganti warna & beri pelukan keluarga!</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900 space-y-1">
+              <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900 space-y-0.5">
                 <div className="font-bold text-emerald-700 dark:text-emerald-400">🗣️ 3. Teriak "UNO!"</div>
-                <p>Ketika kartu di tangan Anda tersisa tinggal <strong>1 kartu</strong>, tekan tombol <strong>"UNO!"</strong> untuk mengumumkan ke seluruh pemain!</p>
+                <p>Ketika kartu di tangan Anda tersisa <strong>1 kartu</strong>, tekan tombol <strong>"TERIAK UNO!"</strong> untuk mengumumkan ke lawan!</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 space-y-1">
+              <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 space-y-0.5">
                 <div className="font-bold text-blue-700 dark:text-blue-400">🏆 4. Kemenangan</div>
                 <p>Pemain pertama yang menghabiskan seluruh kartu di tangan dinobatkan sebagai <strong>Juara 1</strong>!</p>
               </div>
@@ -905,7 +951,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
 
             <button
               onClick={() => setShowRulesModal(false)}
-              className="w-full py-3 rounded-2xl bg-family-coral hover:bg-rose-600 text-white font-display font-black text-xs shadow-md active:scale-95 transition-all"
+              className="w-full py-3 rounded-2xl bg-family-coral hover:bg-rose-600 text-white font-display font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all"
             >
               MENGERTI, SIAP MAIN! 👍
             </button>
