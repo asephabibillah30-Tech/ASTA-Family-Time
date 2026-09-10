@@ -10,7 +10,8 @@ import type {
   FinanceTransaction,
   SavingsTarget,
   FamilyAchievement,
-  JournalMood
+  JournalMood,
+  ActivityNotification
 } from '../types/family';
 import {
   DAILY_IDEAS,
@@ -21,6 +22,42 @@ import {
 import { supabaseFamilyService } from '../services/db/supabaseFamilyService';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti, fireSmallPop } from '../utils/confetti';
+
+const MAX_NOTIF_BYTES = 5 * 1024 * 1024; // 5 MB PWA Cache Limit
+
+export const DEFAULT_NOTIFICATIONS: ActivityNotification[] = [
+  {
+    id: 'notif-1',
+    title: 'Sesi Enkripsi Aktif',
+    message: '✨ Sesi privat terenkripsi aktif untuk keluarga ASTA.',
+    category: 'system',
+    icon: '✨',
+    timestamp: Date.now() - 1000 * 60 * 5,
+    read: false
+  },
+  {
+    id: 'notif-2',
+    title: 'Sinkronisasi PWA Cloud',
+    message: '☁️ Sinkronisasi data keluarga di semua HP aktif.',
+    category: 'system',
+    icon: '☁️',
+    timestamp: Date.now() - 1000 * 60 * 15,
+    read: false
+  }
+];
+
+function pruneNotifications(notifs: ActivityNotification[]): ActivityNotification[] {
+  let list = [...notifs];
+  while (list.length > 1) {
+    const jsonStr = JSON.stringify(list);
+    const bytes = new Blob([jsonStr]).size;
+    if (bytes <= MAX_NOTIF_BYTES && list.length <= 500) {
+      break;
+    }
+    list.pop(); // Automatically evict oldest notification if limit reached
+  }
+  return list;
+}
 
 function loadStorage<T>(key: string, familyId: string, defaultValue: T): T {
   try {
@@ -52,9 +89,58 @@ export function useFamilyState(familyId?: string | null) {
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
   const [savingsTargets, setSavingsTargets] = useState<SavingsTarget[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [notifications, setNotifications] = useState<ActivityNotification[]>([]);
   const [gamePoints, setGamePoints] = useState<number>(() => {
     return familyId ? loadStorage('game_points', familyId, 0) : 0;
   });
+
+  const addNotification = useCallback((
+    message: string,
+    category: ActivityNotification['category'],
+    icon?: string,
+    title?: string
+  ) => {
+    const newNotif: ActivityNotification = {
+      id: 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+      title: title || 'Aktivitas Keluarga',
+      message,
+      category,
+      icon: icon || '🔔',
+      timestamp: Date.now(),
+      read: false
+    };
+
+    setNotifications((prev) => {
+      const updated = [newNotif, ...prev];
+      const pruned = pruneNotifications(updated);
+      if (familyId) {
+        saveStorage('notifications', familyId, pruned);
+        try {
+          if ('caches' in window) {
+            caches.open('asta-pwa-notif-v1').then((cache) => {
+              cache.put('/api/notifications', new Response(JSON.stringify(pruned), {
+                headers: { 'Content-Type': 'application/json' }
+              })).catch(() => {});
+            });
+          }
+        } catch (e) {}
+      }
+      return pruned;
+    });
+  }, [familyId]);
+
+  const markAllNotifsAsRead = useCallback(() => {
+    setNotifications((prev) => {
+      const updated = prev.map((n) => ({ ...n, read: true }));
+      if (familyId) saveStorage('notifications', familyId, updated);
+      return updated;
+    });
+  }, [familyId]);
+
+  const clearNotifications = useCallback(() => {
+    setNotifications([]);
+    if (familyId) saveStorage('notifications', familyId, []);
+  }, [familyId]);
 
   const loadData = useCallback(async (fid: string) => {
     setIsLoading(true);
@@ -69,6 +155,7 @@ export function useFamilyState(familyId?: string | null) {
         setHabits(cloud.habits.length > 0 ? cloud.habits : loadStorage('habits', fid, INITIAL_HABITS));
         setTransactions(cloud.transactions.length > 0 ? cloud.transactions : loadStorage('transactions', fid, []));
         setSavingsTargets(cloud.savingsTargets.length > 0 ? cloud.savingsTargets : loadStorage('savings', fid, []));
+        setNotifications(loadStorage('notifications', fid, DEFAULT_NOTIFICATIONS));
         // Merge local chat messages with cloud chat messages to preserve read receipts
         const localMsgs = loadStorage<ChatMessage[]>('chat_msgs', fid, []);
         const mergedMsgs = (cloud.chatMessages || []).map((cMsg) => {
@@ -91,6 +178,7 @@ export function useFamilyState(familyId?: string | null) {
         setTransactions(loadStorage('transactions', fid, []));
         setSavingsTargets(loadStorage('savings', fid, []));
         setChatMessages(loadStorage('chat_msgs', fid, []));
+        setNotifications(loadStorage('notifications', fid, DEFAULT_NOTIFICATIONS));
       }
       setCurrentIdeaIndex(loadStorage('idea_idx', fid, 0));
     } catch (e) {
@@ -103,6 +191,7 @@ export function useFamilyState(familyId?: string | null) {
       setTransactions(loadStorage('transactions', fid, []));
       setSavingsTargets(loadStorage('savings', fid, []));
       setChatMessages(loadStorage('chat_msgs', fid, []));
+      setNotifications(loadStorage('notifications', fid, DEFAULT_NOTIFICATIONS));
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +222,7 @@ export function useFamilyState(familyId?: string | null) {
   useEffect(() => { if (familyId) saveStorage('transactions', familyId, transactions); }, [transactions, familyId]);
   useEffect(() => { if (familyId) saveStorage('savings', familyId, savingsTargets); }, [savingsTargets, familyId]);
   useEffect(() => { if (familyId) saveStorage('chat_msgs', familyId, chatMessages); }, [chatMessages, familyId]);
+  useEffect(() => { if (familyId) saveStorage('notifications', familyId, notifications); }, [notifications, familyId]);
 
   // Real-Time Auto-Sync: Pesan obrolan baru & status dibaca langsung muncul tanpa perlu refresh halaman
   useEffect(() => {
@@ -185,6 +275,7 @@ export function useFamilyState(familyId?: string | null) {
       if (familyId) saveStorage('game_points', familyId, next);
       return next;
     });
+    addNotification(`🎮 Berhasil mendapatkan +${amount} Love Points dari permainan!`, 'game', '🎮', 'Poin Permainan');
     sound.playSuccess();
     fireSmallPop(0.5, 0.4);
   };
@@ -214,6 +305,8 @@ export function useFamilyState(familyId?: string | null) {
     return ach;
   });
 
+  const unreadNotifCount = notifications.filter((n) => !n.read).length;
+
   const currentDailyIdea = DAILY_IDEAS[Math.abs(currentIdeaIndex || 0) % DAILY_IDEAS.length] || DAILY_IDEAS[0];
 
   const nextDailyIdea = () => {
@@ -226,6 +319,7 @@ export function useFamilyState(familyId?: string | null) {
     const newItem: MemoryItem = { ...memory, id: 'mem-' + Date.now(), likes: 1 };
     setMemories((prev) => [newItem, ...prev]);
     if (familyId) supabaseFamilyService.upsertMemory(familyId, newItem).catch(console.warn);
+    addNotification(`📸 Momen kenangan foto "${newItem.title}" telah diunggah! (+10 ⭐)`, 'memory', '📸', 'Memori Foto');
     sound.playSuccess();
     fireBurstConfetti();
   };
@@ -250,6 +344,7 @@ export function useFamilyState(familyId?: string | null) {
     const newItem: PlannerEvent = { ...event, id: 'ev-' + Date.now() };
     setPlannerEvents((prev) => [...prev, newItem]);
     if (familyId) supabaseFamilyService.upsertPlannerEvent(familyId, newItem).catch(console.warn);
+    addNotification(`📅 Agenda baru "${newItem.title}" ditambahkan untuk ${newItem.date}`, 'planner', '📅', 'Agenda Keluarga Baru');
     sound.playSuccess();
   };
 
@@ -282,6 +377,7 @@ export function useFamilyState(familyId?: string | null) {
     };
     setJournalEntries((prev) => [newEntry, ...prev]);
     if (familyId) supabaseFamilyService.insertJournalEntry(familyId, newEntry).catch(console.warn);
+    addNotification(`📝 Catatan emosi baru ditulis oleh ${playerName}`, 'journal', '📝', 'Jurnal Emosi Hati');
     sound.playSuccess();
     fireBurstConfetti();
   };
@@ -302,6 +398,7 @@ export function useFamilyState(familyId?: string | null) {
     };
     setAppreciations((prev) => [newApp, ...prev]);
     if (familyId) supabaseFamilyService.insertAppreciation(familyId, newApp).catch(console.warn);
+    addNotification(`💌 ${newApp.fromPlayerName} mengapresiasi ${newApp.toPlayerName}: "${newApp.message}" (+10 ⭐)`, 'appreciation', '💌', 'Kartu Apresiasi Hangat');
     sound.playSuccess();
     fireBurstConfetti();
   };
@@ -311,6 +408,9 @@ export function useFamilyState(familyId?: string | null) {
       const updated = prev.map((h) => {
         if (h.id === id) {
           const nextCompleted = !h.completedToday;
+          if (nextCompleted) {
+            addNotification(`🌱 Kebiasaan "${h.title}" diselesaikan hari ini! (+10 ⭐)`, 'habit', '🌱', 'Kebiasaan Harian');
+          }
           return {
             ...h,
             completedToday: nextCompleted,
@@ -505,6 +605,11 @@ export function useFamilyState(familyId?: string | null) {
     achievements,
     familyStreak,
     totalLovePoints,
-    addLovePoints
+    addLovePoints,
+    notifications,
+    unreadNotifCount,
+    markAllNotifsAsRead,
+    clearNotifications,
+    addNotification
   };
 }

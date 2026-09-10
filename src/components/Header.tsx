@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import type { UserAccount, FamilyAccount } from '../types/auth';
+import type { ActivityNotification } from '../types/family';
 import { 
   Volume2, VolumeX, Moon, Sun, Settings, HelpCircle, Home, RotateCcw, 
   Crown, Users, LogOut, ChevronDown, Copy, Check, 
-  ShieldCheck, Bell, RefreshCw, Clock, X, Megaphone
+  ShieldCheck, Bell, RefreshCw, Clock, X, Megaphone, Trash2
 } from 'lucide-react';
 import { sound } from '../utils/sound';
 
@@ -13,6 +14,10 @@ interface HeaderProps {
   currentScreen: string;
   currentUser?: UserAccount;
   currentFamily?: FamilyAccount;
+  notifications?: ActivityNotification[];
+  unreadNotifCount?: number;
+  onMarkAllNotifsRead?: () => void;
+  onClearNotifs?: () => void;
   onToggleSound: () => void;
   onToggleDarkMode: () => void;
   onOpenSettings: () => void;
@@ -30,6 +35,10 @@ export const Header: React.FC<HeaderProps> = ({
   currentScreen,
   currentUser,
   currentFamily,
+  notifications = [],
+  unreadNotifCount = 0,
+  onMarkAllNotifsRead,
+  onClearNotifs,
   onToggleSound,
   onToggleDarkMode,
   onOpenSettings,
@@ -46,6 +55,22 @@ export const Header: React.FC<HeaderProps> = ({
   const [currentTimeStr, setCurrentTimeStr] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showNotifToast, setShowNotifToast] = useState(false);
+
+  const getCacheSizeText = (notifs?: ActivityNotification[]) => {
+    if (!notifs || notifs.length === 0) return '0.01 MB / 5.0 MB';
+    const jsonStr = JSON.stringify(notifs);
+    const bytes = new Blob([jsonStr]).size;
+    const mb = (bytes / (1024 * 1024)).toFixed(2);
+    return `${mb} MB / 5.0 MB`;
+  };
+
+  const formatNotifTime = (ts: number) => {
+    const diff = Date.now() - ts;
+    if (diff < 60000) return 'Baru saja';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} mnt lalu`;
+    const date = new Date(ts);
+    return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  };
 
   // Real-time clock updater
   useEffect(() => {
@@ -206,35 +231,93 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={() => {
                   sound.playClick();
-                  setShowNotifToast(!showNotifToast);
+                  const nextState = !showNotifToast;
+                  setShowNotifToast(nextState);
+                  if (nextState && unreadNotifCount > 0 && onMarkAllNotifsRead) {
+                    onMarkAllNotifsRead();
+                  }
                 }}
                 className="p-2 rounded-2xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-90 shadow-2xs relative"
                 title="Notifikasi Aktivitas"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500" />
+                {unreadNotifCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white font-extrabold text-[9px] flex items-center justify-center animate-bounce shadow-xs">
+                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                  </span>
+                )}
               </button>
 
               {/* Notification Popup Dropdown */}
               {showNotifToast && (
                 <div 
-                  className="absolute right-0 top-12 z-50 w-72 bg-white dark:bg-slate-800 rounded-3xl p-3.5 border-2 border-amber-200 dark:border-amber-900 shadow-bubbly-lg space-y-2 animate-pop-in text-xs"
-                  onClick={() => setShowNotifToast(false)}
+                  className="absolute right-0 top-12 z-50 w-80 sm:w-96 bg-white dark:bg-slate-800 rounded-3xl p-4 border-2 border-amber-200 dark:border-amber-900 shadow-bubbly-lg space-y-3 animate-pop-in text-xs max-h-[80vh] flex flex-col"
                 >
-                  <div className="flex items-center justify-between border-b pb-2 dark:border-slate-700">
-                    <span className="font-extrabold text-slate-800 dark:text-white flex items-center gap-1">
-                      <Bell className="w-3.5 h-3.5 text-amber-500" /> Notifikasi Aktivitas
+                  <div className="flex items-center justify-between border-b pb-2.5 dark:border-slate-700 shrink-0">
+                    <span className="font-extrabold text-slate-800 dark:text-white flex items-center gap-1.5 text-sm">
+                      <Bell className="w-4 h-4 text-amber-500" /> Notifikasi Aktivitas
                     </span>
-                    <span className="text-[9px] bg-rose-100 text-rose-700 px-1.5 py-0.2 rounded-full font-black">Baru</span>
+                    <div className="flex items-center gap-1.5">
+                      {unreadNotifCount > 0 && (
+                        <span className="text-[10px] bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded-full font-black">
+                          {unreadNotifCount} Baru
+                        </span>
+                      )}
+                      {onClearNotifs && notifications.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onClearNotifs();
+                          }}
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                          title="Hapus Semua Notifikasi"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300 font-medium">
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-700/50">
-                      ✨ Sesi privat terenkripsi aktif untuk <strong>{currentFamily?.familyName}</strong>.
-                    </div>
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-700/50">
-                      ☁️ Sinkronisasi data keluarga di semua HP aktif.
-                    </div>
+
+                  <div className="space-y-2 overflow-y-auto max-h-64 pr-1 text-slate-600 dark:text-slate-300">
+                    {notifications.length === 0 ? (
+                      <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs font-medium">
+                        Belum ada notifikasi aktivitas baru.
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          className={`p-2.5 rounded-2xl border transition-all flex items-start gap-2.5 ${
+                            n.read
+                              ? 'bg-slate-50 dark:bg-slate-700/40 border-slate-100 dark:border-slate-700/60'
+                              : 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 font-medium'
+                          }`}
+                        >
+                          <span className="text-lg shrink-0 mt-0.5">{n.icon || '🔔'}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-extrabold text-[11px] text-slate-800 dark:text-slate-100 truncate">
+                                {n.title || 'Aktivitas'}
+                              </span>
+                              <span className="text-[9px] text-slate-400 shrink-0 font-semibold">
+                                {formatNotifTime(n.timestamp)}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug mt-0.5">
+                              {n.message}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* PWA Cache Info Footer */}
+                  <div className="border-t pt-2 dark:border-slate-700 flex items-center justify-between text-[10px] text-slate-400 font-bold shrink-0">
+                    <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                      ⚡ Cache PWA: {getCacheSizeText(notifications)}
+                    </span>
+                    <span className="text-slate-400">Auto-Evict Max 5 MB</span>
                   </div>
                 </div>
               )}

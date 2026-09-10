@@ -105,6 +105,10 @@ export function App() {
         currentScreen={game.screen}
         currentUser={auth.currentUser ?? undefined}
         currentFamily={auth.currentFamily ?? undefined}
+        notifications={family.notifications}
+        unreadNotifCount={family.unreadNotifCount}
+        onMarkAllNotifsRead={family.markAllNotifsAsRead}
+        onClearNotifs={family.clearNotifications}
         onToggleSound={() => game.updateSettings({ soundEnabled: !game.settings.soundEnabled })}
         onToggleDarkMode={() => game.updateSettings({ darkMode: !game.settings.darkMode })}
         onOpenSettings={() => setIsSettingsOpen(true)}

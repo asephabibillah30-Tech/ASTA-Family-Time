@@ -153,3 +153,13 @@ export interface FamilyAchievement {
   maxProgress: number;
   rewardPoints: number;
 }
+
+export interface ActivityNotification {
+  id: string;
+  title?: string;
+  message: string;
+  category: 'appreciation' | 'memory' | 'habit' | 'planner' | 'journal' | 'chat' | 'game' | 'finance' | 'system';
+  icon?: string;
+  timestamp: number;
+  read: boolean;
+}
