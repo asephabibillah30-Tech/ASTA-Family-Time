@@ -100,15 +100,15 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
         {/* Security Status Badge */}
         <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+            <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
               <span className="text-xs font-black text-emerald-800 dark:text-emerald-200">
                 {postgresService.getConfig().statusText}
               </span>
               <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
                 {postgresService.isCloudConnected() 
-                  ? 'Terhubung langsung dengan Supabase Cloud PostgreSQL' 
-                  : 'Sistem menggunakan enkripsi lokal terenkripsi'}
+                  ? 'Data keluarga Anda tersimpan secara otomatis & tersinkronkan aman di semua HP.' 
+                  : 'Data keluarga Anda tersimpan secara otomatis & aman di perangkat Anda.'}
               </p>
             </div>
           </div>

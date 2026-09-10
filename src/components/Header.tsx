@@ -233,7 +233,7 @@ export const Header: React.FC<HeaderProps> = ({
                       ✨ Sesi privat terenkripsi aktif untuk <strong>{currentFamily?.familyName}</strong>.
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-700/50">
-                      ☁️ Sinkronisasi Supabase Real-time aktif.
+                      ☁️ Sinkronisasi data keluarga di semua HP aktif.
                     </div>
                   </div>
                 </div>
