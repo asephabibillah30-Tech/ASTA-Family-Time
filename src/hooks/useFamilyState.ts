@@ -15,7 +15,8 @@ import type {
 import {
   DAILY_IDEAS,
   INITIAL_CHALLENGES,
-  INITIAL_ACHIEVEMENTS
+  INITIAL_ACHIEVEMENTS,
+  INITIAL_HABITS
 } from '../data/familyData';
 import { supabaseFamilyService } from '../services/db/supabaseFamilyService';
 import { sound } from '../utils/sound';
@@ -50,7 +51,6 @@ export function useFamilyState(familyId?: string | null) {
   const [habits, setHabits] = useState<FamilyHabit[]>([]);
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
   const [savingsTargets, setSavingsTargets] = useState<SavingsTarget[]>([]);
-  const [achievements] = useState<FamilyAchievement[]>(INITIAL_ACHIEVEMENTS);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [gamePoints, setGamePoints] = useState<number>(() => {
     return familyId ? loadStorage('game_points', familyId, 0) : 0;
@@ -66,7 +66,7 @@ export function useFamilyState(familyId?: string | null) {
         setPlannerEvents(cloud.plannerEvents.length > 0 ? cloud.plannerEvents : loadStorage('planner', fid, []));
         setJournalEntries(cloud.journalEntries.length > 0 ? cloud.journalEntries : loadStorage('journal', fid, []));
         setAppreciations(cloud.appreciations.length > 0 ? cloud.appreciations : loadStorage('appreciations', fid, []));
-        setHabits(cloud.habits.length > 0 ? cloud.habits : loadStorage('habits', fid, []));
+        setHabits(cloud.habits.length > 0 ? cloud.habits : loadStorage('habits', fid, INITIAL_HABITS));
         setTransactions(cloud.transactions.length > 0 ? cloud.transactions : loadStorage('transactions', fid, []));
         setSavingsTargets(cloud.savingsTargets.length > 0 ? cloud.savingsTargets : loadStorage('savings', fid, []));
         // Merge local chat messages with cloud chat messages to preserve read receipts
@@ -87,7 +87,7 @@ export function useFamilyState(familyId?: string | null) {
         setPlannerEvents(loadStorage('planner', fid, []));
         setJournalEntries(loadStorage('journal', fid, []));
         setAppreciations(loadStorage('appreciations', fid, []));
-        setHabits(loadStorage('habits', fid, []));
+        setHabits(loadStorage('habits', fid, INITIAL_HABITS));
         setTransactions(loadStorage('transactions', fid, []));
         setSavingsTargets(loadStorage('savings', fid, []));
         setChatMessages(loadStorage('chat_msgs', fid, []));
@@ -99,7 +99,7 @@ export function useFamilyState(familyId?: string | null) {
       setPlannerEvents(loadStorage('planner', fid, []));
       setJournalEntries(loadStorage('journal', fid, []));
       setAppreciations(loadStorage('appreciations', fid, []));
-      setHabits(loadStorage('habits', fid, []));
+      setHabits(loadStorage('habits', fid, INITIAL_HABITS));
       setTransactions(loadStorage('transactions', fid, []));
       setSavingsTargets(loadStorage('savings', fid, []));
       setChatMessages(loadStorage('chat_msgs', fid, []));
@@ -189,7 +189,31 @@ export function useFamilyState(familyId?: string | null) {
     fireSmallPop(0.5, 0.4);
   };
 
-  const familyStreak = 7;
+  const familyStreak = habits.length > 0
+    ? Math.max(...habits.map((h) => h.streakDays || 0), 1)
+    : 7;
+
+  const achievements: FamilyAchievement[] = INITIAL_ACHIEVEMENTS.map((ach) => {
+    if (ach.id === 'ach-2') {
+      const progress = Math.min(familyStreak, 7);
+      return { ...ach, progress, unlocked: progress >= 7 };
+    }
+    if (ach.id === 'ach-3') {
+      const progress = Math.min(appreciations.length, 100);
+      return { ...ach, progress, unlocked: progress >= 100 };
+    }
+    if (ach.id === 'ach-4') {
+      const progress = Math.min(memories.length, 50);
+      return { ...ach, progress, unlocked: progress >= 50 };
+    }
+    if (ach.id === 'ach-6') {
+      const completedCount = habits.filter((h) => h.completedToday).length;
+      const max = habits.length || 6;
+      return { ...ach, maxProgress: max, progress: completedCount, unlocked: habits.length > 0 && completedCount === habits.length };
+    }
+    return ach;
+  });
+
   const currentDailyIdea = DAILY_IDEAS[Math.abs(currentIdeaIndex || 0) % DAILY_IDEAS.length] || DAILY_IDEAS[0];
 
   const nextDailyIdea = () => {
