@@ -344,15 +344,15 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
                         {em}
                       </button>
                     ))}
-                    <button
-                      onClick={() => onDeleteMessage(msg.id)}
-                      className={`text-xs p-1 rounded-lg hover:text-red-400 transition-transform ${
-                        isMe ? 'hover:bg-white/20' : 'hover:bg-slate-200 dark:hover:bg-slate-700'
-                      }`}
-                      title="Hapus Pesan"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    {isMe && (
+                      <button
+                        onClick={() => onDeleteMessage(msg.id)}
+                        className="text-xs p-1 rounded-lg hover:text-rose-200 hover:bg-white/20 transition-transform"
+                        title="Hapus Pesan Saya"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
