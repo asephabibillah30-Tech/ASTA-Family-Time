@@ -124,17 +124,18 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
 
       {/* Add Modal */}
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-pop-in">
-          <div className="relative w-full max-w-md rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-bubbly-lg border-4 border-blue-200 dark:border-slate-700">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-md animate-pop-in overflow-y-auto">
+          <div className="relative w-full max-w-md my-auto rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 shadow-bubbly-lg border-3 sm:border-4 border-blue-200 dark:border-slate-700 max-h-[85vh] overflow-y-auto">
             <button
               onClick={() => setIsAddOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500"
+              className="absolute top-3.5 right-3.5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-300 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="font-display font-black text-xl text-slate-900 dark:text-white mb-4">
-              Tambah Agenda Keluarga
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white mb-4 flex items-center gap-2 pr-8">
+              <span>📅</span>
+              <span>Tambah Agenda Keluarga</span>
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-left">
@@ -148,11 +149,11 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
                   placeholder="Misal: Sholat Berjamaah / Family Game"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold"
+                  className="w-full px-3.5 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none focus:border-blue-500"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Tanggal:
@@ -162,7 +163,7 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
                     required
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none"
                   />
                 </div>
                 <div>
@@ -173,7 +174,7 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none"
                   />
                 </div>
               </div>
@@ -182,13 +183,17 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Pilih Emoji Ikon:
                 </label>
-                <div className="flex gap-2 text-2xl">
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                   {['🕌', '🍽️', '🎮', '📖', '🎉', '🏖️', '⚽', '🚗'].map((em) => (
                     <button
                       key={em}
                       type="button"
                       onClick={() => setEmoji(em)}
-                      className={`p-2 rounded-xl border ${emoji === em ? 'bg-blue-100 border-blue-500' : 'bg-slate-50'}`}
+                      className={`p-2 rounded-xl text-xl sm:text-2xl border flex items-center justify-center transition-all ${
+                        emoji === em 
+                          ? 'bg-blue-100 dark:bg-blue-950 border-blue-500 scale-105 shadow-xs' 
+                          : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                      }`}
                     >
                       {em}
                     </button>
@@ -198,7 +203,7 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-2xl bg-blue-600 text-white font-display font-black text-sm shadow-md"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-display font-black text-sm shadow-md active:scale-95 transition-all mt-2"
               >
                 SIMPAN AGENDA
               </button>
