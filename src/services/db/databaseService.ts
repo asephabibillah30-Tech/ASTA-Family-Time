@@ -374,8 +374,8 @@ class DatabaseService {
             family_code: familyCode,
             streak_days: 1,
             total_love_points: 100
-          });
-          if (fErr) console.warn('Supabase family upsert error:', fErr);
+          }, { onConflict: 'id' });
+          if (fErr) console.error('Supabase family registration error:', fErr.message, fErr.details);
 
           // 2. Insert User Next (satisfies Foreign Key)
           const { error: uErr } = await supabase.from('users').upsert({
@@ -391,13 +391,13 @@ class DatabaseService {
             color: dto.color || 'bg-blue-500',
             love_points: 100,
             is_head: true
-          });
-          if (uErr) console.warn('Supabase user upsert error:', uErr);
+          }, { onConflict: 'id' });
+          if (uErr) console.error('Supabase user registration error:', uErr.message, uErr.details);
 
           // 3. Link head_user_id
           await supabase.from('families').update({ head_user_id: headUserId }).eq('id', familyId);
         } catch (err) {
-          console.warn('Supabase registration sync failed:', err);
+          console.error('Supabase registration sync failed:', err);
         }
       })();
     }
@@ -444,18 +444,25 @@ class DatabaseService {
 
     const supabase = postgresService.getClient();
     if (supabase) {
-      Promise.resolve(supabase.from('users').insert({
-        id: newMemberId,
-        family_id: familyId,
-        full_name: cleanName,
-        role: 'member',
-        role_title: dto.roleTitle,
-        pin: pinHash,
-        avatar: dto.avatar || '👦',
-        color: dto.color || 'bg-amber-500',
-        love_points: 50,
-        is_head: false
-      })).catch(console.warn);
+      (async () => {
+        try {
+          const { error } = await supabase.from('users').upsert({
+            id: newMemberId,
+            family_id: familyId,
+            full_name: cleanName,
+            role: 'member',
+            role_title: dto.roleTitle,
+            pin: pinHash,
+            avatar: dto.avatar || '👦',
+            color: dto.color || 'bg-amber-500',
+            love_points: 50,
+            is_head: false
+          }, { onConflict: 'id' });
+          if (error) console.error('Supabase add member error:', error.message, error.details);
+        } catch (e) {
+          console.error('Supabase add member failed:', e);
+        }
+      })();
     }
 
     this.logSecurity('TAMBAH_ANGGOTA', 'SUCCESS', `Anggota ${cleanName} (${dto.roleTitle}) ditambahkan oleh ${requester.fullName}`, familyId, requesterUserId, requester.fullName);
