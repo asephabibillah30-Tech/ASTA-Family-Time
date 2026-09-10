@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type {
   MemoryItem,
   PlannerEvent,
@@ -15,22 +15,15 @@ import type {
 import {
   DAILY_IDEAS,
   INITIAL_CHALLENGES,
-  INITIAL_HABITS,
-  INITIAL_PLANNER_EVENTS,
-  INITIAL_MEMORIES,
-  INITIAL_JOURNAL,
-  INITIAL_APPRECIATIONS,
-  INITIAL_CHAT_MESSAGES,
-  INITIAL_FINANCE_TRANSACTIONS,
-  INITIAL_SAVINGS_TARGETS,
   INITIAL_ACHIEVEMENTS
 } from '../data/familyData';
+import { supabaseFamilyService } from '../services/db/supabaseFamilyService';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti, fireSmallPop } from '../utils/confetti';
 
-function loadStorage<T>(key: string, defaultValue: T): T {
+function loadStorage<T>(key: string, familyId: string, defaultValue: T): T {
   try {
-    const saved = localStorage.getItem(`asta_family_${key}`);
+    const saved = localStorage.getItem('asta_family_' + familyId + '_' + key);
     if (saved) return JSON.parse(saved);
   } catch (e) {
     console.error('Error loading storage for', key, e);
@@ -38,101 +31,154 @@ function loadStorage<T>(key: string, defaultValue: T): T {
   return defaultValue;
 }
 
-function saveStorage<T>(key: string, value: T) {
+function saveStorage<T>(key: string, familyId: string, value: T) {
   try {
-    localStorage.setItem(`asta_family_${key}`, JSON.stringify(value));
+    localStorage.setItem('asta_family_' + familyId + '_' + key, JSON.stringify(value));
   } catch (e) {
     console.error('Error saving storage for', key, e);
   }
 }
 
-export function useFamilyState() {
-  const [currentIdeaIndex, setCurrentIdeaIndex] = useState<number>(() => loadStorage('idea_idx', 0));
-  const [memories, setMemories] = useState<MemoryItem[]>(() => loadStorage('memories', INITIAL_MEMORIES));
-  const [plannerEvents, setPlannerEvents] = useState<PlannerEvent[]>(() => loadStorage('planner', INITIAL_PLANNER_EVENTS));
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => loadStorage('journal', INITIAL_JOURNAL));
-  const [appreciations, setAppreciations] = useState<AppreciationItem[]>(() => loadStorage('appreciations', INITIAL_APPRECIATIONS));
-  const [challenges, setChallenges] = useState<FamilyChallenge[]>(() => loadStorage('challenges', INITIAL_CHALLENGES));
-  const [habits, setHabits] = useState<FamilyHabit[]>(() => loadStorage('habits', INITIAL_HABITS));
-  const [transactions, setTransactions] = useState<FinanceTransaction[]>(() => loadStorage('transactions', INITIAL_FINANCE_TRANSACTIONS));
-  const [savingsTargets, setSavingsTargets] = useState<SavingsTarget[]>(() => loadStorage('savings', INITIAL_SAVINGS_TARGETS));
-  const [achievements] = useState<FamilyAchievement[]>(() => loadStorage('achievements', INITIAL_ACHIEVEMENTS));
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
-    const saved = loadStorage<ChatMessage[]>('chat_msgs', INITIAL_CHAT_MESSAGES);
-    if (!saved || !Array.isArray(saved) || saved.length === 0) {
-      return INITIAL_CHAT_MESSAGES;
-    }
-    return saved;
-  });
+export function useFamilyState(familyId?: string | null) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentIdeaIndex, setCurrentIdeaIndex] = useState<number>(0);
+  const [memories, setMemories] = useState<MemoryItem[]>([]);
+  const [plannerEvents, setPlannerEvents] = useState<PlannerEvent[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [appreciations, setAppreciations] = useState<AppreciationItem[]>([]);
+  const [challenges, setChallenges] = useState<FamilyChallenge[]>(INITIAL_CHALLENGES);
+  const [habits, setHabits] = useState<FamilyHabit[]>([]);
+  const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
+  const [savingsTargets, setSavingsTargets] = useState<SavingsTarget[]>([]);
+  const [achievements] = useState<FamilyAchievement[]>(INITIAL_ACHIEVEMENTS);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
-  // Calculated Family Stats
-  const familyStreak = 7; // Streak days
-  const totalLovePoints = (Array.isArray(appreciations) ? appreciations : []).reduce((acc, curr) => acc + (curr?.lovePoints || 0), 120);
+  const loadData = useCallback(async (fid: string) => {
+    setIsLoading(true);
+    try {
+      const cloud = await supabaseFamilyService.loadAllFamilyData(fid);
+      const hasCloudData = Object.values(cloud).some((arr) => arr.length > 0);
+      if (hasCloudData) {
+        setMemories(cloud.memories.length > 0 ? cloud.memories : loadStorage('memories', fid, []));
+        setPlannerEvents(cloud.plannerEvents.length > 0 ? cloud.plannerEvents : loadStorage('planner', fid, []));
+        setJournalEntries(cloud.journalEntries.length > 0 ? cloud.journalEntries : loadStorage('journal', fid, []));
+        setAppreciations(cloud.appreciations.length > 0 ? cloud.appreciations : loadStorage('appreciations', fid, []));
+        setHabits(cloud.habits.length > 0 ? cloud.habits : loadStorage('habits', fid, []));
+        setTransactions(cloud.transactions.length > 0 ? cloud.transactions : loadStorage('transactions', fid, []));
+        setSavingsTargets(cloud.savingsTargets.length > 0 ? cloud.savingsTargets : loadStorage('savings', fid, []));
+        setChatMessages(cloud.chatMessages.length > 0 ? cloud.chatMessages : loadStorage('chat_msgs', fid, []));
+      } else {
+        setMemories(loadStorage('memories', fid, []));
+        setPlannerEvents(loadStorage('planner', fid, []));
+        setJournalEntries(loadStorage('journal', fid, []));
+        setAppreciations(loadStorage('appreciations', fid, []));
+        setHabits(loadStorage('habits', fid, []));
+        setTransactions(loadStorage('transactions', fid, []));
+        setSavingsTargets(loadStorage('savings', fid, []));
+        setChatMessages(loadStorage('chat_msgs', fid, []));
+      }
+      setCurrentIdeaIndex(loadStorage('idea_idx', fid, 0));
+    } catch (e) {
+      console.warn('loadData error, falling back to localStorage:', e);
+      setMemories(loadStorage('memories', fid, []));
+      setPlannerEvents(loadStorage('planner', fid, []));
+      setJournalEntries(loadStorage('journal', fid, []));
+      setAppreciations(loadStorage('appreciations', fid, []));
+      setHabits(loadStorage('habits', fid, []));
+      setTransactions(loadStorage('transactions', fid, []));
+      setSavingsTargets(loadStorage('savings', fid, []));
+      setChatMessages(loadStorage('chat_msgs', fid, []));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (familyId) {
+      loadData(familyId);
+    } else {
+      setMemories([]);
+      setPlannerEvents([]);
+      setJournalEntries([]);
+      setAppreciations([]);
+      setHabits([]);
+      setTransactions([]);
+      setSavingsTargets([]);
+      setChatMessages([]);
+      setIsLoading(false);
+    }
+  }, [familyId, loadData]);
+
+  useEffect(() => { if (familyId) saveStorage('idea_idx', familyId, currentIdeaIndex); }, [currentIdeaIndex, familyId]);
+  useEffect(() => { if (familyId) saveStorage('memories', familyId, memories); }, [memories, familyId]);
+  useEffect(() => { if (familyId) saveStorage('planner', familyId, plannerEvents); }, [plannerEvents, familyId]);
+  useEffect(() => { if (familyId) saveStorage('journal', familyId, journalEntries); }, [journalEntries, familyId]);
+  useEffect(() => { if (familyId) saveStorage('appreciations', familyId, appreciations); }, [appreciations, familyId]);
+  useEffect(() => { if (familyId) saveStorage('habits', familyId, habits); }, [habits, familyId]);
+  useEffect(() => { if (familyId) saveStorage('transactions', familyId, transactions); }, [transactions, familyId]);
+  useEffect(() => { if (familyId) saveStorage('savings', familyId, savingsTargets); }, [savingsTargets, familyId]);
+  useEffect(() => { if (familyId) saveStorage('chat_msgs', familyId, chatMessages); }, [chatMessages, familyId]);
+
+  const totalLovePoints = appreciations.reduce((acc, curr) => acc + (curr?.lovePoints || 0), 0);
+  const familyStreak = 7;
   const currentDailyIdea = DAILY_IDEAS[Math.abs(currentIdeaIndex || 0) % DAILY_IDEAS.length] || DAILY_IDEAS[0];
 
-  // Save effects
-  useEffect(() => saveStorage('idea_idx', currentIdeaIndex), [currentIdeaIndex]);
-  useEffect(() => saveStorage('memories', memories), [memories]);
-  useEffect(() => saveStorage('planner', plannerEvents), [plannerEvents]);
-  useEffect(() => saveStorage('journal', journalEntries), [journalEntries]);
-  useEffect(() => saveStorage('appreciations', appreciations), [appreciations]);
-  useEffect(() => saveStorage('challenges', challenges), [challenges]);
-  useEffect(() => saveStorage('habits', habits), [habits]);
-  useEffect(() => saveStorage('transactions', transactions), [transactions]);
-  useEffect(() => saveStorage('savings', savingsTargets), [savingsTargets]);
-  useEffect(() => saveStorage('achievements', achievements), [achievements]);
-  useEffect(() => saveStorage('chat_msgs', chatMessages), [chatMessages]);
-
-  // Actions
   const nextDailyIdea = () => {
-    setCurrentIdeaIndex(prev => (prev + 1) % DAILY_IDEAS.length);
+    setCurrentIdeaIndex((prev) => (prev + 1) % DAILY_IDEAS.length);
     sound.playClick();
     fireSmallPop(0.5, 0.4);
   };
 
   const addMemory = (memory: Omit<MemoryItem, 'id' | 'likes'>) => {
-    const newItem: MemoryItem = {
-      ...memory,
-      id: `mem-${Date.now()}`,
-      likes: 1
-    };
-    setMemories(prev => [newItem, ...prev]);
+    const newItem: MemoryItem = { ...memory, id: 'mem-' + Date.now(), likes: 1 };
+    setMemories((prev) => [newItem, ...prev]);
+    if (familyId) supabaseFamilyService.upsertMemory(familyId, newItem).catch(console.warn);
     sound.playSuccess();
     fireBurstConfetti();
   };
 
   const likeMemory = (id: string) => {
-    setMemories(prev => prev.map(m => m.id === id ? { ...m, likes: m.likes + 1 } : m));
+    setMemories((prev) => {
+      const updated = prev.map((m) => (m.id === id ? { ...m, likes: m.likes + 1 } : m));
+      const item = updated.find((m) => m.id === id);
+      if (familyId && item) supabaseFamilyService.upsertMemory(familyId, item).catch(console.warn);
+      return updated;
+    });
     sound.playClick();
   };
 
   const deleteMemory = (id: string) => {
-    setMemories(prev => prev.filter(m => m.id !== id));
+    setMemories((prev) => prev.filter((m) => m.id !== id));
+    supabaseFamilyService.deleteMemory(id).catch(console.warn);
     sound.playClick();
   };
 
   const addPlannerEvent = (event: Omit<PlannerEvent, 'id'>) => {
-    const newItem: PlannerEvent = {
-      ...event,
-      id: `ev-${Date.now()}`
-    };
-    setPlannerEvents(prev => [...prev, newItem]);
+    const newItem: PlannerEvent = { ...event, id: 'ev-' + Date.now() };
+    setPlannerEvents((prev) => [...prev, newItem]);
+    if (familyId) supabaseFamilyService.upsertPlannerEvent(familyId, newItem).catch(console.warn);
     sound.playSuccess();
   };
 
   const togglePlannerEvent = (id: string) => {
-    setPlannerEvents(prev => prev.map(e => e.id === id ? { ...e, completed: !e.completed } : e));
+    setPlannerEvents((prev) => {
+      const updated = prev.map((e) => (e.id === id ? { ...e, completed: !e.completed } : e));
+      const item = updated.find((e) => e.id === id);
+      if (familyId && item) supabaseFamilyService.upsertPlannerEvent(familyId, item).catch(console.warn);
+      return updated;
+    });
     sound.playClick();
   };
 
   const deletePlannerEvent = (id: string) => {
-    setPlannerEvents(prev => prev.filter(e => e.id !== id));
+    setPlannerEvents((prev) => prev.filter((e) => e.id !== id));
+    supabaseFamilyService.deletePlannerEvent(id).catch(console.warn);
     sound.playClick();
   };
 
   const addJournalEntry = (playerId: string, playerName: string, playerAvatar: string, mood: JournalMood, reason: string) => {
     const newEntry: JournalEntry = {
-      id: `j-${Date.now()}`,
+      id: 'j-' + Date.now(),
       playerId,
       playerName,
       playerAvatar,
@@ -141,159 +187,152 @@ export function useFamilyState() {
       reason,
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    setJournalEntries(prev => [newEntry, ...prev]);
+    setJournalEntries((prev) => [newEntry, ...prev]);
+    if (familyId) supabaseFamilyService.insertJournalEntry(familyId, newEntry).catch(console.warn);
     sound.playSuccess();
     fireBurstConfetti();
   };
 
   const sendAppreciation = (
-    fromPlayerId: string,
-    fromPlayerName: string,
-    fromPlayerAvatar: string,
-    toPlayerId: string,
-    toPlayerName: string,
-    toPlayerAvatar: string,
-    message: string,
-    badge?: string
+    fromPlayerId: string, fromPlayerName: string, fromPlayerAvatar: string,
+    toPlayerId: string, toPlayerName: string, toPlayerAvatar: string,
+    message: string, badge?: string
   ) => {
     const newApp: AppreciationItem = {
-      id: `app-${Date.now()}`,
-      fromPlayerId,
-      fromPlayerName,
-      fromPlayerAvatar,
-      toPlayerId,
-      toPlayerName,
-      toPlayerAvatar,
+      id: 'app-' + Date.now(),
+      fromPlayerId, fromPlayerName, fromPlayerAvatar,
+      toPlayerId, toPlayerName, toPlayerAvatar,
       message,
       lovePoints: 10,
       date: 'Hari ini',
       badge: badge || 'Penuh Kasih ❤️'
     };
-    setAppreciations(prev => [newApp, ...prev]);
+    setAppreciations((prev) => [newApp, ...prev]);
+    if (familyId) supabaseFamilyService.insertAppreciation(familyId, newApp).catch(console.warn);
     sound.playSuccess();
     fireBurstConfetti();
   };
 
   const toggleHabit = (id: string) => {
-    setHabits(prev => prev.map(h => {
-      if (h.id === id) {
-        const nextCompleted = !h.completedToday;
-        return {
-          ...h,
-          completedToday: nextCompleted,
-          streakDays: nextCompleted ? h.streakDays + 1 : Math.max(0, h.streakDays - 1)
-        };
-      }
-      return h;
-    }));
+    setHabits((prev) => {
+      const updated = prev.map((h) => {
+        if (h.id === id) {
+          const nextCompleted = !h.completedToday;
+          return {
+            ...h,
+            completedToday: nextCompleted,
+            streakDays: nextCompleted ? h.streakDays + 1 : Math.max(0, h.streakDays - 1)
+          };
+        }
+        return h;
+      });
+      const item = updated.find((h) => h.id === id);
+      if (familyId && item) supabaseFamilyService.upsertHabit(familyId, item).catch(console.warn);
+      return updated;
+    });
     sound.playClick();
   };
 
   const toggleChallenge = (id: string) => {
-    setChallenges(prev => prev.map(c => {
-      if (c.id === id) {
-        const nextState = !c.completed;
-        if (nextState) {
-          sound.playSuccess();
-          fireBurstConfetti();
+    setChallenges((prev) =>
+      prev.map((c) => {
+        if (c.id === id) {
+          const nextState = !c.completed;
+          if (nextState) { sound.playSuccess(); fireBurstConfetti(); }
+          return { ...c, completed: nextState };
         }
-        return { ...c, completed: nextState };
-      }
-      return c;
-    }));
+        return c;
+      })
+    );
   };
 
   const addFinanceTransaction = (type: 'income' | 'expense', amount: number, category: string, note: string) => {
     const newTrans: FinanceTransaction = {
-      id: `f-${Date.now()}`,
-      type,
-      amount,
-      category,
-      note,
+      id: 'f-' + Date.now(),
+      type, amount, category, note,
       date: new Date().toISOString().split('T')[0]
     };
-    setTransactions(prev => [newTrans, ...prev]);
+    setTransactions((prev) => [newTrans, ...prev]);
+    if (familyId) supabaseFamilyService.insertTransaction(familyId, newTrans).catch(console.warn);
     sound.playSuccess();
   };
 
   const addSavingsTarget = (title: string, targetAmount: number, emoji: string, deadline?: string) => {
     const newTarget: SavingsTarget = {
-      id: `st-${Date.now()}`,
-      title,
-      targetAmount,
+      id: 'st-' + Date.now(),
+      title, targetAmount,
       currentAmount: 0,
       emoji: emoji || '🎯',
       deadline
     };
-    setSavingsTargets(prev => [...prev, newTarget]);
+    setSavingsTargets((prev) => [...prev, newTarget]);
+    if (familyId) supabaseFamilyService.upsertSavingsTarget(familyId, newTarget).catch(console.warn);
     sound.playSuccess();
   };
 
   const depositSavings = (id: string, amount: number) => {
-    setSavingsTargets(prev => prev.map(s => s.id === id ? { ...s, currentAmount: s.currentAmount + amount } : s));
+    setSavingsTargets((prev) => {
+      const updated = prev.map((s) => (s.id === id ? { ...s, currentAmount: s.currentAmount + amount } : s));
+      const item = updated.find((s) => s.id === id);
+      if (familyId && item) supabaseFamilyService.upsertSavingsTarget(familyId, item).catch(console.warn);
+      return updated;
+    });
     sound.playSuccess();
     fireSmallPop(0.5, 0.4);
   };
 
-    const sendChatMessage = (
-    senderId: string,
-    senderName: string,
-    senderAvatar: string,
-    senderColor: string,
-    text: string,
+  const sendChatMessage = (
+    senderId: string, senderName: string, senderAvatar: string,
+    senderColor: string, text: string,
     mediaType: ChatMessage['mediaType'] = 'text'
   ) => {
     const newMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      senderId,
-      senderName,
-      senderAvatar,
-      senderColor,
-      text,
+      id: 'msg-' + Date.now(),
+      senderId, senderName, senderAvatar, senderColor, text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       reactions: [],
       mediaType
     };
-    setChatMessages(prev => [...prev, newMsg]);
+    setChatMessages((prev) => [...prev, newMsg]);
+    if (familyId) supabaseFamilyService.insertChatMessage(familyId, newMsg).catch(console.warn);
     sound.playClick();
   };
 
   const addChatReaction = (msgId: string, emoji: string, userId: string) => {
-    setChatMessages(prev => prev.map(m => {
-      if (m.id === msgId) {
-        const existing = m.reactions.find(r => r.emoji === emoji);
-        if (existing) {
-          if (existing.by.includes(userId)) {
-            // remove
-            return {
-              ...m,
-              reactions: m.reactions.map(r => r.emoji === emoji ? { ...r, count: Math.max(0, r.count - 1), by: r.by.filter(u => u !== userId) } : r).filter(r => r.count > 0)
-            };
+    setChatMessages((prev) => {
+      const updated = prev.map((m) => {
+        if (m.id === msgId) {
+          const existing = m.reactions.find((r) => r.emoji === emoji);
+          let newReactions;
+          if (existing) {
+            if (existing.by.includes(userId)) {
+              newReactions = m.reactions
+                .map((r) => r.emoji === emoji ? { ...r, count: Math.max(0, r.count - 1), by: r.by.filter((u) => u !== userId) } : r)
+                .filter((r) => r.count > 0);
+            } else {
+              newReactions = m.reactions.map((r) => r.emoji === emoji ? { ...r, count: r.count + 1, by: [...r.by, userId] } : r);
+            }
           } else {
-            return {
-              ...m,
-              reactions: m.reactions.map(r => r.emoji === emoji ? { ...r, count: r.count + 1, by: [...r.by, userId] } : r)
-            };
+            newReactions = [...m.reactions, { emoji, count: 1, by: [userId] }];
           }
-        } else {
-          return {
-            ...m,
-            reactions: [...m.reactions, { emoji, count: 1, by: [userId] }]
-          };
+          supabaseFamilyService.updateChatReactions(msgId, newReactions).catch(console.warn);
+          return { ...m, reactions: newReactions };
         }
-      }
-      return m;
-    }));
+        return m;
+      });
+      return updated;
+    });
     sound.playClick();
   };
 
   const deleteChatMessage = (msgId: string) => {
-    setChatMessages(prev => prev.filter(m => m.id !== msgId));
+    setChatMessages((prev) => prev.filter((m) => m.id !== msgId));
+    supabaseFamilyService.deleteChatMessage(msgId).catch(console.warn);
     sound.playClick();
   };
 
   const resetChatToDemo = () => {
-    setChatMessages(INITIAL_CHAT_MESSAGES);
+    setChatMessages([]);
     sound.playSuccess();
     fireBurstConfetti();
   };
@@ -304,6 +343,7 @@ export function useFamilyState() {
   };
 
   return {
+    isLoading,
     chatMessages,
     sendChatMessage,
     addChatReaction,

@@ -33,8 +33,9 @@ import type { MainTab, AppScreen, Player } from './types/game';
 
 export function App() {
   const game = useGame();
-  const family = useFamilyState();
   const auth = useAuth();
+  // Pass familyId sehingga data dimuat dari Supabase per keluarga
+  const family = useFamilyState(auth.currentFamily?.id ?? null);
 
   useEffect(() => {
     document.title = 'ASTA Family Time - Satu aplikasi, lebih banyak waktu bersama keluarga.';
