@@ -1,8 +1,8 @@
-# 🎴 ASTA Family Time (Game Kartu Keluarga ASTA)
+# 🎴 ASTA Family Time - Platform & Super-App Game Keluarga Indonesia
 
-> **“Main Bersama, Lebih Dekat, Lebih Bahagia ❤️”**
+> **“ASTA - Aktivitas • Senyum • Tawa • Apresiasi - Satu aplikasi, lebih banyak waktu bersama Keluarga.” ❤️**
 
-Aplikasi web interaktif permainan kartu keluarga yang ceria, hangat, lucu, edukatif, dan ramah anak. Dirancang *mobile-first* untuk dimainkan bersama keluarga di smartphone, tablet, maupun desktop.
+Platform & Super-App Game Keluarga Indonesia yang ceria, hangat, lucu, edukatif, dan ramah keluarga. Dilengkapi 5 Game Keluarga Lengkap (Game Kartu ASTA 350+ Kartu, ASTA UNO Card Party, Monopoli Jelajah Indonesia, Ludo Klasik Ceria, Ular Tangga Petualangan) serta 13 Fitur Family Hub Terpadu.
 
 ---
 

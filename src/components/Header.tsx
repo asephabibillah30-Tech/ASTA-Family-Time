@@ -51,6 +51,19 @@ export const Header: React.FC<HeaderProps> = ({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
+  const handleShareWhatsApp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    sound.playClick();
+    const message = `✨ *ASTA Family Time - Platform & Super-App Game Keluarga Indonesia*\n\n` +
+      `"ASTA - Aktivitas • Senyum • Tawa • Apresiasi - Satu aplikasi, lebih banyak waktu bersama Keluarga." ❤️\n\n` +
+      `👨‍👩‍👧‍👦 *Keluarga:* ${currentFamily?.familyName || 'Keluarga Harmonis ASTA'}\n` +
+      `🔑 *Kode Keluarga:* ${currentFamily?.familyCode || 'ASTA-2026'}\n\n` +
+      `Yuk bergabung dan main bareng sekarang di link berikut:\n` +
+      `👉 https://asephabibillah30-tech.github.io/ASTA-Family-Time/`;
+    
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
   return (
     <header 
       className="sticky top-0 z-30 w-full backdrop-blur-md bg-white/90 dark:bg-slate-900/90 border-b border-rose-100 dark:border-slate-800 transition-colors"
@@ -140,17 +153,26 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 {/* Family Code Copy Strip */}
-                <div className="mt-2 pt-2 border-t border-rose-200 dark:border-rose-900 flex items-center justify-between">
-                  <div className="text-[10px] text-slate-600 dark:text-slate-300 font-bold">
+                <div className="mt-2 pt-2 border-t border-rose-200 dark:border-rose-900 flex items-center justify-between gap-1.5">
+                  <div className="text-[10px] text-slate-600 dark:text-slate-300 font-bold truncate">
                     Kode: <span className="font-black text-family-coral">{currentFamily?.familyCode}</span>
                   </div>
-                  <button
-                    onClick={handleCopyFamilyCode}
-                    className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 text-[10px] font-black text-family-coral border border-rose-200 flex items-center gap-1"
-                  >
-                    {copiedCode ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedCode ? 'Tersalin' : 'Salin'}</span>
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={handleCopyFamilyCode}
+                      className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 text-[10px] font-black text-family-coral border border-rose-200 flex items-center gap-1"
+                    >
+                      {copiedCode ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedCode ? 'Tersalin' : 'Salin'}</span>
+                    </button>
+                    <button
+                      onClick={handleShareWhatsApp}
+                      className="px-2 py-0.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[10px] font-black text-white flex items-center gap-1"
+                      title="Kirim ke WhatsApp"
+                    >
+                      <span>💬 WA</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

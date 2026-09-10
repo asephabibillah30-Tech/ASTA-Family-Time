@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-192x192.svg', 'pwa-512x512.svg'],
       manifest: {
-        name: 'ASTA Family Time - Game Kartu Keluarga ASTA',
+        name: 'ASTA Family Time - Platform & Super-App Game Keluarga Indonesia',
         short_name: 'ASTA Family',
-        description: 'Permainan kartu keluarga interaktif, seru, lucu, dan edukatif untuk dimainkan bersama keluarga di rumah.',
+        description: 'ASTA - Aktivitas • Senyum • Tawa • Apresiasi - “Satu aplikasi, lebih banyak waktu bersama Keluarga.” ❤️',
         theme_color: '#FF6B6B',
         background_color: '#FFF9EB',
         display: 'standalone',

@@ -39,6 +39,18 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleShareWhatsApp = () => {
+    sound.playClick();
+    const message = `✨ *ASTA Family Time - Platform & Super-App Game Keluarga Indonesia*\n\n` +
+      `"ASTA - Aktivitas • Senyum • Tawa • Apresiasi - Satu aplikasi, lebih banyak waktu bersama Keluarga." ❤️\n\n` +
+      `👨‍👩‍👧‍👦 *Keluarga:* ${currentFamily.familyName}\n` +
+      `🔑 *Kode Keluarga:* ${currentFamily.familyCode}\n\n` +
+      `Yuk bergabung dan main bareng sekarang di link berikut:\n` +
+      `👉 https://asephabibillah30-tech.github.io/ASTA-Family-Time/`;
+    
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -102,20 +114,29 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
         </div>
 
         {/* Family Code Card */}
-        <div className="p-3.5 bg-rose-50 dark:bg-rose-950/50 rounded-2xl border border-rose-200 dark:border-rose-900 flex items-center justify-between">
+        <div className="p-3.5 bg-rose-50 dark:bg-rose-950/50 rounded-2xl border border-rose-200 dark:border-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
             <span className="text-[10px] font-black uppercase text-family-coral">Kode Unik Keluarga:</span>
             <div className="font-display font-black text-base text-slate-900 dark:text-white tracking-widest">
               {currentFamily.familyCode}
             </div>
           </div>
-          <button
-            onClick={handleCopyCode}
-            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-rose-200 text-family-coral text-xs font-black flex items-center gap-1 shadow-2xs active:scale-95"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Tersalin!' : 'Salin'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopyCode}
+              className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-rose-200 text-family-coral text-xs font-black flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? 'Tersalin!' : 'Salin'}</span>
+            </button>
+            <button
+              onClick={handleShareWhatsApp}
+              className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+              title="Kirim Undangan ke WhatsApp"
+            >
+              <span>💬 Bagikan ke WA</span>
+            </button>
+          </div>
         </div>
 
         {errorMsg && (
