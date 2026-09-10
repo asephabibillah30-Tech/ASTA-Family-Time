@@ -11,7 +11,15 @@ if (typeof document !== 'undefined') {
   document.title = APP_TITLE;
 }
 
-// Register PWA service worker and auto update immediately
+// Register PWA service worker and enforce immediate update
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (const registration of registrations) {
+      registration.update();
+    }
+  }).catch(() => {});
+}
+
 registerSW({ 
   immediate: true,
   onNeedRefresh() {

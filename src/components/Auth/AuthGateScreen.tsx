@@ -20,15 +20,15 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   const [activeTab, setActiveTab] = useState<'login_head' | 'login_member' | 'register'>('login_head');
   
   // Head Login State
-  const [headUsername, setHeadUsername] = useState('ayah@asta.com');
-  const [headPassword, setHeadPassword] = useState('123');
+  const [headUsername, setHeadUsername] = useState('');
+  const [headPassword, setHeadPassword] = useState('');
   
   // Member Login State
-  const [familyCode, setFamilyCode] = useState('ASTA-2026');
+  const [familyCode, setFamilyCode] = useState('');
   const [foundFamily, setFoundFamily] = useState<FamilyAccount | null>(null);
   const [familyMembers, setFamilyMembers] = useState<UserAccount[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState('');
-  const [memberPin, setMemberPin] = useState('1234');
+  const [memberPin, setMemberPin] = useState('');
 
   // Register State
   const [regStep, setRegStep] = useState<1 | 2>(1);
