@@ -32,7 +32,7 @@ export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) =>
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 pb-24 space-y-6 animate-pop-in">
+    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6 animate-pop-in">
       
       {/* Title */}
       <div className="text-center space-y-2">
@@ -46,7 +46,7 @@ export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) =>
       </div>
 
       {/* 4 Main Games Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         
         {/* 1. Kartu Keluarga ASTA */}
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-rose-200 dark:border-rose-900/60 shadow-bubbly-coral flex flex-col justify-between space-y-4 hover:scale-[1.01] transition-all">

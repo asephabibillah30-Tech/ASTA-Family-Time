@@ -17,7 +17,7 @@ export const FamilyHabitScreen: React.FC<FamilyHabitScreenProps> = ({
   onBack,
 }) => {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 pb-24 space-y-6 animate-pop-in">
+    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6 animate-pop-in">
       
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -56,7 +56,7 @@ export const FamilyHabitScreen: React.FC<FamilyHabitScreenProps> = ({
       </div>
 
       {/* Habits Checklist */}
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {habits.map((h) => (
           <div
             key={h.id}

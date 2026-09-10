@@ -136,7 +136,7 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 pt-1 pb-20 sm:pb-24 flex flex-col h-[calc(100dvh-75px)] sm:h-[calc(100dvh-85px)] gap-2 animate-pop-in">
+    <div className="w-full max-w-4xl mx-auto px-2 sm:px-4 lg:px-6 pt-1 pb-4 flex flex-col h-[calc(100dvh-130px)] sm:h-[calc(100dvh-150px)] gap-2 animate-pop-in">
       
       {/* Top Chat Header */}
       <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-3 py-2.5 rounded-2xl border-2 border-rose-100 dark:border-slate-700 shadow-sm flex items-center justify-between shrink-0">

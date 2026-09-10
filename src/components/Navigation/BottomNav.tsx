@@ -20,12 +20,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-rose-100 dark:border-slate-800 shadow-bubbly-lg"
+      className="fixed bottom-0 sm:bottom-3 left-0 right-0 sm:left-1/2 sm:-translate-x-1/2 z-40 w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t sm:border border-rose-100 dark:border-slate-800 shadow-bubbly-lg sm:rounded-3xl transition-all"
       style={{
-        paddingBottom: 'max(0.6rem, env(safe-area-inset-bottom, 0px))',
+        paddingBottom: 'max(0.4rem, env(safe-area-inset-bottom, 0px))',
       }}
     >
-      <div className="max-w-xl mx-auto px-1.5 sm:px-3 py-1.5 flex items-center justify-around">
+      <div className="px-2 sm:px-4 py-1.5 flex items-center justify-around">
         {navItems.map((item) => {
           const isActive = currentTab === item.id;
 

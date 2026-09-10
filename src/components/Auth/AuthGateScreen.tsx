@@ -192,10 +192,10 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   };
 
   return (
-    <div className="min-h-dvh bg-family-bg dark:bg-slate-950 flex flex-col justify-between p-3 sm:p-6 font-body antialiased selection:bg-rose-200">
+    <div className="min-h-dvh bg-family-bg dark:bg-slate-950 flex flex-col justify-between p-3 sm:p-6 lg:p-8 font-body antialiased selection:bg-rose-200">
       
-      {/* Top Mobile-Optimized Header */}
-      <header className="w-full max-w-md sm:max-w-xl mx-auto flex items-center justify-between gap-2 pt-1 sm:pt-2 pb-2">
+      {/* Top Mobile & Desktop Header */}
+      <header className="w-full max-w-md sm:max-w-xl lg:max-w-6xl mx-auto flex items-center justify-between gap-2 pt-1 sm:pt-2 pb-2">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-family-coral to-family-pink flex items-center justify-center text-white text-2xl shadow-md shrink-0">
             🎴
@@ -218,20 +218,51 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
         </div>
       </header>
 
-      {/* Main Responsive Authentication Card */}
-      <main className="w-full max-w-md sm:max-w-lg mx-auto my-auto py-2 sm:py-4">
-        <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-3xl p-5 sm:p-8 border-3 border-rose-200 dark:border-slate-700 shadow-bubbly-coral space-y-5 animate-pop-in">
-          
-          {/* Header Title */}
-          <div className="text-center space-y-1">
-            <span className="text-3xl sm:text-4xl inline-block animate-bounce">🔐</span>
-            <h2 className="font-display font-black text-xl sm:text-2xl text-slate-900 dark:text-white">
-              Ruang Masuk Keluarga
-            </h2>
-            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium max-w-xs mx-auto">
-              Hubungkan seluruh anggota keluarga dalam ruang privat yang aman.
-            </p>
+      {/* Main Responsive Layout: Dual Column on Desktop, Centered Column on Mobile & Tablet */}
+      <main className="w-full max-w-md sm:max-w-xl lg:max-w-6xl mx-auto my-auto py-2 sm:py-4 lg:grid lg:grid-cols-12 lg:gap-8 lg:items-center">
+        
+        {/* Desktop Left Hero Panel (Hidden on mobile/tablet, visible on lg) */}
+        <div className="hidden lg:flex lg:col-span-5 flex-col space-y-6 text-left p-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-black w-fit">
+            <span>✨</span> Super-App Keluarga Indonesia
           </div>
+
+          <h2 className="font-display font-black text-3xl lg:text-4xl text-slate-900 dark:text-white leading-tight">
+            Hubungkan Senyum & Tawa Keluarga Setiap Hari ❤️
+          </h2>
+
+          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+            Nikmati 350+ kartu interaktif, game UNO, Ludo, Ular Tangga, Obrolan privat terenkripsi, Jurnal Kenangan, dan Perencana Kegiatan Keluarga dalam 1 aplikasi.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="p-3.5 bg-white dark:bg-slate-800 rounded-2xl border border-rose-100 dark:border-slate-700 shadow-2xs">
+              <span className="text-2xl mb-1 block">🔐</span>
+              <h4 className="font-black text-xs text-slate-900 dark:text-white">Privat & Aman</h4>
+              <p className="text-[10px] text-slate-500 mt-0.5">Enkripsi E2EE per keluarga</p>
+            </div>
+            <div className="p-3.5 bg-white dark:bg-slate-800 rounded-2xl border border-rose-100 dark:border-slate-700 shadow-2xs">
+              <span className="text-2xl mb-1 block">☁️</span>
+              <h4 className="font-black text-xs text-slate-900 dark:text-white">Real-time Cloud</h4>
+              <p className="text-[10px] text-slate-500 mt-0.5">Sinkron lintas HP & Laptop</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Form Card (Single column on mobile, right 7 cols on desktop) */}
+        <div className="lg:col-span-7">
+          <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-3xl p-5 sm:p-8 border-3 border-rose-200 dark:border-slate-700 shadow-bubbly-coral space-y-5 animate-pop-in">
+            
+            {/* Header Title */}
+            <div className="text-center space-y-1">
+              <span className="text-3xl sm:text-4xl inline-block animate-bounce">🔐</span>
+              <h2 className="font-display font-black text-xl sm:text-2xl text-slate-900 dark:text-white">
+                Ruang Masuk Keluarga
+              </h2>
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium max-w-xs mx-auto">
+                Hubungkan seluruh anggota keluarga dalam ruang privat yang aman.
+              </p>
+            </div>
 
           {/* 3 Nav Tabs */}
           <div className="grid grid-cols-3 p-1 bg-slate-100 dark:bg-slate-700/80 rounded-2xl gap-1">
@@ -624,12 +655,12 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
               )}
             </div>
           )}
-
         </div>
-      </main>
+      </div>
+    </main>
 
       {/* Footer Feature Highlights */}
-      <footer className="w-full max-w-lg mx-auto text-center space-y-1.5 pb-2 pt-2">
+      <footer className="w-full max-w-md sm:max-w-xl lg:max-w-6xl mx-auto text-center space-y-1.5 pb-2 pt-2">
         <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold">
           <span className="flex items-center gap-1">🎴 350 Kartu ASTA</span> &bull;
           <span className="flex items-center gap-1">🃏 Game UNO</span> &bull;

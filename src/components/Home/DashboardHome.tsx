@@ -39,7 +39,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   const todayEvents = plannerEvents.slice(0, 3);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-5 pb-24 space-y-6 animate-pop-in">
+    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6 animate-pop-in">
       
       {/* Top Greeting & Stats Bar */}
       <div className="bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 rounded-3xl p-6 text-white shadow-bubbly-coral relative overflow-hidden">

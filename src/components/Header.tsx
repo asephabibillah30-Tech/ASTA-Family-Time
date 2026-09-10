@@ -72,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
         paddingTop: 'env(safe-area-inset-top, 0px)'
       }}
     >
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2 flex items-center justify-between gap-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-2.5 flex items-center justify-between gap-2">
         
         {/* Left: Logo & Brand */}
         <button
@@ -137,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Profile Dropdown Menu */}
           {showProfileMenu && (
             <div 
-              className="absolute right-0 sm:left-0 top-12 z-50 w-64 bg-white dark:bg-slate-800 rounded-3xl p-3 border-2 border-rose-100 dark:border-slate-700 shadow-bubbly-lg space-y-2 animate-pop-in"
+              className="absolute right-0 top-12 z-50 w-72 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-800 rounded-3xl p-3 border-2 border-rose-100 dark:border-slate-700 shadow-bubbly-lg space-y-2 animate-pop-in"
               onClick={() => setShowProfileMenu(false)}
             >
               <div className="p-2.5 bg-rose-50 dark:bg-rose-950/60 rounded-2xl border border-rose-100 dark:border-rose-900">

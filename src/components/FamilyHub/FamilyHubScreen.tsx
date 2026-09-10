@@ -80,7 +80,7 @@ export const FamilyHubScreen: React.FC<FamilyHubScreenProps> = ({
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 pb-24 space-y-6 animate-pop-in">
+    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6 animate-pop-in">
       
       {/* Title */}
       <div className="text-center space-y-2">
@@ -112,8 +112,8 @@ export const FamilyHubScreen: React.FC<FamilyHubScreenProps> = ({
         </button>
       </div>
 
-      {/* Feature Menu List */}
-      <div className="space-y-3">
+      {/* Feature Menu Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {menuItems.map((item) => (
           <button
             key={item.id}
