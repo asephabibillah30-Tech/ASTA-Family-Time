@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { Player } from '../../types/game';
 import type { ChatMessage } from '../../types/family';
 import type { UserAccount } from '../../types/auth';
-import { Send, PhoneCall, Video, Smile, Trash2, CheckCheck, RotateCcw, ShieldCheck, Eye, CheckCircle2, Clock, X } from 'lucide-react';
+import { Send, PhoneCall, Video, Smile, Trash2, CheckCheck, RotateCcw, ShieldCheck, CheckCircle2, Clock, X } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
 
@@ -273,7 +273,7 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
                     {msg.text}
                   </p>
 
-                  {/* Footer time & checkmark */}
+                  {/* Footer time & checkmark (Hanya pengirim yang dapat melihat/menglik info status dibaca) */}
                   <div className={`flex items-center justify-end gap-1.5 text-[9px] ${
                     isMe ? 'text-rose-100' : 'text-slate-400'
                   }`}>
@@ -294,20 +294,6 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
                         ) : (
                           <CheckCheck className="w-3.5 h-3.5 text-white/50" />
                         )}
-                      </button>
-                    )}
-
-                    {!isMe && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          sound.playClick();
-                          setSelectedMessageInfo(msg);
-                        }}
-                        className="p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                        title="Lihat status dibaca"
-                      >
-                        <Eye className="w-3 h-3" />
                       </button>
                     )}
                   </div>
