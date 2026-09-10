@@ -54,12 +54,13 @@ export const Header: React.FC<HeaderProps> = ({
   const handleShareWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
     sound.playClick();
+    const shareUrl = typeof window !== 'undefined' ? window.location.origin : 'https://asta-family-time.vercel.app';
     const message = `✨ *ASTA Family Time - Platform & Super-App Game Keluarga Indonesia*\n\n` +
       `"ASTA - Aktivitas • Senyum • Tawa • Apresiasi - Satu aplikasi, lebih banyak waktu bersama Keluarga." ❤️\n\n` +
       `👨‍👩‍👧‍👦 *Keluarga:* ${currentFamily?.familyName || 'Keluarga Harmonis ASTA'}\n` +
       `🔑 *Kode Keluarga:* ${currentFamily?.familyCode || 'ASTA-2026'}\n\n` +
       `Yuk bergabung dan main bareng sekarang di link berikut:\n` +
-      `👉 https://asephabibillah30-tech.github.io/ASTA-Family-Time/`;
+      `👉 ${shareUrl}/`;
     
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
