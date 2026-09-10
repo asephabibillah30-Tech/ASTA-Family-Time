@@ -145,20 +145,21 @@ class DatabaseService {
     if (!supabase) return;
 
     try {
-      // 1. Upsert all families (termasuk keluarga demo & keluarga baru)
+      // 1. Upsert all families first (tanpa head_user_id untuk menghindari FK deadlock)
       for (const f of this.families) {
         const { error } = await supabase.from('families').upsert({
           id: f.id,
           family_name: f.familyName || 'Keluarga ASTA',
           family_code: f.familyCode || 'ASTA-2026',
-          head_user_id: f.headUserId || null,
+          head_user_id: null,
           streak_days: f.streakDays || 1,
           total_love_points: f.totalLovePoints || 100
         }, { onConflict: 'id' });
         if (error) console.error('❌ Supabase families upsert error:', error.message, error.details);
+        else console.log(`✅ Supabase family synced: ${f.familyName} (${f.id})`);
       }
 
-      // 2. Upsert all users (termasuk pengguna demo & pengguna baru)
+      // 2. Upsert all users (sekarang family_id sudah pasti ada di tabel families)
       for (const u of this.users) {
         const payload: Record<string, any> = {
           id: u.id,
@@ -177,6 +178,13 @@ class DatabaseService {
         const { error } = await supabase.from('users').upsert(payload, { onConflict: 'id' });
         if (error) console.error(`❌ Supabase user (${u.fullName}) upsert error:`, error.message, error.details);
         else console.log(`✅ Supabase user synced: ${u.fullName} (${u.id})`);
+      }
+
+      // 3. Update head_user_id di tabel families setelah user berhasil di-insert
+      for (const f of this.families) {
+        if (f.headUserId) {
+          await supabase.from('families').update({ head_user_id: f.headUserId }).eq('id', f.id);
+        }
       }
     } catch (err) {
       console.warn('Sync local to cloud failed:', err);
