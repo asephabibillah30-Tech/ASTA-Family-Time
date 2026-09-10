@@ -52,6 +52,9 @@ export function useFamilyState(familyId?: string | null) {
   const [savingsTargets, setSavingsTargets] = useState<SavingsTarget[]>([]);
   const [achievements] = useState<FamilyAchievement[]>(INITIAL_ACHIEVEMENTS);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [gamePoints, setGamePoints] = useState<number>(() => {
+    return familyId ? loadStorage('game_points', familyId, 0) : 0;
+  });
 
   const loadData = useCallback(async (fid: string) => {
     setIsLoading(true);
@@ -170,7 +173,22 @@ export function useFamilyState(familyId?: string | null) {
     return () => clearInterval(pollInterval);
   }, [familyId]);
 
-  const totalLovePoints = appreciations.reduce((acc, curr) => acc + (curr?.lovePoints || 0), 0);
+  const basePoints = 100; // Base Initial Family Welcome Points
+  const appreciationsPoints = appreciations.reduce((acc, curr) => acc + (curr?.lovePoints || 10), 0);
+  const memoriesPoints = memories.length * 10;
+  const habitsPoints = habits.filter(h => h.completedToday).length * 10;
+  const totalLovePoints = basePoints + appreciationsPoints + memoriesPoints + habitsPoints + gamePoints;
+
+  const addLovePoints = (amount: number) => {
+    setGamePoints((prev) => {
+      const next = prev + amount;
+      if (familyId) saveStorage('game_points', familyId, next);
+      return next;
+    });
+    sound.playSuccess();
+    fireSmallPop(0.5, 0.4);
+  };
+
   const familyStreak = 7;
   const currentDailyIdea = DAILY_IDEAS[Math.abs(currentIdeaIndex || 0) % DAILY_IDEAS.length] || DAILY_IDEAS[0];
 
@@ -462,6 +480,7 @@ export function useFamilyState(familyId?: string | null) {
     depositSavings,
     achievements,
     familyStreak,
-    totalLovePoints
+    totalLovePoints,
+    addLovePoints
   };
 }
