@@ -201,7 +201,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
               ASTA Family Time
             </h1>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-              Platform & Super-App Game Keluarga Indonesia ❤️
+              Satu aplikasi, lebih banyak waktu bersama keluarga. ❤️
             </p>
           </div>
         </div>

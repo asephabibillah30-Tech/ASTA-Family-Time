@@ -94,8 +94,8 @@ export const Header: React.FC<HeaderProps> = ({
                 ❤️
               </span>
             </div>
-            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold hidden sm:block">
-              {currentFamily?.familyName || 'Keluarga Harmonis ASTA'}
+            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold hidden sm:block truncate max-w-xs md:max-w-md">
+              {currentFamily?.familyName ? `${currentFamily.familyName} • Satu aplikasi, lebih banyak waktu bersama keluarga.` : 'Satu aplikasi, lebih banyak waktu bersama keluarga.'}
             </p>
           </div>
         </button>
