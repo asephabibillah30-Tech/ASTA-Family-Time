@@ -8,6 +8,7 @@ import { CountingGame } from './CountingGame';
 import { AlphabetGame } from './AlphabetGame';
 import { HijaiyahGame } from './HijaiyahGame';
 import { VegetableGame } from './VegetableGame';
+import { AnimalGame } from './AnimalGame';
 import { Play } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
@@ -17,7 +18,11 @@ interface GameHubProps {
 }
 
 export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) => {
-  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet' | 'hijaiyah' | 'vegetable'>('hub');
+  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet' | 'hijaiyah' | 'vegetable' | 'animal'>('hub');
+
+  if (activeGame === 'animal') {
+    return <AnimalGame onBack={() => setActiveGame('hub')} />;
+  }
 
   if (activeGame === 'vegetable') {
     return <VegetableGame onBack={() => setActiveGame('hub')} />;
@@ -326,6 +331,35 @@ export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) =>
           >
             <Play className="w-4 h-4 fill-white" />
             <span>MAIN SAYURAN CERIA</span>
+          </button>
+        </div>
+
+        {/* 9. Game Nama Binatang Ceria */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-amber-300 dark:border-amber-800 shadow-bubbly-amber flex flex-col justify-between space-y-4 hover:scale-[1.01] transition-all">
+          <div>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-600 text-white flex items-center justify-center text-2xl sm:text-3xl shadow-md mb-3">
+              🦁
+            </div>
+            <div className="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[10px] font-extrabold mb-1">
+              SUARA INDONESIA • FAKTA UNIK
+            </div>
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
+              Nama Binatang Ceria 🐘
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2 font-medium">
+              Mengenal 20 jenis binatang unik lengkap dengan audio Bahasa Indonesia, suara tiruan hewan, fakta menarik, putar otomatis, & kuis tebak binatang!
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              setActiveGame('animal');
+            }}
+            className="w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 hover:opacity-90 text-white font-display font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>MAIN BINATANG CERIA</span>
           </button>
         </div>
 
