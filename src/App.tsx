@@ -114,8 +114,6 @@ export function App() {
           setCurrentTab('home');
           setSubScreen(null);
         }}
-        onOpenLogin={() => setIsLoginOpen(true)}
-        onOpenRegister={() => setIsRegisterOpen(true)}
         onOpenManageFamily={() => setIsManageFamilyOpen(true)}
         onOpenSecurityCenter={() => setIsSecurityCenterOpen(true)}
         onLogout={auth.logout}

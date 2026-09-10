@@ -18,8 +18,6 @@ interface HeaderProps {
   onOpenSettings: () => void;
   onOpenHowToPlay: () => void;
   onGoHome: () => void;
-  onOpenLogin: () => void;
-  onOpenRegister: () => void;
   onOpenManageFamily: () => void;
   onOpenSecurityCenter?: () => void;
   onLogout: () => void;
