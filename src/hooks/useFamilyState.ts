@@ -233,6 +233,14 @@ export function useFamilyState(familyId?: string | null) {
         const cloudMsgs = await supabaseFamilyService.loadChatMessages(familyId);
         if (cloudMsgs && Array.isArray(cloudMsgs) && cloudMsgs.length > 0) {
           setChatMessages((prev) => {
+            if (prev.length > 0) {
+              const newMsgs = cloudMsgs.filter((c) => !prev.some((p) => p.id === c.id));
+              newMsgs.forEach((nM) => {
+                const snippet = nM.text.length > 35 ? nM.text.substring(0, 35) + '...' : nM.text;
+                addNotification(`💬 ${nM.senderName}: "${snippet}"`, 'chat', '💬', 'Pesan Obrolan Masuk');
+              });
+            }
+
             const merged = cloudMsgs.map((cMsg) => {
               const localMsg = prev.find((p) => p.id === cMsg.id);
               if (!localMsg) return cMsg;
@@ -261,7 +269,7 @@ export function useFamilyState(familyId?: string | null) {
     }, 2500);
 
     return () => clearInterval(pollInterval);
-  }, [familyId]);
+  }, [familyId, addNotification]);
 
   const basePoints = 100; // Base Initial Family Welcome Points
   const appreciationsPoints = appreciations.reduce((acc, curr) => acc + (curr?.lovePoints || 10), 0);
@@ -495,6 +503,8 @@ export function useFamilyState(familyId?: string | null) {
     if (familyId) {
       supabaseFamilyService.insertChatMessage(familyId, newMsg).catch(console.warn);
     }
+    const snippet = text.length > 35 ? text.substring(0, 35) + '...' : text;
+    addNotification(`💬 ${senderName}: "${snippet}"`, 'chat', '💬', 'Pesan Obrolan Baru');
     sound.playClick();
   };
 
