@@ -331,6 +331,34 @@ export function useFamilyState(familyId?: string | null) {
     sound.playClick();
   };
 
+  const markChatMessagesAsRead = useCallback((userId: string, userName: string, userAvatar?: string) => {
+    if (!userId) return;
+    setChatMessages((prev) => {
+      let changed = false;
+      const updated = prev.map((m) => {
+        if (m.senderId === userId) return m;
+        const currentReadBy = m.readBy || [];
+        const alreadyRead = currentReadBy.some((r) => r.userId === userId);
+        if (!alreadyRead) {
+          changed = true;
+          const newReadBy = [
+            ...currentReadBy,
+            {
+              userId,
+              userName,
+              userAvatar: userAvatar || '😊',
+              readAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+          ];
+          supabaseFamilyService.updateChatReadBy(m.id, newReadBy).catch(console.warn);
+          return { ...m, readBy: newReadBy };
+        }
+        return m;
+      });
+      return changed ? updated : prev;
+    });
+  }, []);
+
   const resetChatToDemo = () => {
     setChatMessages([]);
     sound.playSuccess();
@@ -348,6 +376,7 @@ export function useFamilyState(familyId?: string | null) {
     sendChatMessage,
     addChatReaction,
     deleteChatMessage,
+    markChatMessagesAsRead,
     resetChatToDemo,
     clearAllChatMessages,
     currentDailyIdea,

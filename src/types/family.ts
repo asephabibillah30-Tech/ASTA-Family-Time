@@ -55,6 +55,13 @@ export interface AppreciationItem {
   badge?: string;
 }
 
+export interface ReadReceipt {
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  readAt: string;
+}
+
 export interface ChatMessage {
   id: string;
   senderId: string;
@@ -64,6 +71,7 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   reactions: { emoji: string; count: number; by: string[] }[];
+  readBy?: ReadReceipt[];
   isQuick?: boolean;
   mediaType?: 'text' | 'sticker' | 'call_invite' | 'voice_note';
 }

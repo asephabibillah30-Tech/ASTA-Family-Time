@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { Player } from '../../types/game';
 import type { ChatMessage } from '../../types/family';
 import type { UserAccount } from '../../types/auth';
-import { Send, PhoneCall, Video, Smile, Trash2, CheckCheck, RotateCcw, ShieldCheck } from 'lucide-react';
+import { Send, PhoneCall, Video, Smile, Trash2, CheckCheck, RotateCcw, ShieldCheck, Eye, CheckCircle2, Clock, X } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
 
@@ -20,6 +20,7 @@ interface FamilyChatScreenProps {
   ) => void;
   onAddReaction: (msgId: string, emoji: string, userId: string) => void;
   onDeleteMessage: (msgId: string) => void;
+  onMarkAsRead?: (userId: string, userName: string, userAvatar?: string) => void;
   onResetChat?: () => void;
 }
 
@@ -48,11 +49,13 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
   onSendMessage,
   onAddReaction,
   onDeleteMessage,
+  onMarkAsRead,
   onResetChat,
 }) => {
   const [inputText, setInputText] = useState('');
   const [showCallModal, setShowCallModal] = useState<boolean>(false);
   const [showStickers, setShowStickers] = useState<boolean>(false);
+  const [selectedMessageInfo, setSelectedMessageInfo] = useState<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Active sender is strictly locked to the currently logged in user
@@ -84,9 +87,13 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Automatically mark unread messages as read when viewing screen
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+    if (onMarkAsRead && activeSender.id) {
+      onMarkAsRead(activeSender.id, activeSender.name, activeSender.avatar);
+    }
+  }, [messages, activeSender, onMarkAsRead]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,6 +239,9 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
         ) : (
           messages.map((msg) => {
             const isMe = msg.senderId === activeSender.id;
+            const readList = msg.readBy || [];
+            const readByOthers = readList.filter(r => r.userId !== msg.senderId);
+            const isRead = readByOthers.length > 0;
 
             return (
               <div
@@ -264,11 +274,42 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
                   </p>
 
                   {/* Footer time & checkmark */}
-                  <div className={`flex items-center justify-end gap-1 text-[9px] ${
+                  <div className={`flex items-center justify-end gap-1.5 text-[9px] ${
                     isMe ? 'text-rose-100' : 'text-slate-400'
                   }`}>
                     <span>{msg.timestamp}</span>
-                    {isMe && <CheckCheck className="w-3.5 h-3.5 text-white" />}
+
+                    {isMe && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sound.playClick();
+                          setSelectedMessageInfo(msg);
+                        }}
+                        className="flex items-center gap-0.5 hover:scale-110 transition-transform"
+                        title={isRead ? `Dibaca oleh ${readByOthers.map(r => r.userName).join(', ')}` : 'Terkirim (Belum dibaca)'}
+                      >
+                        {isRead ? (
+                          <CheckCheck className="w-3.5 h-3.5 text-sky-300 font-black drop-shadow-xs" />
+                        ) : (
+                          <CheckCheck className="w-3.5 h-3.5 text-white/50" />
+                        )}
+                      </button>
+                    )}
+
+                    {!isMe && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sound.playClick();
+                          setSelectedMessageInfo(msg);
+                        }}
+                        className="p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                        title="Lihat status dibaca"
+                      >
+                        <Eye className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
 
                   {/* Reaction Badges */}
@@ -426,6 +467,112 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
             >
               Tutup Panggilan
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Read Receipts Info Modal */}
+      {selectedMessageInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-pop-in">
+          <div className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 p-5 space-y-4 border-2 border-rose-200 dark:border-slate-700 shadow-bubbly-lg">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 flex items-center justify-center text-lg">
+                  👁️
+                </div>
+                <div>
+                  <h3 className="font-display font-black text-slate-900 dark:text-white text-sm">
+                    Info Status Dibaca
+                  </h3>
+                  <p className="text-[10px] text-slate-500">Pesan Obrolan Keluarga</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedMessageInfo(null)}
+                className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Message Preview */}
+            <div className="p-3 rounded-2xl bg-rose-50/80 dark:bg-slate-800/80 border border-rose-100 dark:border-slate-700 space-y-1">
+              <p className="text-[10px] font-bold text-rose-500 dark:text-rose-400">
+                {selectedMessageInfo.senderName} &bull; {selectedMessageInfo.timestamp}
+              </p>
+              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 break-words">
+                "{selectedMessageInfo.text}"
+              </p>
+            </div>
+
+            {/* Read Status List */}
+            <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+              <div>
+                <div className="flex items-center gap-1 text-[11px] font-black text-emerald-600 dark:text-emerald-400 mb-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Sudah Dibaca ({ (selectedMessageInfo.readBy || []).filter(r => r.userId !== selectedMessageInfo.senderId).length })</span>
+                </div>
+
+                {((selectedMessageInfo.readBy || []).filter(r => r.userId !== selectedMessageInfo.senderId).length === 0) ? (
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-center text-xs text-slate-400 font-medium">
+                    Belum ada yang membaca pesan ini
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {(selectedMessageInfo.readBy || [])
+                      .filter(r => r.userId !== selectedMessageInfo.senderId)
+                      .map((r, i) => (
+                        <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">{r.userAvatar || '😊'}</span>
+                            <span className="text-xs font-bold text-slate-800 dark:text-white">{r.userName}</span>
+                          </div>
+                          <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                            {r.readAt}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Unread Members */}
+              {(() => {
+                const readUserIds = new Set((selectedMessageInfo.readBy || []).map(r => r.userId).concat(selectedMessageInfo.senderId));
+                const unreadPlayers = players.filter(p => !readUserIds.has(p.id));
+                if (unreadPlayers.length === 0) return null;
+
+                return (
+                  <div>
+                    <div className="flex items-center gap-1 text-[11px] font-black text-amber-600 dark:text-amber-400 mb-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Belum Membaca ({unreadPlayers.length})</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {unreadPlayers.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 opacity-70">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{p.avatar}</span>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{p.name}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">Belum dibaca</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            <button
+              onClick={() => setSelectedMessageInfo(null)}
+              className="w-full py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs transition-colors shadow-sm"
+            >
+              Tutup Info
+            </button>
+
           </div>
         </div>
       )}

@@ -350,6 +350,7 @@ class SupabaseFamilyService {
           ? new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : '',
         reactions: Array.isArray(r.reactions) ? r.reactions : [],
+        readBy: Array.isArray(r.read_by) ? r.read_by : [],
         mediaType: (r.media_type as ChatMessage['mediaType']) || 'text'
       }));
     } catch { return []; }
@@ -368,7 +369,8 @@ class SupabaseFamilyService {
         sender_color: msg.senderColor,
         message_text: encryptMessageE2EE(msg.text, familyId),
         media_type: msg.mediaType || 'text',
-        reactions: msg.reactions || []
+        reactions: msg.reactions || [],
+        read_by: msg.readBy || []
       });
     } catch (e) { console.warn('insertChatMessage error:', e); }
   }
@@ -379,6 +381,14 @@ class SupabaseFamilyService {
     try {
       await supabase.from('chat_messages').update({ reactions }).eq('id', msgId);
     } catch (e) { console.warn('updateChatReactions error:', e); }
+  }
+
+  async updateChatReadBy(msgId: string, readBy: ChatMessage['readBy']): Promise<void> {
+    const supabase = this.getClient();
+    if (!supabase) return;
+    try {
+      await supabase.from('chat_messages').update({ read_by: readBy }).eq('id', msgId);
+    } catch (e) { console.warn('updateChatReadBy error:', e); }
   }
 
   async deleteChatMessage(id: string): Promise<void> {

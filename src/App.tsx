@@ -271,6 +271,7 @@ export function App() {
                 onSendMessage={family.sendChatMessage}
                 onAddReaction={family.addChatReaction}
                 onDeleteMessage={family.deleteChatMessage}
+                onMarkAsRead={family.markChatMessagesAsRead}
                 onResetChat={family.resetChatToDemo}
               />
             )}
