@@ -680,7 +680,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players, onBack 
           </div>
 
           {/* Interactive LUDO BOARD SVG */}
-          <div className="w-full max-w-[540px] mx-auto bg-white dark:bg-slate-900 p-2 sm:p-3 rounded-3xl border-4 border-slate-300 dark:border-slate-700 shadow-bubbly-lg">
+          <div className="w-full max-w-[340px] xs:max-w-[420px] sm:max-w-[540px] mx-auto bg-white dark:bg-slate-900 p-1.5 sm:p-3 rounded-3xl border-3 sm:border-4 border-slate-300 dark:border-slate-700 shadow-bubbly-lg">
             <svg
               viewBox="0 0 600 600"
               className="w-full h-auto select-none rounded-2xl drop-shadow-sm"

@@ -191,26 +191,26 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({ players,
       </div>
 
       {/* Control Area */}
-      <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border-3 border-amber-200 dark:border-amber-900/60 shadow-bubbly-amber flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <span className="text-[10px] font-extrabold uppercase text-amber-600 tracking-wider">Giliran Bermain</span>
-          <h3 className="font-display font-black text-xl text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl p-3.5 sm:p-5 border-3 border-amber-200 dark:border-amber-900/60 shadow-bubbly-amber flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+        <div className="w-full sm:w-auto">
+          <span className="text-[9px] sm:text-[10px] font-extrabold uppercase text-amber-600 tracking-wider">Giliran Bermain</span>
+          <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white flex items-center gap-2">
             <span>{activePlayer.avatar}</span> {activePlayer.name}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Kocok dadu dan kelilingi aset kebahagiaan keluarga!
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center font-display font-black text-2xl shadow-md">
+        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center font-display font-black text-2xl shadow-md shrink-0">
             {diceValue || '🎲'}
           </div>
 
           <button
             onClick={rollDice}
             disabled={isRolling}
-            className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-display font-black text-sm shadow-md flex items-center gap-2 active:scale-95 disabled:opacity-50"
+            className="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-display font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
           >
             <Dices className="w-4 h-4" />
             <span>{isRolling ? 'Mengocok...' : 'KOCOK DADU'}</span>
@@ -219,13 +219,13 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({ players,
       </div>
 
       {/* Log bar */}
-      <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+      <div className="bg-slate-50 dark:bg-slate-800/80 p-3 sm:p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
         <p>{logMessage}</p>
       </div>
 
       {/* Monopoly Board Grid (12 Tiles) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-2.5">
         {MONOPOLY_TILES.map((tile) => {
           const playersHere = players.filter(p => (positions[p.id] || 0) === tile.id);
           const ownerId = properties[tile.id];

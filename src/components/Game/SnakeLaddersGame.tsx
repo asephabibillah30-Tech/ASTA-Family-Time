@@ -151,29 +151,29 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({ players, onB
       </div>
 
       {/* Current Turn & Dice Controller */}
-      <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border-3 border-teal-200 dark:border-teal-900/60 shadow-bubbly-teal flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl p-3.5 sm:p-5 border-3 border-teal-200 dark:border-teal-900/60 shadow-bubbly-teal flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         
         {/* Active Player */}
-        <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-3xl border-2 border-rose-300 shadow-sm animate-pulse-fast">
+        <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-2xl sm:text-3xl border-2 border-rose-300 shadow-sm animate-pulse-fast shrink-0">
             {activePlayer.avatar}
           </div>
           <div>
-            <span className="text-[10px] font-extrabold uppercase text-rose-500 tracking-wider">
+            <span className="text-[9px] sm:text-[10px] font-extrabold uppercase text-rose-500 tracking-wider">
               Giliran Melempar Dadu
             </span>
-            <h3 className="font-display font-black text-xl text-slate-900 dark:text-white">
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
               {activePlayer.name}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
               Posisi Sekarang: Petak {positions[activePlayer.id] || 1}
             </p>
           </div>
         </div>
 
         {/* Dice & Action */}
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center font-display font-black text-3xl shadow-md">
+        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+          <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center font-display font-black text-2xl sm:text-3xl shadow-md shrink-0">
             {diceValue || '🎲'}
           </div>
 
@@ -181,17 +181,17 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({ players, onB
             <button
               onClick={rollDice}
               disabled={isRolling}
-              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-display font-black text-base shadow-md flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              className="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-display font-black text-sm sm:text-base shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
             >
-              <Dices className="w-5 h-5" />
+              <Dices className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>{isRolling ? 'Mengocok...' : 'KOCOK DADU'}</span>
             </button>
           ) : (
             <button
               onClick={restartGame}
-              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-black text-base shadow-md flex items-center gap-2 active:scale-95"
+              className="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-black text-sm sm:text-base shadow-md flex items-center justify-center gap-2 active:scale-95"
             >
-              <Trophy className="w-5 h-5" />
+              <Trophy className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>MAIN LAGI</span>
             </button>
           )}
@@ -199,20 +199,20 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({ players, onB
       </div>
 
       {/* Action Notice Bar */}
-      <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2.5 shadow-sm">
-        <Sparkles className="w-5 h-5 text-amber-500 shrink-0" />
+      <div className="bg-amber-50 dark:bg-amber-950/40 p-3 sm:p-4 rounded-2xl border border-amber-200 dark:border-amber-800 text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2 sm:gap-2.5 shadow-sm">
+        <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 shrink-0" />
         <p>{lastActionMessage}</p>
       </div>
 
       {/* 25 Board Tiles Grid */}
-      <div className="grid grid-cols-5 gap-2 sm:gap-3 bg-white/70 dark:bg-slate-800/70 p-4 rounded-3xl border-2 border-slate-200 dark:border-slate-700 shadow-sm">
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-3 bg-white/70 dark:bg-slate-800/70 p-2 sm:p-4 rounded-3xl border-2 border-slate-200 dark:border-slate-700 shadow-sm">
         {BOARD_TILES.slice().reverse().map((tile) => {
           const playersOnTile = players.filter(p => (positions[p.id] || 1) === tile.id);
 
           return (
             <div
               key={tile.id}
-              className={`min-h-[70px] sm:min-h-[85px] p-2 rounded-2xl border-2 flex flex-col justify-between relative transition-all ${
+              className={`min-h-[58px] sm:min-h-[85px] p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border-2 flex flex-col justify-between relative transition-all ${
                 tile.type === 'start'
                   ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300'
                   : tile.type === 'finish'

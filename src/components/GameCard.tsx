@@ -66,30 +66,30 @@ export const GameCard: React.FC<GameCardProps> = ({
             </div>
 
             {/* Central Animated Illustration / Emoji */}
-            <div className="relative group my-1">
-              <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr ${categoryInfo.color} p-1 shadow-bubbly-sm animate-float`}>
-                <div className="w-full h-full rounded-[22px] bg-white dark:bg-slate-800 flex items-center justify-center text-5xl sm:text-6xl select-none">
+            <div className="relative group my-0.5 sm:my-1">
+              <div className={`w-20 h-20 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr ${categoryInfo.color} p-1 shadow-bubbly-sm animate-float`}>
+                <div className="w-full h-full rounded-[22px] bg-white dark:bg-slate-800 flex items-center justify-center text-4xl sm:text-6xl select-none">
                   {card.emoji}
                 </div>
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-amber-400 text-amber-950 px-2 py-0.5 rounded-full text-[11px] font-black shadow flex items-center gap-0.5">
+              <div className="absolute -bottom-1 -right-1 bg-amber-400 text-amber-950 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black shadow flex items-center gap-0.5">
                 <Award className="w-3 h-3" /> +{card.points}
               </div>
             </div>
 
             {/* Title & Description */}
-            <div className="space-y-2 max-w-sm">
-              <h2 className="text-xl sm:text-2xl font-display font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
+            <div className="space-y-1.5 sm:space-y-2 max-w-sm">
+              <h2 className="text-lg sm:text-2xl font-display font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
                 {card.title}
               </h2>
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+              <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed bg-slate-50 dark:bg-slate-800/80 p-2.5 sm:p-3 rounded-2xl border border-slate-100 dark:border-slate-700/60">
                 {card.description}
               </p>
             </div>
 
             {/* Pro Tip if available */}
             {card.proTip && (
-              <div className="w-full flex items-start gap-2 text-left bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-2.5 text-xs text-amber-900 dark:text-amber-200">
+              <div className="w-full flex items-start gap-2 text-left bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-2 sm:p-2.5 text-xs text-amber-900 dark:text-amber-200">
                 <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                 <span>
                   <strong className="font-bold">Tips Seru:</strong> {card.proTip}
@@ -112,37 +112,37 @@ export const GameCard: React.FC<GameCardProps> = ({
             </div>
 
             {/* Scoring Question Banner */}
-            <div className="w-full pt-2">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+            <div className="w-full pt-1.5 sm:pt-2">
+              <p className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
                 Bagaimana hasil tantangan {currentPlayer.name}?
               </p>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+              {/* Action Buttons Grid */}
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
                 {/* 1. Success Button */}
                 <button
                   onClick={() => onSubmitScore('success')}
-                  className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-display font-extrabold text-sm shadow-bubbly-teal active:scale-95 transition-all"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-display font-extrabold text-[11px] sm:text-sm shadow-bubbly-teal active:scale-95 transition-all leading-tight"
                 >
-                  <Heart className="w-4 h-4 fill-white" />
+                  <Heart className="w-3.5 h-3.5 fill-white shrink-0 hidden xs:inline" />
                   <span>BERHASIL! +{card.points}</span>
                 </button>
 
                 {/* 2. Super Funny Button (+Bonus) */}
                 <button
                   onClick={() => onSubmitScore('funny')}
-                  className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-display font-extrabold text-sm shadow-bubbly-yellow active:scale-95 transition-all"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-display font-extrabold text-[11px] sm:text-sm shadow-bubbly-yellow active:scale-95 transition-all leading-tight"
                 >
-                  <Sparkles className="w-4 h-4 fill-white" />
-                  <span>LUCU BANGET! +{card.points + 1}</span>
+                  <Sparkles className="w-3.5 h-3.5 fill-white shrink-0 hidden xs:inline" />
+                  <span>LUCU! +{card.points + 1}</span>
                 </button>
 
                 {/* 3. Skip Button */}
                 <button
                   onClick={() => onSubmitScore('skip')}
-                  className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-bold text-xs active:scale-95 transition-all"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2.5 sm:py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-bold text-[11px] sm:text-xs active:scale-95 transition-all leading-tight"
                 >
-                  <SkipForward className="w-4 h-4" />
+                  <SkipForward className="w-3.5 h-3.5 shrink-0 hidden xs:inline" />
                   <span>LEWATI</span>
                 </button>
               </div>
