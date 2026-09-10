@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, ArrowLeft, Award, Sparkles, HelpCircle, Grid } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, ArrowLeft, Award, Sparkles, HelpCircle, Grid, Volume1, Info } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
 interface CountingGameProps {
@@ -33,10 +33,12 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
   const [mode, setMode] = useState<'grid' | 'quiz' | 'sequence'>('grid');
   const [selectedNumber, setSelectedNumber] = useState<number | null>(1);
   const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(false);
-  const [autoSpeed, setAutoSpeed] = useState<number>(1200); // ms per step
+  const [autoSpeed, setAutoSpeed] = useState<number>(1300); // ms per step
   const [muted, setMuted] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
+  const [audioUnlocked, setAudioUnlocked] = useState<boolean>(false);
+  const [showMobileTip, setShowMobileTip] = useState<boolean>(false);
 
   // Quiz Mode state
   const [quizTarget, setQuizTarget] = useState<number>(1);
@@ -51,34 +53,81 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
 
   const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Speech synthesis helper
+  // Mobile Audio Unlocker (Bypasses iOS Safari & Mobile Chrome Autoplay restrictions)
+  const unlockAudioEngine = () => {
+    sound.unlock();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        // Speak empty silent utterance to unlock speech synthesis channel on mobile
+        const silentUtterance = new SpeechSynthesisUtterance('');
+        silentUtterance.volume = 0;
+        window.speechSynthesis.speak(silentUtterance);
+        setAudioUnlocked(true);
+      } catch (e) {
+        console.warn('Audio unlock warning:', e);
+      }
+    }
+  };
+
+  // Pre-load voices on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      const handleVoicesChanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+      window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
+    }
+  }, []);
+
+  // Speech & Sound Synthesis Helper
   const speakNumber = (num: number) => {
     if (muted) return;
 
-    // Use Web Speech API if available
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel(); // Stop any pending speech
-      const text = `${num}! ${numberToIndonesianWords(num)}`;
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'id-ID';
-      utterance.rate = 0.95;
-      utterance.pitch = 1.2; // Cheerful higher pitch for children
-      
-      // Fallback: try finding an Indonesian voice
-      const voices = window.speechSynthesis.getVoices();
-      const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
-      if (idVoice) {
-        utterance.voice = idVoice;
-      }
+    // 1. ALWAYS play sound effect immediately for 100% reliable mobile speaker feedback
+    sound.playClick();
 
-      window.speechSynthesis.speak(utterance);
-    } else {
-      // Fallback beep tone
-      sound.playClick();
+    // 2. Play Web Speech Synthesis in Indonesian
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        // Resume engine if paused (iOS Safari bug)
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+
+        window.speechSynthesis.cancel(); // Clear queued speech
+
+        const text = `${num}. ${numberToIndonesianWords(num)}`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.pitch = 1.25; // Cheerful higher pitch for children
+
+        // Find Indonesian voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const idVoice = voices.find(
+          (v) =>
+            v.lang.toLowerCase().includes('id') ||
+            v.lang.toLowerCase().includes('indonesia') ||
+            v.name.toLowerCase().includes('indonesia')
+        );
+
+        if (idVoice) {
+          utterance.voice = idVoice;
+        }
+
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.warn('Speech synthesis playback warning:', e);
+      }
     }
   };
 
   const handleSelectNumber = (num: number) => {
+    unlockAudioEngine();
     setSelectedNumber(num);
     speakNumber(num);
   };
@@ -103,6 +152,7 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
   }, [isAutoPlaying, selectedNumber, autoSpeed]);
 
   const toggleAutoPlay = () => {
+    unlockAudioEngine();
     sound.playClick();
     if (!isAutoPlaying) {
       if (!selectedNumber || selectedNumber >= 100) {
@@ -131,21 +181,8 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
       optionsSet.add(wrong);
     }
 
-    // Shuffle options
     const optionsArr = Array.from(optionsSet).sort(() => Math.random() - 0.5);
     setQuizOptions(optionsArr);
-
-    // Speak prompt after a brief delay
-    setTimeout(() => {
-      if (!muted && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const text = `Coba tebak mana angka ${target}? ${numberToIndonesianWords(target)}`;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'id-ID';
-        utterance.pitch = 1.25;
-        window.speechSynthesis.speak(utterance);
-      }
-    }, 200);
   };
 
   // Setup Sequence mode
@@ -171,7 +208,13 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
     if (mode !== 'grid') setIsAutoPlaying(false);
   }, [mode]);
 
+  const speakQuizPrompt = (target: number) => {
+    unlockAudioEngine();
+    speakNumber(target);
+  };
+
   const handleQuizAnswer = (num: number) => {
+    unlockAudioEngine();
     if (quizFeedback !== null) return;
 
     if (num === quizTarget) {
@@ -180,13 +223,14 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
       setScore((s) => s + 10);
       setStreak((st) => st + 1);
 
-      if (!muted && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const text = `Hore! Benar sekali! Ini angka ${num}, ${numberToIndonesianWords(num)}`;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'id-ID';
-        utterance.pitch = 1.3;
-        window.speechSynthesis.speak(utterance);
+      if (!muted && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(`Hore! Benar sekali! Ini angka ${num}, ${numberToIndonesianWords(num)}`);
+          utterance.lang = 'id-ID';
+          utterance.pitch = 1.3;
+          window.speechSynthesis.speak(utterance);
+        } catch {}
       }
 
       setTimeout(() => {
@@ -197,12 +241,13 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
       sound.playClick();
       setStreak(0);
 
-      if (!muted && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const text = `Belum tepat! Coba lagi yuk!`;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'id-ID';
-        window.speechSynthesis.speak(utterance);
+      if (!muted && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(`Belum tepat! Coba lagi yuk!`);
+          utterance.lang = 'id-ID';
+          window.speechSynthesis.speak(utterance);
+        } catch {}
       }
 
       setTimeout(() => {
@@ -212,6 +257,7 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
   };
 
   const handleSeqAnswer = (num: number) => {
+    unlockAudioEngine();
     if (seqFeedback !== null) return;
     const correctAns = seqStart + seqMissingIndex;
 
@@ -221,13 +267,14 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
       setScore((s) => s + 10);
       setStreak((st) => st + 1);
 
-      if (!muted && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const text = `Hebat! Urutan angka ${correctAns} benar!`;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'id-ID';
-        utterance.pitch = 1.25;
-        window.speechSynthesis.speak(utterance);
+      if (!muted && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(`Hebat! Urutan angka ${correctAns} benar!`);
+          utterance.lang = 'id-ID';
+          utterance.pitch = 1.25;
+          window.speechSynthesis.speak(utterance);
+        } catch {}
       }
 
       setTimeout(() => {
@@ -246,7 +293,11 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
   const chosenEmoji = ITEM_EMOJIS[(selectedNumber || 1) % ITEM_EMOJIS.length];
 
   return (
-    <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 space-y-5 animate-pop-in select-none">
+    <div
+      onClick={unlockAudioEngine}
+      onTouchStart={unlockAudioEngine}
+      className="max-w-5xl mx-auto px-3 sm:px-6 py-4 space-y-5 animate-pop-in select-none"
+    >
       
       {/* Header Bar */}
       <div className="bg-gradient-to-r from-amber-400 via-pink-400 to-indigo-500 rounded-3xl p-4 sm:p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
@@ -276,6 +327,16 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
 
         {/* Controls Header */}
         <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto justify-end">
+          {/* Mobile Sound Tip Button */}
+          <button
+            onClick={() => setShowMobileTip(!showMobileTip)}
+            className="p-2.5 sm:p-3 rounded-2xl bg-amber-300/30 hover:bg-amber-300/40 backdrop-blur-md font-bold text-xs sm:text-sm flex items-center gap-1.5 text-white transition-all"
+            title="Bantuan Suara di HP"
+          >
+            <Info className="w-5 h-5 text-yellow-200" />
+            <span className="hidden sm:inline">Tips HP</span>
+          </button>
+
           {/* Mute button */}
           <button
             onClick={() => {
@@ -301,10 +362,40 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
         </div>
       </div>
 
+      {/* Mobile Sound Troubleshooting Banner */}
+      {(showMobileTip || !audioUnlocked) && (
+        <div className="bg-amber-50 dark:bg-amber-950/80 border-2 border-amber-300 dark:border-amber-700 rounded-2xl p-4 text-xs text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-pop-in">
+          <div className="flex items-start gap-2.5">
+            <Volume1 className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-extrabold block text-sm">💡 Solusi Jika Suara Tidak Keluar di Handphone:</span>
+              <ul className="list-disc list-inside space-y-0.5 opacity-90 font-medium">
+                <li><strong>Matikan Mode Hening (Silent Switch)</strong> di samping bodi HP (terutama pada iPhone / iPad).</li>
+                <li><strong>Naikkan Volume Media / Musik HP</strong> (bukan hanya volume nada panggil).</li>
+                <li><strong>Ketuk sembarang angka</strong> di layar untuk mengaktifkan sistem suara browser HP.</li>
+              </ul>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              unlockAudioEngine();
+              setShowMobileTip(false);
+              speakNumber(selectedNumber || 1);
+            }}
+            className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-display font-black rounded-xl text-xs shadow-md shrink-0 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+          >
+            <Volume2 className="w-4 h-4" />
+            <span>Tes Suara Sekarang 🔊</span>
+          </button>
+        </div>
+      )}
+
       {/* Mode Navigation Tabs */}
       <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-inner gap-1">
         <button
           onClick={() => {
+            unlockAudioEngine();
             sound.playClick();
             setMode('grid');
           }}
@@ -320,6 +411,7 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
 
         <button
           onClick={() => {
+            unlockAudioEngine();
             sound.playClick();
             setMode('quiz');
           }}
@@ -335,6 +427,7 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
 
         <button
           onClick={() => {
+            unlockAudioEngine();
             sound.playClick();
             setMode('sequence');
           }}
@@ -358,13 +451,13 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
             {/* Big Active Number */}
             <div className="flex items-center gap-5 w-full md:w-auto justify-center md:justify-start">
               <div
-                onClick={() => selectedNumber && speakNumber(selectedNumber)}
+                onClick={() => selectedNumber && handleSelectNumber(selectedNumber)}
                 className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr from-amber-400 via-orange-500 to-pink-500 text-white font-display font-black text-4xl sm:text-5xl flex items-center justify-center shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-all border-4 border-white dark:border-slate-700 relative group"
                 title="Klik untuk dengarkan suara angka!"
               >
                 {selectedNumber || '?'}
                 <div className="absolute bottom-1 right-2 text-xs bg-black/30 px-1.5 py-0.5 rounded-full backdrop-blur-xs flex items-center gap-0.5">
-                  <Volume2 className="w-3 h-3 text-yellow-200" />
+                  <Volume2 className="w-3.5 h-3.5 text-yellow-200 animate-pulse" />
                 </div>
               </div>
 
@@ -376,7 +469,7 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
                   {selectedNumber ? numberToIndonesianWords(selectedNumber) : 'Pilih Angka'}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Tekan tombol angka di bawah untuk mendengarkan suaranya!
+                  Tekan tombol angka atau kartu di atas untuk membunyikan suara!
                 </p>
               </div>
             </div>
@@ -414,9 +507,9 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
               <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                 <span>Kecepatan:</span>
                 <button
-                  onClick={() => setAutoSpeed(1600)}
+                  onClick={() => setAutoSpeed(1700)}
                   className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold ${
-                    autoSpeed === 1600
+                    autoSpeed === 1700
                       ? 'bg-amber-500 text-white border-amber-500'
                       : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700'
                   }`}
@@ -424,9 +517,9 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
                   Pelan
                 </button>
                 <button
-                  onClick={() => setAutoSpeed(1100)}
+                  onClick={() => setAutoSpeed(1300)}
                   className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold ${
-                    autoSpeed === 1100
+                    autoSpeed === 1300
                       ? 'bg-amber-500 text-white border-amber-500'
                       : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700'
                   }`}
@@ -434,9 +527,9 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
                   Sedang
                 </button>
                 <button
-                  onClick={() => setAutoSpeed(700)}
+                  onClick={() => setAutoSpeed(800)}
                   className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold ${
-                    autoSpeed === 700
+                    autoSpeed === 800
                       ? 'bg-amber-500 text-white border-amber-500'
                       : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700'
                   }`}
@@ -511,20 +604,11 @@ export const CountingGame: React.FC<CountingGameProps> = ({ onBack }) => {
           {/* Voice Prompt Box */}
           <div className="bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-3xl p-6 shadow-lg flex flex-col items-center justify-center gap-3">
             <button
-              onClick={() => {
-                if ('speechSynthesis' in window) {
-                  window.speechSynthesis.cancel();
-                  const text = `Coba tebak mana angka ${quizTarget}? ${numberToIndonesianWords(quizTarget)}`;
-                  const utterance = new SpeechSynthesisUtterance(text);
-                  utterance.lang = 'id-ID';
-                  utterance.pitch = 1.25;
-                  window.speechSynthesis.speak(utterance);
-                }
-              }}
+              onClick={() => speakQuizPrompt(quizTarget)}
               className="p-4 rounded-full bg-white/20 hover:bg-white/30 text-white active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 font-display font-black text-sm"
             >
               <Volume2 className="w-7 h-7 text-yellow-200 animate-pulse" />
-              <span>Dengarkan Lagi Suara Angka</span>
+              <span>Dengarkan Suara Angka 🔊</span>
             </button>
 
             <div className="text-xl sm:text-2xl font-display font-black tracking-wide">
