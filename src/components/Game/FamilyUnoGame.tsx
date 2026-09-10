@@ -588,27 +588,27 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
         <div className="space-y-4">
           
           {/* Players Turn Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
             {unoPlayers.map((p) => {
               const isCurrentTurn = p.id === activePlayer.id;
 
               return (
                 <div
                   key={p.id}
-                  className={`p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2 relative ${
+                  className={`p-2 sm:p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2 relative ${
                     isCurrentTurn
                       ? 'border-family-coral bg-rose-50 dark:bg-rose-950/60 shadow-md scale-102 ring-2 ring-rose-400/50'
                       : 'border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 opacity-80'
                   }`}
                 >
-                  <span className="text-2xl">{p.avatar}</span>
+                  <span className="text-xl sm:text-2xl shrink-0">{p.avatar}</span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1">
-                      <span className="font-display font-black text-xs text-slate-900 dark:text-white truncate">
+                      <span className="font-display font-black text-[11px] sm:text-xs text-slate-900 dark:text-white truncate">
                         {p.name}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                    <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500 font-bold">
                       <span>{p.hand.length} Kartu</span>
                       {p.hand.length === 1 && (
                         <span className="text-rose-600 font-extrabold animate-pulse">UNO! 🔥</span>
@@ -626,15 +626,15 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
           </div>
 
           {/* Action Message Bar */}
-          <div className="bg-white/95 dark:bg-slate-800/95 p-3 rounded-2xl border-2 border-rose-100 dark:border-slate-700 shadow-sm flex items-center justify-between gap-3">
+          <div className="bg-white/95 dark:bg-slate-800/95 p-3 rounded-2xl border-2 border-rose-100 dark:border-slate-700 shadow-sm flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2.5">
             <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
-              <span className="text-lg">📢</span>
+              <span className="text-base sm:text-lg shrink-0">📢</span>
               <span>{message}</span>
             </div>
             {activePlayer.hand.length === 2 && (
               <button
                 onClick={handleShoutUno}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-black shadow-md hover:scale-105 active:scale-95 transition-all shrink-0 animate-bounce"
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-black shadow-md hover:scale-105 active:scale-95 transition-all shrink-0 animate-bounce text-center"
               >
                 TERIAK "UNO!" 🗣️
               </button>
@@ -642,49 +642,49 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
           </div>
 
           {/* Table Center (Discard Pile & Draw Deck & Active Color) */}
-          <div className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-3xl p-5 sm:p-6 border-4 border-slate-700 shadow-bubbly-lg flex flex-col items-center justify-center space-y-4 text-white relative min-h-[220px]">
+          <div className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-3xl p-3.5 sm:p-6 border-3 sm:border-4 border-slate-700 shadow-bubbly-lg flex flex-col items-center justify-center space-y-3.5 text-white relative min-h-[190px] sm:min-h-[220px]">
             
             {/* Active Color Badge */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black uppercase text-slate-300">Warna Aktif:</span>
-              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase shadow-sm ${COLOR_MAP[activeColor].bg} text-white`}>
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
+              <span className="font-black uppercase text-slate-400">Warna Aktif:</span>
+              <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-black uppercase shadow-sm ${COLOR_MAP[activeColor].bg} text-white`}>
                 {COLOR_MAP[activeColor].name}
               </span>
-              <span className="text-xs text-slate-400 font-bold ml-2">
+              <span className="text-slate-400 font-bold ml-1">
                 Arah: {isClockwise ? 'Searah ↻' : 'Berlawanan ↺'}
               </span>
             </div>
 
             {/* Piles Center */}
-            <div className="flex items-center justify-center gap-6 sm:gap-10">
+            <div className="flex items-center justify-center gap-4 sm:gap-10">
               
               {/* Draw Deck */}
               <div
                 onClick={handlePlayerDrawCard}
-                className="w-24 h-36 sm:w-28 sm:h-40 rounded-2xl bg-gradient-to-tr from-slate-700 to-slate-900 border-3 border-amber-400/80 shadow-2xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all group relative"
+                className="w-20 h-30 sm:w-28 sm:h-40 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-slate-700 to-slate-900 border-2 sm:border-3 border-amber-400/80 shadow-2xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all group relative shrink-0"
                 title="Klik untuk ambil 1 kartu"
               >
-                <div className="w-16 h-24 rounded-xl bg-gradient-to-tr from-red-600 via-yellow-500 to-blue-600 flex items-center justify-center text-white font-black text-xl shadow-inner transform -rotate-6 group-hover:rotate-0 transition-transform">
+                <div className="w-13 h-20 sm:w-16 sm:h-24 rounded-lg sm:rounded-xl bg-gradient-to-tr from-red-600 via-yellow-500 to-blue-600 flex items-center justify-center text-white font-black text-sm sm:text-xl shadow-inner transform -rotate-6 group-hover:rotate-0 transition-transform">
                   UNO
                 </div>
-                <span className="text-[10px] font-black text-amber-300 mt-2 uppercase tracking-wide">
+                <span className="text-[9px] sm:text-[10px] font-black text-amber-300 mt-1 uppercase tracking-wide">
                   Ambil (+1)
                 </span>
-                <span className="absolute -bottom-2 px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[9px] shadow-sm">
+                <span className="absolute -bottom-2 px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] shadow-sm">
                   {drawPile.length} Kartu
                 </span>
               </div>
 
               {/* Top Discard Card */}
               {topDiscard && (
-                <div className={`w-24 h-36 sm:w-28 sm:h-40 rounded-2xl bg-gradient-to-br ${COLOR_MAP[topDiscard.color === 'wild' ? activeColor : topDiscard.color].gradient} border-4 border-white shadow-2xl flex flex-col items-center justify-between p-2 text-white relative animate-pop-in`}>
-                  <div className="self-start font-black text-sm">
+                <div className={`w-20 h-30 sm:w-28 sm:h-40 rounded-xl sm:rounded-2xl bg-gradient-to-br ${COLOR_MAP[topDiscard.color === 'wild' ? activeColor : topDiscard.color].gradient} border-2 sm:border-4 border-white shadow-2xl flex flex-col items-center justify-between p-1.5 sm:p-2 text-white relative animate-pop-in shrink-0`}>
+                  <div className="self-start font-black text-xs sm:text-sm">
                     {topDiscard.value === 'draw2' ? '+2' : topDiscard.value === 'wild4' ? '+4' : topDiscard.value === 'asta_love' ? '❤️' : topDiscard.value.toUpperCase()}
                   </div>
-                  <div className="w-14 h-20 sm:w-16 sm:h-22 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-2xl sm:text-3xl drop-shadow-md">
+                  <div className="w-12 h-16 sm:w-16 sm:h-22 rounded-md sm:rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-xl sm:text-3xl drop-shadow-md">
                     {topDiscard.value === 'skip' ? '🚫' : topDiscard.value === 'reverse' ? '🔄' : topDiscard.value === 'draw2' ? '+2' : topDiscard.value === 'wild4' ? '+4' : topDiscard.value === 'asta_love' ? '💖' : topDiscard.value === 'wild' ? '🌈' : topDiscard.value}
                   </div>
-                  <div className="self-end font-black text-sm transform rotate-180">
+                  <div className="self-end font-black text-xs sm:text-sm transform rotate-180">
                     {topDiscard.value === 'draw2' ? '+2' : topDiscard.value === 'wild4' ? '+4' : topDiscard.value === 'asta_love' ? '❤️' : topDiscard.value.toUpperCase()}
                   </div>
                 </div>
@@ -694,21 +694,21 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
           </div>
 
           {/* Active Player Hand */}
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-3xl border-3 border-rose-100 dark:border-slate-700 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-3xl border-3 border-rose-100 dark:border-slate-700 shadow-sm space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-1">
               <div className="flex items-center gap-2">
-                <span className="text-xl">{activePlayer.avatar}</span>
-                <span className="font-display font-black text-sm sm:text-base text-slate-900 dark:text-white">
+                <span className="text-lg sm:text-xl">{activePlayer.avatar}</span>
+                <span className="font-display font-black text-xs sm:text-base text-slate-900 dark:text-white">
                   Tangan {activePlayer.name} ({activePlayer.hand.length} Kartu)
                 </span>
               </div>
-              <span className="text-xs text-slate-500 font-bold">
+              <span className="text-[11px] sm:text-xs text-slate-500 font-bold">
                 Pilih kartu yang cocok untuk dimainkan:
               </span>
             </div>
 
             {/* Cards Scroll List */}
-            <div className="flex gap-2.5 overflow-x-auto pb-3 pt-2 px-1">
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-3 pt-2 px-1 scrollbar-thin scrollbar-thumb-rose-300 dark:scrollbar-thumb-slate-700 min-h-[135px] sm:min-h-[160px] items-end">
               {activePlayer.hand.map((card) => {
                 const playable = isCardPlayable(card);
 
@@ -716,21 +716,27 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players, onBack })
                   <button
                     key={card.id}
                     onClick={() => handlePlayCard(card)}
-                    className={`w-20 h-32 sm:w-24 sm:h-36 rounded-2xl bg-gradient-to-br ${COLOR_MAP[card.color].gradient} p-2 text-white flex flex-col justify-between items-center shrink-0 transition-all border-2 border-white shadow-md active:scale-95 ${
+                    className={`w-18 h-28 xs:w-20 xs:h-32 sm:w-24 sm:h-36 rounded-xl sm:rounded-2xl bg-gradient-to-br ${COLOR_MAP[card.color].gradient} p-1.5 sm:p-2 text-white flex flex-col justify-between items-center shrink-0 transition-all border-2 border-white shadow-md active:scale-95 relative ${
                       playable
-                        ? 'hover:-translate-y-2 hover:shadow-xl ring-3 ring-amber-400 cursor-pointer animate-pulse-subtle'
-                        : 'opacity-50 grayscale-30 cursor-not-allowed'
+                        ? 'hover:-translate-y-2 hover:shadow-xl ring-3 ring-amber-400 cursor-pointer animate-pulse-subtle scale-102'
+                        : 'opacity-45 grayscale-30 cursor-not-allowed'
                     }`}
                   >
-                    <div className="self-start font-black text-xs">
+                    <div className="self-start font-black text-[10px] sm:text-xs">
                       {card.value === 'draw2' ? '+2' : card.value === 'wild4' ? '+4' : card.value === 'asta_love' ? '❤️' : card.value.toUpperCase()}
                     </div>
-                    <div className="w-10 h-14 sm:w-12 sm:h-16 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-xl sm:text-2xl">
+                    <div className="w-9 h-13 sm:w-12 sm:h-16 rounded-md sm:rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-lg sm:text-2xl">
                       {card.value === 'skip' ? '🚫' : card.value === 'reverse' ? '🔄' : card.value === 'draw2' ? '+2' : card.value === 'wild4' ? '+4' : card.value === 'asta_love' ? '💖' : card.value === 'wild' ? '🌈' : card.value}
                     </div>
-                    <div className="self-end font-black text-xs transform rotate-180">
+                    <div className="self-end font-black text-[10px] sm:text-xs transform rotate-180">
                       {card.value === 'draw2' ? '+2' : card.value === 'wild4' ? '+4' : card.value === 'asta_love' ? '❤️' : card.value.toUpperCase()}
                     </div>
+
+                    {playable && (
+                      <span className="absolute -top-2 px-1.5 py-0.2 rounded-full bg-amber-400 text-amber-950 font-black text-[8px] uppercase shadow-xs">
+                        Bisa
+                      </span>
+                    )}
                   </button>
                 );
               })}
