@@ -29,10 +29,11 @@ export function useAuth() {
     return db.getUsersByFamily(sess.family.id);
   });
 
-  // Refresh members whenever current family changes
+  // Refresh members & sync active family data whenever current family changes
   useEffect(() => {
     if (currentFamily?.id) {
       setFamilyMembers(db.getUsersByFamily(currentFamily.id));
+      db.syncActiveFamily(currentFamily.id).catch(() => {});
     }
   }, [currentFamily]);
 

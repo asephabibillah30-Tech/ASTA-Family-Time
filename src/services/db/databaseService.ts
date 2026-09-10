@@ -74,116 +74,106 @@ class DatabaseService {
         timestamp: new Date().toISOString()
       }
     ]);
-    this.initSync().catch(console.warn);
-  }
-
-  public async initSync(): Promise<void> {
-    await this.syncLocalToCloud();
-    await this.syncFromCloud();
-  }
-
-  public async syncLocalToCloud(): Promise<void> {
-    const supabase = postgresService.getClient();
-    if (!supabase) return;
-
-    try {
-      // 1. Upsert all families first (tanpa head_user_id untuk menghindari FK deadlock)
-      for (const f of this.families) {
-        const { error } = await supabase.from('families').upsert({
-          id: f.id,
-          family_name: f.familyName || 'Keluarga ASTA',
-          family_code: f.familyCode || 'ASTA-2026',
-          head_user_id: null,
-          streak_days: f.streakDays || 1,
-          total_love_points: f.totalLovePoints || 100
-        }, { onConflict: 'id' });
-        if (error) console.error('❌ Supabase families upsert error:', error.message, error.details);
-        else console.log(`✅ Supabase family synced: ${f.familyName} (${f.id})`);
-      }
-
-      // 2. Upsert all users (sekarang family_id sudah pasti ada di tabel families)
-      for (const u of this.users) {
-        const payload: Record<string, any> = {
-          id: u.id,
-          family_id: u.familyId,
-          full_name: u.fullName || 'Anggota Keluarga',
-          role: u.role || 'member',
-          role_title: u.roleTitle || 'Anggota',
-          username: u.usernameOrEmail || null,
-          password_hash: u.password || null,
-          pin: u.pin || null,
-          avatar: u.avatar || '👨‍💼',
-          color: u.color || 'bg-blue-500',
-          love_points: u.lovePoints || 50,
-          is_head: Boolean(u.isHead)
-        };
-        const { error } = await supabase.from('users').upsert(payload, { onConflict: 'id' });
-        if (error) console.error(`❌ Supabase user (${u.fullName}) upsert error:`, error.message, error.details);
-        else console.log(`✅ Supabase user synced: ${u.fullName} (${u.id})`);
-      }
-
-      // 3. Update head_user_id di tabel families setelah user berhasil di-insert
-      for (const f of this.families) {
-        if (f.headUserId) {
-          await supabase.from('families').update({ head_user_id: f.headUserId }).eq('id', f.id);
-        }
-      }
-    } catch (err) {
-      console.warn('Sync local to cloud failed:', err);
+    // Melakukan sinkronisasi terfokus hanya jika ada sesi keluarga aktif yang tersimpan
+    const activeSession = this.getSavedSession();
+    if (activeSession?.family?.id) {
+      this.syncActiveFamily(activeSession.family.id).catch(() => {});
     }
   }
 
-  public async syncFromCloud(): Promise<void> {
+  /**
+   * Sinkronisasi data TERFOKUS hanya untuk keluarga yang sedang aktif/login.
+   * Mencegah pembocoran data antar-keluarga dan menjaga privasi pengguna.
+   */
+  public async syncActiveFamily(familyId: string): Promise<void> {
+    if (!familyId) return;
     const supabase = postgresService.getClient();
     if (!supabase) return;
+
     try {
-      const { data: cloudFamilies, error: famError } = await supabase
+      // 1. Ambil data keluarga aktif dari cloud
+      const { data: cloudFam } = await supabase
         .from('families')
         .select('*')
-        .order('created_at', { ascending: false });
+        .eq('id', familyId)
+        .maybeSingle();
 
-      if (!famError && cloudFamilies) {
-        this.families = cloudFamilies
-          .filter(f => f.id !== 'fam-asta-default')
-          .map(f => ({
-            id: f.id,
-            familyName: f.family_name,
-            familyCode: f.family_code,
-            headUserId: f.head_user_id,
-            streakDays: f.streak_days || 1,
-            totalLovePoints: f.total_love_points || 100,
-            createdAt: f.created_at
-          }));
+      if (cloudFam) {
+        const updatedFam: FamilyAccount = {
+          id: cloudFam.id,
+          familyName: cloudFam.family_name,
+          familyCode: cloudFam.family_code,
+          headUserId: cloudFam.head_user_id,
+          streakDays: cloudFam.streak_days || 1,
+          totalLovePoints: cloudFam.total_love_points || 100,
+          createdAt: cloudFam.created_at
+        };
+        const idx = this.families.findIndex(f => f.id === familyId);
+        if (idx >= 0) this.families[idx] = updatedFam;
+        else this.families.push(updatedFam);
         saveData(FAMILIES_KEY, this.families);
       }
 
-      const { data: cloudUsers, error: usrError } = await supabase
+      // 2. Ambil data anggota keluarga aktif dari cloud (difilter strictly berdasarkan family_id)
+      const { data: cloudUsers } = await supabase
         .from('users')
         .select('*')
-        .order('created_at', { ascending: false });
+        .eq('family_id', familyId);
 
-      if (!usrError && cloudUsers) {
-        this.users = cloudUsers
-          .filter(u => u.family_id !== 'fam-asta-default' && u.id !== 'usr-ayah' && u.id !== 'usr-ibu' && u.id !== 'usr-kakak' && u.id !== 'usr-adik')
-          .map(u => ({
-            id: u.id,
-            familyId: u.family_id,
-            fullName: u.full_name,
-            role: u.role as any,
-            roleTitle: u.role_title,
-            usernameOrEmail: u.username || u.email,
-            password: u.password_hash,
-            pin: u.pin,
-            avatar: u.avatar || '👨‍💼',
-            color: u.color || 'bg-blue-500',
-            lovePoints: u.love_points || 50,
-            isHead: u.is_head || false,
-            createdAt: u.created_at
-          }));
+      if (cloudUsers && cloudUsers.length > 0) {
+        const mappedUsers: UserAccount[] = cloudUsers.map(u => ({
+          id: u.id,
+          familyId: u.family_id,
+          fullName: u.full_name,
+          role: u.role as any,
+          roleTitle: u.role_title,
+          usernameOrEmail: u.username || u.email,
+          password: u.password_hash,
+          pin: u.pin,
+          avatar: u.avatar || '👨‍💼',
+          color: u.color || 'bg-blue-500',
+          lovePoints: u.love_points || 50,
+          isHead: u.is_head || false,
+          createdAt: u.created_at
+        }));
+
+        // Ganti/update data pengguna untuk keluarga ini di memori lokal
+        this.users = [...this.users.filter(u => u.familyId !== familyId), ...mappedUsers];
         saveData(USERS_KEY, this.users);
       }
-    } catch (err) {
-      console.warn('Cloud sync error:', err);
+
+      // 3. Dorong data offline keluarga aktif ke cloud saat online (Aktivitas Up Data Offline)
+      const activeFamLocal = this.families.find(f => f.id === familyId);
+      if (activeFamLocal) {
+        await supabase.from('families').upsert({
+          id: activeFamLocal.id,
+          family_name: activeFamLocal.familyName,
+          family_code: activeFamLocal.familyCode,
+          head_user_id: activeFamLocal.headUserId || null,
+          streak_days: activeFamLocal.streakDays,
+          total_love_points: activeFamLocal.totalLovePoints
+        }, { onConflict: 'id' });
+      }
+
+      const activeUsersLocal = this.users.filter(u => u.familyId === familyId);
+      for (const u of activeUsersLocal) {
+        await supabase.from('users').upsert({
+          id: u.id,
+          family_id: u.familyId,
+          full_name: u.fullName,
+          role: u.role,
+          role_title: u.roleTitle,
+          username: u.usernameOrEmail || null,
+          password_hash: u.password || null,
+          pin: u.pin || null,
+          avatar: u.avatar,
+          color: u.color,
+          love_points: u.lovePoints,
+          is_head: u.isHead
+        }, { onConflict: 'id' });
+      }
+    } catch (e) {
+      // Gagal sync offline diam-diam tanpa spam log
     }
   }
 
@@ -315,8 +305,7 @@ class DatabaseService {
             streak_days: 1,
             total_love_points: 100
           }, { onConflict: 'id' });
-          if (fErr) console.error('❌ Supabase family registration error:', fErr.message, fErr.details);
-          else console.log('✅ Supabase family registered:', familyId);
+          if (fErr) console.error('Supabase family registration error:', fErr.message);
 
           // 2. Insert User Next (satisfies Foreign Key)
           const { error: uErr } = await supabase.from('users').upsert({
@@ -333,13 +322,12 @@ class DatabaseService {
             love_points: 100,
             is_head: true
           }, { onConflict: 'id' });
-          if (uErr) console.error('❌ Supabase user registration error:', uErr.message, uErr.details);
-          else console.log('✅ Supabase user registered:', headUserId);
+          if (uErr) console.error('Supabase user registration error:', uErr.message);
 
           // 3. Link head_user_id
           await supabase.from('families').update({ head_user_id: headUserId }).eq('id', familyId);
         } catch (err) {
-          console.error('❌ Supabase registration sync failed:', err);
+          // Silent catch
         }
       })();
     } else {
