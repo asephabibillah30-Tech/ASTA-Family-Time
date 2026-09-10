@@ -18,81 +18,25 @@ export interface SecurityAuditLog {
   timestamp: string;
 }
 
-// Initial Demo Family & Users (Secured with Fast Hashing)
-export const DEFAULT_FAMILY: FamilyAccount = {
-  id: 'fam-asta-default',
-  familyName: 'Keluarga Harmonis ASTA',
-  familyCode: 'ASTA-2026',
-  headUserId: 'usr-ayah',
-  streakDays: 7,
-  totalLovePoints: 120,
-  createdAt: '2026-01-01T00:00:00.000Z'
-};
-
-export const DEFAULT_USERS: UserAccount[] = [
-  {
-    id: 'usr-ayah',
-    familyId: 'fam-asta-default',
-    fullName: 'Ayah Asep',
-    role: 'head_family',
-    roleTitle: 'Ayah',
-    usernameOrEmail: 'ayah@asta.com',
-    password: fastHashSync('123'),
-    pin: fastHashSync('1234'),
-    avatar: '👨‍💼',
-    color: 'bg-blue-500',
-    lovePoints: 120,
-    isHead: true,
-    createdAt: '2026-01-01T00:00:00.000Z'
-  },
-  {
-    id: 'usr-ibu',
-    familyId: 'fam-asta-default',
-    fullName: 'Ibu Habibah',
-    role: 'member',
-    roleTitle: 'Ibu',
-    usernameOrEmail: 'ibu@asta.com',
-    pin: fastHashSync('1234'),
-    avatar: '👩‍🍳',
-    color: 'bg-rose-500',
-    lovePoints: 95,
-    isHead: false,
-    createdAt: '2026-01-01T00:00:00.000Z'
-  },
-  {
-    id: 'usr-kakak',
-    familyId: 'fam-asta-default',
-    fullName: 'Kakak Alif',
-    role: 'member',
-    roleTitle: 'Kakak',
-    usernameOrEmail: 'kakak@asta.com',
-    pin: fastHashSync('1234'),
-    avatar: '👦',
-    color: 'bg-amber-500',
-    lovePoints: 80,
-    isHead: false,
-    createdAt: '2026-01-01T00:00:00.000Z'
-  },
-  {
-    id: 'usr-adik',
-    familyId: 'fam-asta-default',
-    fullName: 'Adik Aqila',
-    role: 'member',
-    roleTitle: 'Adik',
-    usernameOrEmail: 'adik@asta.com',
-    pin: fastHashSync('1234'),
-    avatar: '👧',
-    color: 'bg-teal-500',
-    lovePoints: 70,
-    isHead: false,
-    createdAt: '2026-01-01T00:00:00.000Z'
-  }
-];
-
 function loadData<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        // Filter out legacy demo family and users
+        const cleaned = parsed.filter((item: any) => 
+          item.id !== 'fam-asta-default' && 
+          item.id !== 'usr-ayah' && 
+          item.id !== 'usr-ibu' && 
+          item.id !== 'usr-kakak' && 
+          item.id !== 'usr-adik' &&
+          item.familyId !== 'fam-asta-default'
+        );
+        return cleaned as unknown as T;
+      }
+      return parsed;
+    }
   } catch (err) {
     console.error('Error loading DB key:', key, err);
   }
@@ -118,12 +62,11 @@ class DatabaseService {
   private logs: SecurityAuditLog[];
 
   constructor() {
-    this.families = loadData<FamilyAccount[]>(FAMILIES_KEY, [DEFAULT_FAMILY]);
-    this.users = loadData<UserAccount[]>(USERS_KEY, DEFAULT_USERS);
+    this.families = loadData<FamilyAccount[]>(FAMILIES_KEY, []);
+    this.users = loadData<UserAccount[]>(USERS_KEY, []);
     this.logs = loadData<SecurityAuditLog[]>(SECURITY_LOGS_KEY, [
       {
         id: 'log-init',
-        familyId: DEFAULT_FAMILY.id,
         userName: 'Sistem ASTA',
         action: 'INICIALISASI_DATABASE_AMAN',
         status: 'SUCCESS',
@@ -131,7 +74,6 @@ class DatabaseService {
         timestamp: new Date().toISOString()
       }
     ]);
-    this.ensureDefaultSeeded();
     this.initSync().catch(console.warn);
   }
 
@@ -244,17 +186,6 @@ class DatabaseService {
       }
     } catch (err) {
       console.warn('Cloud sync error:', err);
-    }
-  }
-
-  private ensureDefaultSeeded() {
-    if (!this.families || this.families.length === 0) {
-      this.families = [DEFAULT_FAMILY];
-      saveData(FAMILIES_KEY, this.families);
-    }
-    if (!this.users || this.users.length === 0) {
-      this.users = DEFAULT_USERS;
-      saveData(USERS_KEY, this.users);
     }
   }
 

@@ -164,7 +164,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </label>
               <input
                 type="text"
-                placeholder="misal: ayah@asta.com atau Ayah Asep"
+                placeholder="Masukkan email atau username"
                 value={headUsername}
                 onChange={e => setHeadUsername(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold outline-none focus:border-family-coral"
@@ -273,7 +273,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 {/* PIN Input */}
                 <div>
                   <label className="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
-                    PIN Keamanan (Default: 1234)
+                    PIN Keamanan
                   </label>
                   <input
                     type="password"

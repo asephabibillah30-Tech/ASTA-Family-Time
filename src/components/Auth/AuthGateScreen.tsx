@@ -295,7 +295,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                 </label>
                 <input
                   type="text"
-                  placeholder="misal: ayah@asta.com atau Ayah Asep"
+                  placeholder="Masukkan Email atau Username"
                   value={headUsername}
                   onChange={e => setHeadUsername(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold outline-none focus:border-family-coral"
@@ -322,22 +322,6 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                 <span>MASUK SEBAGAI KEPALA KELUARGA</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-
-              {/* Demo Hint */}
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 text-[11px] text-amber-900 dark:text-amber-200 flex items-center justify-between">
-                <span>Akun Demo: <strong>ayah@asta.com</strong> (Pass: <strong>123</strong>)</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setHeadUsername('ayah@asta.com');
-                    setHeadPassword('123');
-                    sound.playClick();
-                  }}
-                  className="px-2 py-1 rounded-lg bg-amber-200 dark:bg-amber-800 text-amber-950 dark:text-white font-black text-[10px]"
-                >
-                  Isi Otomatis
-                </button>
-              </div>
             </form>
           )}
 
@@ -358,7 +342,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                       className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-base font-black outline-none focus:border-teal-500 text-center tracking-widest text-slate-900 dark:text-white"
                     />
                     <p className="text-[10px] text-slate-400 mt-1.5 text-center">
-                      *Minta kode keluarga dari Kepala Keluarga Anda (Demo: <strong>ASTA-2026</strong>)
+                      *Minta kode keluarga dari Kepala Keluarga Anda
                     </p>
                   </div>
 
@@ -422,7 +406,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                   {/* PIN Input */}
                   <div>
                     <label className="block text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1">
-                      PIN Keamanan (Default Demo: 1234)
+                      PIN Keamanan
                     </label>
                     <input
                       type="password"
