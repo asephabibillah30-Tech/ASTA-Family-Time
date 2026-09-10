@@ -371,8 +371,10 @@ export function App() {
         currentFamily={auth.currentFamily ?? undefined as any}
         familyMembers={auth.familyMembers}
         onClose={() => setIsManageFamilyOpen(false)}
+        onAddMember={auth.addFamilyMember}
+        onDeleteMember={auth.deleteFamilyMember}
         onRefresh={() => {
-          // Trigger refresh
+          auth.refreshSession();
         }}
       />
 

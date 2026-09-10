@@ -12,6 +12,8 @@ interface ManageFamilyModalProps {
   familyMembers: UserAccount[];
   onClose: () => void;
   onRefresh: () => void;
+  onAddMember?: (dto: any) => void;
+  onDeleteMember?: (memberId: string) => void;
 }
 
 export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
@@ -21,6 +23,8 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
   familyMembers,
   onClose,
   onRefresh,
+  onAddMember,
+  onDeleteMember,
 }) => {
   const [copied, setCopied] = useState(false);
   
@@ -60,13 +64,23 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
     }
 
     try {
-      db.addMemberByHead(currentUser.id, currentFamily.id, {
-        fullName: newMemberName.trim(),
-        roleTitle: newMemberRole,
-        pin: '1234',
-        avatar: newMemberAvatar,
-        color: 'bg-amber-500'
-      });
+      if (onAddMember) {
+        onAddMember({
+          fullName: newMemberName.trim(),
+          roleTitle: newMemberRole,
+          pin: '1234',
+          avatar: newMemberAvatar,
+          color: 'bg-amber-500'
+        });
+      } else {
+        db.addMemberByHead(currentUser.id, currentFamily.id, {
+          fullName: newMemberName.trim(),
+          roleTitle: newMemberRole,
+          pin: '1234',
+          avatar: newMemberAvatar,
+          color: 'bg-amber-500'
+        });
+      }
 
       setNewMemberName('');
       onRefresh();
@@ -80,7 +94,11 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
   const handleDeleteMember = (memberId: string) => {
     if (!confirm('Apakah Anda yakin ingin menghapus anggota keluarga ini?')) return;
     try {
-      db.deleteMemberByHead(currentUser.id, memberId);
+      if (onDeleteMember) {
+        onDeleteMember(memberId);
+      } else {
+        db.deleteMemberByHead(currentUser.id, memberId);
+      }
       onRefresh();
       sound.playClick();
     } catch (err: any) {
