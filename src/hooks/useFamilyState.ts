@@ -62,7 +62,11 @@ function pruneNotifications(notifs: ActivityNotification[]): ActivityNotificatio
 function loadStorage<T>(key: string, familyId: string, defaultValue: T): T {
   try {
     const saved = localStorage.getItem('asta_family_' + familyId + '_' + key);
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved) as T;
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (!Array.isArray(parsed) && parsed !== null && parsed !== undefined) return parsed;
+    }
   } catch (e) {
     console.error('Error loading storage for', key, e);
   }
@@ -72,6 +76,13 @@ function loadStorage<T>(key: string, familyId: string, defaultValue: T): T {
 function saveStorage<T>(key: string, familyId: string, value: T) {
   try {
     localStorage.setItem('asta_family_' + familyId + '_' + key, JSON.stringify(value));
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      caches.open('asta-pwa-storage-v1').then((cache) => {
+        cache.put('/api/storage/' + familyId + '/' + key, new Response(JSON.stringify(value), {
+          headers: { 'Content-Type': 'application/json' }
+        })).catch(() => {});
+      }).catch(() => {});
+    }
   } catch (e) {
     console.error('Error saving storage for', key, e);
   }
@@ -80,19 +91,17 @@ function saveStorage<T>(key: string, familyId: string, value: T) {
 export function useFamilyState(familyId?: string | null) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState<number>(0);
-  const [memories, setMemories] = useState<MemoryItem[]>([]);
-  const [plannerEvents, setPlannerEvents] = useState<PlannerEvent[]>([]);
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-  const [appreciations, setAppreciations] = useState<AppreciationItem[]>([]);
+  const [memories, setMemories] = useState<MemoryItem[]>(() => familyId ? loadStorage('memories', familyId, []) : []);
+  const [plannerEvents, setPlannerEvents] = useState<PlannerEvent[]>(() => familyId ? loadStorage('planner', familyId, []) : []);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => familyId ? loadStorage('journal', familyId, []) : []);
+  const [appreciations, setAppreciations] = useState<AppreciationItem[]>(() => familyId ? loadStorage('appreciations', familyId, []) : []);
   const [challenges, setChallenges] = useState<FamilyChallenge[]>(INITIAL_CHALLENGES);
-  const [habits, setHabits] = useState<FamilyHabit[]>([]);
-  const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
-  const [savingsTargets, setSavingsTargets] = useState<SavingsTarget[]>([]);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [notifications, setNotifications] = useState<ActivityNotification[]>([]);
-  const [gamePoints, setGamePoints] = useState<number>(() => {
-    return familyId ? loadStorage('game_points', familyId, 0) : 0;
-  });
+  const [habits, setHabits] = useState<FamilyHabit[]>(() => familyId ? loadStorage('habits', familyId, INITIAL_HABITS) : INITIAL_HABITS);
+  const [transactions, setTransactions] = useState<FinanceTransaction[]>(() => familyId ? loadStorage('transactions', familyId, []) : []);
+  const [savingsTargets, setSavingsTargets] = useState<SavingsTarget[]>(() => familyId ? loadStorage('savings', familyId, []) : []);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => familyId ? loadStorage('chat_msgs', familyId, []) : []);
+  const [notifications, setNotifications] = useState<ActivityNotification[]>(() => familyId ? loadStorage('notifications', familyId, DEFAULT_NOTIFICATIONS) : DEFAULT_NOTIFICATIONS);
+  const [gamePoints, setGamePoints] = useState<number>(() => familyId ? loadStorage('game_points', familyId, 0) : 0);
 
   const addNotification = useCallback((
     message: string,
