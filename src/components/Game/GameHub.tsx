@@ -6,6 +6,7 @@ import { FamilyLudoGame } from './FamilyLudoGame';
 import { FamilyUnoGame } from './FamilyUnoGame';
 import { CountingGame } from './CountingGame';
 import { AlphabetGame } from './AlphabetGame';
+import { HijaiyahGame } from './HijaiyahGame';
 import { Play } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
@@ -15,7 +16,11 @@ interface GameHubProps {
 }
 
 export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) => {
-  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet'>('hub');
+  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet' | 'hijaiyah'>('hub');
+
+  if (activeGame === 'hijaiyah') {
+    return <HijaiyahGame onBack={() => setActiveGame('hub')} />;
+  }
 
   if (activeGame === 'alphabet') {
     return <AlphabetGame onBack={() => setActiveGame('hub')} />;
@@ -258,6 +263,35 @@ export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) =>
           >
             <Play className="w-4 h-4 fill-white" />
             <span>MAIN ABJAD CERIA</span>
+          </button>
+        </div>
+
+        {/* 7. Game Hijaiyah Ceria (29 Huruf) */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-emerald-300 dark:border-emerald-800 shadow-bubbly-teal flex flex-col justify-between space-y-4 hover:scale-[1.01] transition-all">
+          <div>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 text-white flex items-center justify-center text-2xl sm:text-3xl shadow-md mb-3">
+              🕌
+            </div>
+            <div className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold mb-1">
+              SUARA MENGAJI • 29 HURUF
+            </div>
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
+              Hijaiyah Ceria (29 Huruf)
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2 font-medium">
+              Belajar mengenal & mengaji 29 Huruf Hijaiyah lengkap dengan audio Bahasa Indonesia, harakat, kata Arab bergambar, putar otomatis, & kuis tebak Hijaiyah!
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              setActiveGame('hijaiyah');
+            }}
+            className="w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 hover:opacity-90 text-white font-display font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>MAIN HIJAIYAH CERIA</span>
           </button>
         </div>
 
