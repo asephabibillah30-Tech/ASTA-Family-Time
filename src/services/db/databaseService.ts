@@ -145,9 +145,8 @@ class DatabaseService {
     if (!supabase) return;
 
     try {
-      // 1. Upsert all families
+      // 1. Upsert all families (termasuk keluarga demo & keluarga baru)
       for (const f of this.families) {
-        if (f.id === DEFAULT_FAMILY.id) continue; // Skip default dummy template
         await supabase.from('families').upsert({
           id: f.id,
           family_name: f.familyName,
@@ -158,9 +157,8 @@ class DatabaseService {
         }, { onConflict: 'id' });
       }
 
-      // 2. Upsert all users
+      // 2. Upsert all users (termasuk pengguna demo & pengguna baru)
       for (const u of this.users) {
-        if (u.familyId === DEFAULT_FAMILY.id) continue; // Skip default dummy users
         await supabase.from('users').upsert({
           id: u.id,
           family_id: u.familyId,
