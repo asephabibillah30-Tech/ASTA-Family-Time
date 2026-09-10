@@ -147,7 +147,7 @@ class DatabaseService {
     try {
       // 1. Upsert all families (termasuk keluarga demo & keluarga baru)
       for (const f of this.families) {
-        await supabase.from('families').upsert({
+        const { error } = await supabase.from('families').upsert({
           id: f.id,
           family_name: f.familyName,
           family_code: f.familyCode,
@@ -155,11 +155,12 @@ class DatabaseService {
           streak_days: f.streakDays || 1,
           total_love_points: f.totalLovePoints || 100
         }, { onConflict: 'id' });
+        if (error) console.error('Supabase families upsert error:', error.message, error.details);
       }
 
       // 2. Upsert all users (termasuk pengguna demo & pengguna baru)
       for (const u of this.users) {
-        await supabase.from('users').upsert({
+        const { error } = await supabase.from('users').upsert({
           id: u.id,
           family_id: u.familyId,
           full_name: u.fullName,
@@ -173,6 +174,7 @@ class DatabaseService {
           love_points: u.lovePoints || 50,
           is_head: Boolean(u.isHead)
         }, { onConflict: 'id' });
+        if (error) console.error('Supabase users upsert error:', error.message, error.details);
       }
     } catch (err) {
       console.warn('Sync local to cloud failed:', err);
