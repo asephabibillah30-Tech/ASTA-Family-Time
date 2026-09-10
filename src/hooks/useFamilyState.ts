@@ -119,6 +119,29 @@ export function useFamilyState(familyId?: string | null) {
   useEffect(() => { if (familyId) saveStorage('savings', familyId, savingsTargets); }, [savingsTargets, familyId]);
   useEffect(() => { if (familyId) saveStorage('chat_msgs', familyId, chatMessages); }, [chatMessages, familyId]);
 
+  // Real-Time Auto-Sync: Pesan obrolan baru & status dibaca langsung muncul tanpa perlu refresh halaman
+  useEffect(() => {
+    if (!familyId) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const cloudMsgs = await supabaseFamilyService.loadChatMessages(familyId);
+        if (cloudMsgs && Array.isArray(cloudMsgs) && cloudMsgs.length > 0) {
+          setChatMessages((prev) => {
+            if (JSON.stringify(prev) !== JSON.stringify(cloudMsgs)) {
+              return cloudMsgs;
+            }
+            return prev;
+          });
+        }
+      } catch (e) {
+        // Silent catch
+      }
+    }, 2500);
+
+    return () => clearInterval(pollInterval);
+  }, [familyId]);
+
   const totalLovePoints = appreciations.reduce((acc, curr) => acc + (curr?.lovePoints || 0), 0);
   const familyStreak = 7;
   const currentDailyIdea = DAILY_IDEAS[Math.abs(currentIdeaIndex || 0) % DAILY_IDEAS.length] || DAILY_IDEAS[0];
@@ -291,10 +314,17 @@ export function useFamilyState(familyId?: string | null) {
       senderId, senderName, senderAvatar, senderColor, text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       reactions: [],
+      readBy: [{ userId: senderId, userName: senderName, userAvatar: senderAvatar, readAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }],
       mediaType
     };
-    setChatMessages((prev) => [...prev, newMsg]);
-    if (familyId) supabaseFamilyService.insertChatMessage(familyId, newMsg).catch(console.warn);
+    setChatMessages((prev) => {
+      const nextList = [...prev, newMsg];
+      if (familyId) saveStorage('chat_msgs', familyId, nextList);
+      return nextList;
+    });
+    if (familyId) {
+      supabaseFamilyService.insertChatMessage(familyId, newMsg).catch(console.warn);
+    }
     sound.playClick();
   };
 

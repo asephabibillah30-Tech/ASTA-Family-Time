@@ -360,7 +360,7 @@ class SupabaseFamilyService {
     const supabase = this.getClient();
     if (!supabase || !familyId) return;
     try {
-      await supabase.from('chat_messages').insert({
+      const payload: Record<string, any> = {
         id: msg.id,
         family_id: familyId,
         sender_id: msg.senderId || null,
@@ -371,7 +371,13 @@ class SupabaseFamilyService {
         media_type: msg.mediaType || 'text',
         reactions: msg.reactions || [],
         read_by: msg.readBy || []
-      });
+      };
+      const { error } = await supabase.from('chat_messages').insert(payload);
+      if (error) {
+        // If read_by column doesn't exist on remote database schema yet, retry insert without read_by
+        delete payload.read_by;
+        await supabase.from('chat_messages').insert(payload);
+      }
     } catch (e) { console.warn('insertChatMessage error:', e); }
   }
 
@@ -388,7 +394,9 @@ class SupabaseFamilyService {
     if (!supabase) return;
     try {
       await supabase.from('chat_messages').update({ read_by: readBy }).eq('id', msgId);
-    } catch (e) { console.warn('updateChatReadBy error:', e); }
+    } catch (e) {
+      // Catch if column read_by does not exist on remote schema yet
+    }
   }
 
   async deleteChatMessage(id: string): Promise<void> {
