@@ -238,8 +238,8 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Panduan</span>
             </button>
 
-            {/* Notification Bell */}
-            <div className="relative hidden sm:block">
+            {/* Notification Bell (Visible on Mobile & Desktop) */}
+            <div className="relative block">
               <button
                 onClick={() => {
                   sound.playClick();
@@ -263,7 +263,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Notification Popup Dropdown */}
               {showNotifToast && (
                 <div 
-                  className="absolute right-0 top-12 z-50 w-80 sm:w-96 bg-white dark:bg-slate-800 rounded-3xl p-4 border-2 border-amber-200 dark:border-amber-900 shadow-bubbly-lg space-y-3 animate-pop-in text-xs max-h-[80vh] flex flex-col"
+                  className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-white dark:bg-slate-800 rounded-3xl p-4 border-2 border-amber-200 dark:border-amber-900 shadow-bubbly-lg space-y-3 animate-pop-in text-xs max-h-[80vh] flex flex-col"
                 >
                   <div className="flex items-center justify-between border-b pb-2.5 dark:border-slate-700 shrink-0">
                     <span className="font-extrabold text-slate-800 dark:text-white flex items-center gap-1.5 text-sm">
