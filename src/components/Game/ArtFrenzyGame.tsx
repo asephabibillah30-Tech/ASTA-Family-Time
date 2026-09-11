@@ -50,6 +50,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const [showModeModal, setShowModeModal] = useState<boolean>(true);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isForcedLandscapeMode, setIsForcedLandscapeMode] = useState(false);
 
   // Power-Up Boosters usage state per round
   const [hasUsedExtraLetters, setHasUsedExtraLetters] = useState(false);
@@ -101,16 +102,28 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   // Force & Request Landscape Screen Orientation on Mobile/Tablet
   const handleRequestLandscape = useCallback(() => {
     sound.playClick();
+    setIsForcedLandscapeMode((prev) => !prev);
     try {
       if (typeof window !== 'undefined') {
         const docEl = document.documentElement as any;
-        if (docEl.requestFullscreen) {
-          docEl.requestFullscreen().catch(() => {});
-        } else if (docEl.webkitRequestFullscreen) {
-          docEl.webkitRequestFullscreen().catch(() => {});
-        }
-        if (window.screen && window.screen.orientation && 'lock' in window.screen.orientation) {
-          (window.screen.orientation as any).lock('landscape').catch(() => {});
+        if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+          if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(() => {});
+          } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen().catch(() => {});
+          }
+          if (window.screen && window.screen.orientation && 'lock' in window.screen.orientation) {
+            (window.screen.orientation as any).lock('landscape').catch(() => {});
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if ((document as any).webkitExitFullscreen) {
+            (document as any).webkitExitFullscreen().catch(() => {});
+          }
+          if (window.screen && window.screen.orientation && 'unlock' in window.screen.orientation) {
+            window.screen.orientation.unlock();
+          }
         }
       }
     } catch {}
@@ -401,8 +414,24 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const sortedLeaderboard = [...players].sort((a, b) => b.score - a.score);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 pb-32 sm:pb-16 space-y-3 font-body select-none">
-      
+    <div
+      className={
+        isForcedLandscapeMode
+          ? 'fixed inset-0 z-[9999] bg-slate-900 dark:bg-slate-950 overflow-y-auto p-2 sm:p-4 w-screen h-screen min-h-screen flex flex-col justify-start select-none font-body'
+          : 'w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 pb-32 sm:pb-16 space-y-3 font-body select-none'
+      }
+    >
+      {/* FLOATING EXIT LANDSCAPE BUTTON FOR FORCED LANDSCAPE MODE */}
+      {isForcedLandscapeMode && (
+        <button
+          onClick={handleRequestLandscape}
+          className="fixed top-3 right-3 z-[10000] px-3 py-1.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-display font-black text-xs flex items-center gap-1.5 shadow-2xl border-2 border-white animate-bounce"
+          title="Keluar dari Mode Fullscreen Landscape"
+        >
+          <span>❌ Keluar Landscape</span>
+        </button>
+      )}
+
       {/* 0. MODE SELECTION MODAL */}
       {showModeModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-pop-in">
@@ -638,11 +667,15 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           {/* Landscape Orientation Toggle Button */}
           <button
             onClick={handleRequestLandscape}
-            className="px-2.5 py-1.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-900 font-display font-black text-xs flex items-center gap-1 active:scale-95 transition-all shadow-xs border border-amber-300"
+            className={`px-2.5 py-1.5 rounded-2xl font-display font-black text-xs flex items-center gap-1 active:scale-95 transition-all shadow-xs border ${
+              isForcedLandscapeMode
+                ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-400'
+                : 'bg-amber-400 hover:bg-amber-500 text-slate-900 border-amber-300'
+            }`}
             title="Putar ke Mode Layar Landscape Miring (Layar Lebar)"
           >
             <Maximize className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">📱 LANDSCAPE</span>
+            <span>{isForcedLandscapeMode ? '📱 KELUAR LANDSCAPE' : '📱 LANDSCAPE'}</span>
           </button>
 
           {/* Round Badge */}
@@ -665,7 +698,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           className="px-2.5 py-1 rounded-xl bg-slate-900 text-amber-300 text-[10px] font-black uppercase shrink-0 shadow-sm active:scale-95 flex items-center gap-1"
         >
           <Maximize className="w-3 h-3 text-amber-300" />
-          <span>Putar Layar</span>
+          <span>{isForcedLandscapeMode ? 'Keluar Landscape' : 'Putar Layar'}</span>
         </button>
       </div>
 
