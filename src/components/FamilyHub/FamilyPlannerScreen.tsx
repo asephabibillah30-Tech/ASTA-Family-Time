@@ -124,11 +124,10 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
 
       {/* Add Modal */}
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
-          <div className="flex min-h-full items-center justify-center px-3 pt-28 pb-24 sm:py-10">
-          <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xl rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-blue-400/40 dark:border-slate-700 flex flex-col overflow-hidden animate-pop-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center">
+          <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xl rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-blue-400/40 dark:border-slate-700 my-auto animate-pop-in">
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-700">
               <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white flex items-center gap-2">
                 <span>📅</span>
                 <span>Tambah Agenda Keluarga</span>
@@ -142,83 +141,80 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
               </button>
             </div>
 
-            {/* Scrollable Form Body */}
-            <div className="overflow-y-auto flex-1 pr-1 space-y-4 text-left">
-              <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Form Body */}
+            <form onSubmit={handleSubmit} className="space-y-4 text-left">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Nama Kegiatan:
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Misal: Sholat Berjamaah / Family Game"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Nama Kegiatan:
+                    Tanggal:
                   </label>
                   <input
-                    type="text"
+                    type="date"
                     required
-                    placeholder="Misal: Sholat Berjamaah / Family Game"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none focus:border-blue-500"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none"
                   />
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Tanggal:
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Waktu / Jam:
-                    </label>
-                    <input
-                      type="time"
-                      value={time}
-                      onChange={(e) => setTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none"
-                    />
-                  </div>
-                </div>
-
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Pilih Emoji Ikon:
+                    Waktu / Jam:
                   </label>
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-                    {['🕌', '🍽️', '🎮', '📖', '🎉', '🏖️', '⚽', '🚗'].map((em) => (
-                      <button
-                        key={em}
-                        type="button"
-                        onClick={() => setEmoji(em)}
-                        className={`p-2 rounded-xl text-xl sm:text-2xl border flex items-center justify-center transition-all ${
-                          emoji === em 
-                            ? 'bg-blue-100 dark:bg-blue-950 border-blue-500 scale-105 shadow-xs' 
-                            : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                        }`}
-                      >
-                        {em}
-                      </button>
-                    ))}
-                  </div>
+                  <input
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none"
+                  />
                 </div>
+              </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-display font-black text-sm shadow-md active:scale-95 transition-all mt-2"
-                >
-                  SIMPAN AGENDA
-                </button>
-              </form>
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Pilih Emoji Ikon:
+                </label>
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                  {['🕌', '🍽️', '🎮', '📖', '🎉', '🏖️', '⚽', '🚗'].map((em) => (
+                    <button
+                      key={em}
+                      type="button"
+                      onClick={() => setEmoji(em)}
+                      className={`p-2 rounded-xl text-xl sm:text-2xl border flex items-center justify-center transition-all ${
+                        emoji === em 
+                          ? 'bg-blue-100 dark:bg-blue-950 border-blue-500 scale-105 shadow-xs' 
+                          : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      {em}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-display font-black text-sm shadow-md active:scale-95 transition-all mt-2"
+              >
+                SIMPAN AGENDA
+              </button>
+            </form>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
     </div>
   );

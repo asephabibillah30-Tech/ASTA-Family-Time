@@ -14,12 +14,10 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
   const categoryKeys = Object.keys(CATEGORIES) as CategoryType[];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
-      <div className="flex min-h-full items-center justify-center p-3 pt-28 pb-24 sm:p-6">
-        <div className="relative w-full max-w-xl rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-amber-300 dark:border-slate-700 flex flex-col overflow-hidden animate-pop-in">
-        
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center">
+      <div className="relative w-full max-w-xl rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-amber-300 dark:border-slate-700 my-auto animate-pop-in text-left">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700">
           <h2 className="font-display font-black text-xl sm:text-2xl text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <span>📖</span> Cara Bermain ASTA
           </h2>
@@ -30,9 +28,6 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Scrollable Body */}
-        <div className="overflow-y-auto flex-1 pr-1 space-y-6 text-left">
 
         {/* 4 Easy Steps */}
         <div className="space-y-3 mb-6">
@@ -150,10 +145,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
         >
           Siap Bermain! 🚀
         </button>
-
-        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };

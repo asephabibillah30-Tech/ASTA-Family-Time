@@ -36,12 +36,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
-      <div className="flex min-h-full items-center justify-center p-3 pt-28 pb-24 sm:p-6">
-        <div className="relative w-full max-w-md sm:max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 shadow-2xl border-3 border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-pop-in">
-        
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center">
+      <div className="relative w-full max-w-md sm:max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 shadow-2xl border-3 border-slate-200 dark:border-slate-700 my-auto animate-pop-in text-left">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700">
           <h2 className="font-display font-black text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <span>⚙️</span> Pengaturan Game
           </h2>
@@ -53,12 +51,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="overflow-y-auto flex-1 pr-1 space-y-4 text-left">
-
         {/* Settings List */}
         <div className="space-y-4">
-          
           {/* Sound Toggle */}
           <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-700/50 space-y-2">
             <div className="flex items-center justify-between">
@@ -113,7 +107,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   Mode Gelap (Dark Mode)
                 </strong>
                 <span className="text-xs text-slate-400">
-                  {settings.darkMode ? 'Tema Gelap Aktic' : 'Tema Terang Ceria'}
+                  {settings.darkMode ? 'Tema Gelap Aktif' : 'Tema Terang Ceria'}
                 </span>
               </div>
             </div>
@@ -174,7 +168,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <span>Reset Sesi & Mulai Ulang Dari Awal</span>
             </button>
           </div>
-
         </div>
 
         {/* Save/Close button */}
@@ -184,10 +177,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         >
           Tutup & Simpan
         </button>
-
-        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };

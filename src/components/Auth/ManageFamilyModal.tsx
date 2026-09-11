@@ -134,12 +134,10 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
-      <div className="flex min-h-full items-center justify-center p-3 pt-28 pb-24 sm:p-6">
-        <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 border-3 border-rose-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-pop-in">
-        
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center">
+      <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 border-3 border-rose-200 dark:border-slate-700 shadow-2xl my-auto animate-pop-in text-left">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <span className="text-2xl">👨‍👩‍👧‍👦</span>
             <div>
@@ -367,6 +365,5 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
