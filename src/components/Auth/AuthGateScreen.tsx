@@ -639,9 +639,10 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                       </div>
                       <button
                         type="submit"
-                        className="px-3.5 py-1.5 rounded-xl bg-teal-600 text-white font-black text-xs shadow-xs shrink-0"
+                        className="px-3.5 py-1.5 rounded-xl bg-teal-600 text-white font-black text-xs shadow-xs shrink-0 flex items-center gap-1 hover:bg-teal-700 transition-all"
                       >
-                        + Tambah
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>Tambah</span>
                       </button>
                     </div>
                   </form>

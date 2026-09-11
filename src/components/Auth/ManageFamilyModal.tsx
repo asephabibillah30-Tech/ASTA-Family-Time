@@ -256,9 +256,10 @@ export const ManageFamilyModal: React.FC<ManageFamilyModalProps> = ({
               </div>
               <button
                 type="submit"
-                className="px-3.5 py-1.5 rounded-xl bg-family-coral text-white font-black text-xs shadow-xs hover:bg-rose-600 transition-all"
+                className="px-3.5 py-1.5 rounded-xl bg-family-coral text-white font-black text-xs shadow-xs hover:bg-rose-600 transition-all flex items-center gap-1"
               >
-                + Tambah
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Tambah</span>
               </button>
             </div>
           </form>

@@ -317,9 +317,10 @@ export const RegisterHeadModal: React.FC<RegisterHeadModalProps> = ({
                 </div>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs shadow-xs"
+                  className="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs shadow-xs flex items-center gap-1 transition-all"
                 >
-                  + Tambah
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Tambah</span>
                 </button>
               </div>
             </form>

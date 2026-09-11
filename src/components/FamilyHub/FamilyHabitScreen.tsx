@@ -109,7 +109,7 @@ export const FamilyHabitScreen: React.FC<FamilyHabitScreenProps> = ({
           className="px-5 py-3 rounded-2xl bg-white text-slate-900 font-extrabold text-xs hover:bg-amber-50 shadow-lg flex items-center gap-2 transition-all active:scale-95 shrink-0"
         >
           <PlusCircle className="w-4 h-4 text-amber-600" />
-          <span>+ Buat Kebiasaan Baru</span>
+          <span>Buat Kebiasaan Baru</span>
         </button>
       </div>
 
