@@ -120,15 +120,15 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       {/* 💡 Rekomendasi Ide Family Time Malam Ini (Feature #12) */}
-      <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-amber-200 dark:border-amber-900/60 shadow-bubbly-sm relative space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl animate-bounce">🌙</span>
-            <div>
-              <span className="text-[10px] font-extrabold uppercase text-amber-600 dark:text-amber-400 tracking-wider">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-6 border-3 border-amber-200 dark:border-amber-900/60 shadow-bubbly-sm relative space-y-4 max-w-full overflow-hidden">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2.5 min-w-0 flex-1">
+            <span className="text-2xl animate-bounce shrink-0 mt-0.5">🌙</span>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-extrabold uppercase text-amber-600 dark:text-amber-400 tracking-wider block">
                 IDE FAMILY TIME MALAM INI
               </span>
-              <h2 className="font-display font-black text-lg sm:text-xl text-slate-800 dark:text-slate-100">
+              <h2 className="font-display font-black text-base sm:text-xl text-slate-800 dark:text-slate-100 leading-snug break-words">
                 {dailyIdea.title}
               </h2>
             </div>
@@ -136,7 +136,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
 
           <button
             onClick={onNextIdea}
-            className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 transition-all flex items-center gap-1 text-xs font-bold active:scale-95"
+            className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 transition-all flex items-center gap-1 text-xs font-bold active:scale-95 shrink-0"
             title="Ganti Ide Lainnya"
           >
             <RefreshCw className="w-4 h-4" />
