@@ -201,19 +201,17 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
           }
         }
 
-        // Supabase cloud mapped FIRST, then local cache (Cloud data overwrites local cache)
-        const combined = [...mappedLocal, ...cloudMapped];
-        const uniqueFamiliesMap = new Map<string, RegisteredFamily>();
-
-        if (combined.length > 0) {
-          // Exclusively show real database records from Supabase Cloud and Local DB
-          combined.forEach(fam => uniqueFamiliesMap.set(fam.id, fam));
+        // If Supabase Cloud returns records, EXCLUSIVELY display live database records from Supabase Cloud
+        let finalFamilies: RegisteredFamily[] = [];
+        if (cloudMapped.length > 0) {
+          finalFamilies = cloudMapped;
+        } else if (mappedLocal.length > 0) {
+          finalFamilies = mappedLocal;
         } else {
-          // Fallback to initial demo items only if database has 0 records
-          INITIAL_FAMILIES_DB.forEach(fam => uniqueFamiliesMap.set(fam.id, fam));
+          finalFamilies = INITIAL_FAMILIES_DB;
         }
 
-        setFamilies(Array.from(uniqueFamiliesMap.values()));
+        setFamilies(finalFamilies);
       } catch (err) {
         console.warn('Gagal memuat data live keluarga untuk admin:', err);
       }
