@@ -593,9 +593,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       {isForcedLandscapeMode ? (
         <>
           {/* 1. STICKY COMPACT UNIFIED TOP HEADER BAR */}
-          <div className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md rounded-2xl px-2.5 py-1 border border-indigo-500/40 flex items-center justify-between gap-2 shrink-0 h-11 shadow-lg">
+          <div className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md rounded-2xl px-2 py-1 border border-indigo-500/40 flex items-center justify-between gap-1.5 shrink-0 h-10 shadow-lg text-white">
             {/* Left: Back + Drawer Badge */}
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 shrink-0 min-w-0">
               <button
                 onClick={() => {
                   sound.playClick();
@@ -604,39 +604,39 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                 className="p-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 active:scale-95 transition-all shrink-0"
                 title="Kembali ke Hub Game"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-3.5 h-3.5" />
               </button>
               <div className="flex items-center gap-1 min-w-0">
-                <span className="text-lg shrink-0">{currentDrawer.avatar}</span>
-                <span className="font-black text-xs text-white truncate max-w-[110px]">
+                <span className="text-base shrink-0">{currentDrawer.avatar}</span>
+                <span className="font-black text-[11px] text-white truncate max-w-[85px] sm:max-w-[120px]">
                   {currentDrawer.name}
                 </span>
-                <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-900 font-black text-[9px] shrink-0">
-                  🎨 Pelukis
+                <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-900 font-black text-[8px] shrink-0">
+                  Pelukis
                 </span>
               </div>
             </div>
 
-            {/* Center: Secret Word / Masked Hint & Timer */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <div className="font-display font-black text-sm sm:text-base text-amber-300 tracking-wider">
+            {/* Center-Left: Secret Word / Masked Hint */}
+            <div className="flex items-center gap-1 shrink-0 bg-slate-900 px-2 py-0.5 rounded-lg border border-amber-400/30">
+              <span className="text-[9px] text-slate-400 font-bold hidden sm:inline">RAHASIA:</span>
+              <span className="font-display font-black text-xs sm:text-sm text-amber-300 tracking-wider">
                 {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
-              </div>
-              <div className="text-xs font-black text-amber-400 flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded-lg border border-amber-400/30">
-                <Clock className="w-3.5 h-3.5 animate-spin text-amber-400" />
-                <span>{timeLeft}s</span>
-              </div>
+              </span>
+            </div>
+
+            {/* Center-Right: Timer */}
+            <div className="text-[11px] font-black text-amber-400 flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded-lg border border-amber-400/30 shrink-0">
+              <Clock className="w-3 h-3 animate-spin text-amber-400" />
+              <span>{timeLeft}s</span>
             </div>
 
             {/* Right: Round + Power-Ups + Exit Landscape Button */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              <div className="bg-indigo-600 px-2 py-0.5 rounded-lg text-[10px] font-black text-amber-300 hidden sm:block">
-                R{currentRound}/{maxRounds}
-              </div>
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={handleUseExtraLetters}
                 disabled={hasUsedExtraLetters}
-                className="px-1.5 py-0.5 rounded-lg bg-amber-400 text-slate-900 font-black text-[10px] disabled:opacity-40"
+                className="px-1.5 py-0.5 rounded-lg bg-amber-400 text-slate-900 font-black text-[9px] disabled:opacity-40"
                 title="Buka +2 Huruf"
               >
                 +2H
@@ -644,14 +644,17 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               <button
                 onClick={handleUseAddTime}
                 disabled={hasUsedAddTime}
-                className="px-1.5 py-0.5 rounded-lg bg-emerald-500 text-white font-black text-[10px] disabled:opacity-40"
+                className="px-1.5 py-0.5 rounded-lg bg-emerald-500 text-white font-black text-[9px] disabled:opacity-40"
                 title="Tambah +15s Waktu"
               >
                 +15s
               </button>
+              <div className="bg-indigo-600 px-1.5 py-0.5 rounded-lg text-[9px] font-black text-amber-300 hidden sm:block">
+                R{currentRound}/{maxRounds}
+              </div>
               <button
                 onClick={handleRequestLandscape}
-                className="px-2 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] flex items-center gap-1 shadow-sm border border-rose-400 active:scale-95"
+                className="px-2 py-0.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] flex items-center gap-1 shadow-sm border border-rose-400 active:scale-95 shrink-0"
                 title="Keluar dari mode landscape"
               >
                 <span>❌ Keluar</span>
