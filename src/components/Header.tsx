@@ -142,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header 
-      className="sticky top-0 z-30 w-full flex flex-col bg-white dark:bg-slate-900 shadow-md select-none transition-colors"
+      className="sticky top-0 z-40 w-full flex flex-col bg-white dark:bg-slate-900 shadow-md select-none transition-colors"
       style={{ paddingTop: 'max(2.25rem, env(safe-area-inset-top, 1.25rem))' }}
     >
       

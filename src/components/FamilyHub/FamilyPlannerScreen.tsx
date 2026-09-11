@@ -124,8 +124,8 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
 
       {/* Add Modal */}
       {isAddOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xl rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-blue-400/40 dark:border-slate-700 max-h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-pop-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pt-20 sm:pt-24 pb-24 sm:pb-28 bg-slate-950/60 backdrop-blur-xs">
+          <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xl rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-blue-400/40 dark:border-slate-700 max-h-full flex flex-col overflow-hidden animate-pop-in">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
               <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white flex items-center gap-2">
