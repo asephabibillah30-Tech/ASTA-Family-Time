@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Player } from '../../types/game';
+import { ArtFrenzyGame } from './ArtFrenzyGame';
 import { SnakeLaddersGame } from './SnakeLaddersGame';
 import { FamilyMonopolyGame } from './FamilyMonopolyGame';
 import { FamilyLudoGame } from './FamilyLudoGame';
@@ -20,7 +21,11 @@ interface GameHubProps {
 }
 
 export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) => {
-  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet' | 'hijaiyah' | 'vegetable' | 'animal' | 'vehicle' | 'story'>('hub');
+  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'art_frenzy' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet' | 'hijaiyah' | 'vegetable' | 'animal' | 'vehicle' | 'story'>('hub');
+
+  if (activeGame === 'art_frenzy') {
+    return <ArtFrenzyGame players={players} onBack={() => setActiveGame('hub')} />;
+  }
 
   if (activeGame === 'story') {
     return <ShortStoryGame onBack={() => setActiveGame('hub')} />;
@@ -80,9 +85,41 @@ export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) =>
         </p>
       </div>
 
-      {/* 4 Main Games Grid */}
+      {/* Main Games Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         
+        {/* 0. ASTA Art Frenzy (Menggambar & Tebak Gambar) */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-amber-300 dark:border-amber-700 shadow-bubbly-amber flex flex-col justify-between space-y-4 hover:scale-[1.01] transition-all relative overflow-hidden">
+          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[9px] font-black uppercase tracking-wider animate-bounce shadow-xs">
+            TERBARU 🎨
+          </div>
+          <div>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-600 text-white flex items-center justify-center text-2xl sm:text-3xl shadow-md mb-3">
+              🎨
+            </div>
+            <div className="inline-block px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[10px] font-extrabold mb-1">
+              ART FRENZY • SERU & INTERAKTIF
+            </div>
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
+              ASTA Art Frenzy
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2 font-medium">
+              Game menggambar & tebak gambar interaktif! Pilih pensil, kuas, warna, isi cat, dan tebak lukisan anggota keluarga!
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              setActiveGame('art_frenzy');
+            }}
+            className="w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-90 text-white font-display font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>MAIN ART FRENZY</span>
+          </button>
+        </div>
+
         {/* 1. Kartu Keluarga ASTA */}
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-rose-200 dark:border-rose-900/60 shadow-bubbly-coral flex flex-col justify-between space-y-4 hover:scale-[1.01] transition-all">
           <div>

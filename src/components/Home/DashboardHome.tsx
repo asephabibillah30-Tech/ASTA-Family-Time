@@ -183,7 +183,37 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       {/* Quick Action Grid: Game & Quality Time */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        
+        {/* ASTA Art Frenzy Shortcut */}
+        <div className="bg-gradient-to-br from-indigo-50 via-amber-50 to-rose-50 dark:from-slate-800 dark:to-slate-800/80 p-5 rounded-3xl border-2 border-indigo-200 dark:border-slate-700 shadow-sm space-y-3 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[8px] font-black uppercase tracking-wider shadow-2xs">
+            BARU 🎨
+          </div>
+          <div>
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-indigo-600 text-white flex items-center justify-center text-xl shadow-sm mb-3">
+              🎨
+            </div>
+            <h3 className="font-display font-black text-lg text-slate-800 dark:text-slate-100">
+              ASTA Art Frenzy
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-1">
+              Game melukis & tebak gambar interaktif! Pilih pensil, kuas, warna & tebak lukisan keluarga!
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              onNavigateTab('game');
+            }}
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-90 text-white font-display font-bold text-xs shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>Main Art Frenzy (Menggambar)</span>
+          </button>
+        </div>
+
         {/* Game Card Shortcut */}
         <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-slate-800 dark:to-slate-800/80 p-5 rounded-3xl border-2 border-rose-200 dark:border-slate-700 shadow-sm space-y-3 flex flex-col justify-between">
           <div>
@@ -191,10 +221,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               🎴
             </div>
             <h3 className="font-display font-black text-lg text-slate-800 dark:text-slate-100">
-              Game Kartu Keluarga ASTA
+              Kartu Keluarga ASTA
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-1">
-              Mainkan 350 kartu seru: Kasih Sayang, Tebak Gaya, Suara Binatang, Tebak Kata & Ekspresi!
+              Mainkan 350 kartu seru: Kasih Sayang, Tebak Gaya, Suara Binatang & Ekspresi!
             </p>
           </div>
 
@@ -206,7 +236,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             className="w-full py-3 rounded-2xl bg-family-coral hover:bg-rose-600 text-white font-display font-bold text-xs shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
           >
             <Play className="w-4 h-4 fill-white" />
-            <span>Main Kartu Keluarga (350 Kartu)</span>
+            <span>Main Kartu (350 Kartu)</span>
           </button>
         </div>
 
@@ -217,10 +247,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               🎲
             </div>
             <h3 className="font-display font-black text-lg text-slate-800 dark:text-slate-100">
-              Ular Tangga & Monopoli
+              Ular Tangga & Board
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-1">
-              Board game klasik interaktif penuh aksi kejutan dan tantangan seru bersama keluarga!
+              Board game klasik interaktif penuh aksi kejutan dan tantangan seru!
             </p>
           </div>
 
@@ -232,7 +262,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
             className="w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-display font-bold text-xs shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
           >
             <Play className="w-4 h-4 fill-white" />
-            <span>Main Ular Tangga Keluarga</span>
+            <span>Main Ular Tangga</span>
           </button>
         </div>
       </div>
