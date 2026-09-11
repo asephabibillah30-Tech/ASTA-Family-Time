@@ -36,27 +36,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-md sm:max-w-lg my-auto rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 shadow-bubbly-lg border-4 border-slate-100 dark:border-slate-700 max-h-[90vh] overflow-y-auto animate-pop-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md">
+      <div className="relative w-full max-w-md sm:max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 shadow-2xl border-3 border-slate-200 dark:border-slate-700 max-h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-pop-in">
         
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-rose-100 hover:text-family-coral transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Title */}
-        <div className="text-center space-y-1 mb-6">
-          <span className="text-3xl inline-block">⚙️</span>
-          <h2 className="font-display font-black text-2xl text-slate-800 dark:text-slate-100">
-            Pengaturan Game
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
+          <h2 className="font-display font-black text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span>⚙️</span> Pengaturan Game
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Sesuaikan kenyamanan bermain keluarga
-          </p>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-rose-100 hover:text-family-coral transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
+
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto flex-1 pr-1 space-y-4 text-left">
 
         {/* Settings List */}
         <div className="space-y-4">
@@ -182,11 +179,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Save/Close button */}
         <button
           onClick={onClose}
-          className="w-full mt-6 py-3.5 px-6 rounded-2xl bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-display font-bold text-sm shadow-bubbly-sm active:scale-95 transition-all"
+          className="w-full mt-4 py-3.5 px-6 rounded-2xl bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-display font-bold text-sm shadow-bubbly-sm active:scale-95 transition-all"
         >
           Tutup & Simpan
         </button>
 
+        </div>
       </div>
     </div>
   );

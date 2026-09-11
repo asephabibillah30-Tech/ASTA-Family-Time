@@ -157,82 +157,88 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
 
       {/* Add Memory Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-900/75 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xl my-auto rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-bubbly-lg border-4 border-rose-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto animate-pop-in">
-            <button
-              onClick={() => setIsAddModalOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h2 className="font-display font-black text-xl text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <span>📸</span> Tambah Kenangan Baru
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4 text-left">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Judul Momen / Acara:
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Misal: Family Night #13 / Masak Bersama"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold focus:border-family-coral outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Cerita / Caption Hangat:
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  placeholder="Ceritakan momen lucu atau hal berkesan apa yang terjadi..."
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium focus:border-family-coral outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Album:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Misal: Family Night"
-                    value={album}
-                    onChange={(e) => setAlbum(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Tag (pisahkan koma):
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ayah, Ibu, Masak"
-                    value={tags}
-                    onChange={(e) => setTags(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
-                  />
-                </div>
-              </div>
-
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md">
+          <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xl rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-rose-400/40 dark:border-slate-700 max-h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-pop-in">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
+              <h2 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white flex items-center gap-2">
+                <span>📸</span> Tambah Kenangan Baru
+              </h2>
               <button
-                type="submit"
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-black text-sm shadow-md mt-2 active:scale-95"
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-300 transition-all active:scale-90"
               >
-                SIMPAN KENANGAN ❤️
+                <X className="w-5 h-5" />
               </button>
-            </form>
+            </div>
+
+            {/* Scrollable Form Body */}
+            <div className="overflow-y-auto flex-1 pr-1 space-y-4 text-left">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Judul Momen / Acara:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Misal: Family Night #13 / Masak Bersama"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold focus:border-family-coral outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Cerita / Caption Hangat:
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="Ceritakan momen lucu atau hal berkesan apa yang terjadi..."
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium focus:border-family-coral outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Album:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Misal: Family Night"
+                      value={album}
+                      onChange={(e) => setAlbum(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Tag (pisahkan koma):
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ayah, Ibu, Masak"
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-black text-sm shadow-md mt-2 active:scale-95 transition-all"
+                >
+                  SIMPAN KENANGAN ❤️
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}

@@ -203,28 +203,32 @@ export const QualityTimeScreen: React.FC<QualityTimeScreenProps> = ({
 
       {/* Random Picker Result Modal */}
       {randomModal?.show && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-900/75 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-md sm:max-w-lg my-auto rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-bubbly-lg border-4 border-rose-200 dark:border-slate-700 text-center space-y-4 max-h-[90vh] overflow-y-auto animate-pop-in">
-            <span className="text-6xl inline-block animate-bounce">{randomModal.emoji}</span>
-            <span className="text-xs font-extrabold uppercase px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600">
-              REKOMENDASI SPONTAN KELUARGA
-            </span>
-            <h3 className="font-display font-black text-2xl text-slate-900 dark:text-white">
-              {randomModal.title}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              {randomModal.desc}
-            </p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md">
+          <div className="relative w-full max-w-md sm:max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl border-3 border-rose-400/40 dark:border-slate-700 text-center flex flex-col max-h-[85vh] sm:max-h-[90vh] overflow-hidden animate-pop-in">
+            <div className="overflow-y-auto flex-1 pr-1 space-y-4 my-auto">
+              <span className="text-6xl inline-block animate-bounce">{randomModal.emoji}</span>
+              <div>
+                <span className="text-xs font-extrabold uppercase px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600">
+                  REKOMENDASI SPONTAN KELUARGA
+                </span>
+              </div>
+              <h3 className="font-display font-black text-2xl text-slate-900 dark:text-white">
+                {randomModal.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                {randomModal.desc}
+              </p>
 
-            <button
-              onClick={() => {
-                sound.playClick();
-                setRandomModal(null);
-              }}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-black text-sm shadow-md"
-            >
-              SIAP, AYO KITA LAKUKAN! ❤️
-            </button>
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  setRandomModal(null);
+                }}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-black text-sm shadow-md transition-all active:scale-95 mt-2"
+              >
+                SIAP, AYO KITA LAKUKAN! ❤️
+              </button>
+            </div>
           </div>
         </div>
       )}

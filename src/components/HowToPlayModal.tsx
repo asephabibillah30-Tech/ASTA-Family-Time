@@ -14,27 +14,24 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
   const categoryKeys = Object.keys(CATEGORIES) as CategoryType[];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto my-auto rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-bubbly-lg border-4 border-amber-100 dark:border-slate-700 animate-pop-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md">
+      <div className="relative w-full max-w-xl max-h-[85vh] sm:max-h-[90vh] rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-amber-300 dark:border-slate-700 flex flex-col overflow-hidden animate-pop-in">
         
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-rose-100 hover:text-family-coral transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Title */}
-        <div className="text-center space-y-2 mb-6">
-          <span className="text-4xl inline-block animate-bounce">📖</span>
-          <h2 className="font-display font-black text-2xl sm:text-3xl text-slate-800 dark:text-slate-100">
-            Cara Bermain ASTA Family Time
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
+          <h2 className="font-display font-black text-xl sm:text-2xl text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span>📖</span> Cara Bermain ASTA
           </h2>
-          <p className="text-xs sm:text-sm text-family-coral font-bold">
-            “Main Bersama, Lebih Dekat, Lebih Bahagia ❤️”
-          </p>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-rose-100 hover:text-family-coral transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
+
+        {/* Scrollable Body */}
+        <div className="overflow-y-auto flex-1 pr-1 space-y-6 text-left">
 
         {/* 4 Easy Steps */}
         <div className="space-y-3 mb-6">
@@ -148,11 +145,12 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
         {/* Close Button at bottom */}
         <button
           onClick={onClose}
-          className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-extrabold text-base shadow-bubbly-coral active:scale-95 transition-all"
+          className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 text-white font-display font-extrabold text-base shadow-bubbly-coral active:scale-95 transition-all mt-4"
         >
           Siap Bermain! 🚀
         </button>
 
+        </div>
       </div>
     </div>
   );

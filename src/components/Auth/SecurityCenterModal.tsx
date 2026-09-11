@@ -73,11 +73,11 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-900/75 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-lg my-auto rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 space-y-5 border-2 border-rose-100 dark:border-slate-700 shadow-bubbly-lg max-h-[90vh] overflow-y-auto animate-pop-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md">
+      <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 border-3 border-emerald-400/30 dark:border-slate-700 shadow-2xl max-h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-pop-in">
         
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🛡️</span>
             <div>
@@ -91,11 +91,14 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"
+            className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-300 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto flex-1 pr-1 space-y-5 text-left">
 
         {/* Security Status Badge */}
         <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
@@ -283,6 +286,7 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
           </div>
         )}
 
+        </div>
       </div>
     </div>
   );
