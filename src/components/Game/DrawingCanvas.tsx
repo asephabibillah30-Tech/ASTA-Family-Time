@@ -368,43 +368,61 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         break;
       }
       case 'giraffe': {
-        // Neck & Head
-        ctx.beginPath(); ctx.rect(355, 145, 50, 235); ctx.stroke();
+        // Head, Snout, Ears & Ossicones
         ctx.beginPath(); ctx.ellipse(395, 135, 38, 24, 0, 0, Math.PI * 2); ctx.stroke();
-        // 3D Ossicones (Horns) & Ears
+        ctx.beginPath(); ctx.ellipse(425, 142, 18, 12, 0, 0, Math.PI * 2); ctx.stroke(); // Snout
+        ctx.beginPath(); ctx.arc(380, 130, 6, 0, Math.PI * 2); ctx.stroke(); // Eye
         ctx.beginPath(); ctx.rect(365, 95, 8, 25); ctx.stroke();
-        ctx.beginPath(); ctx.arc(369, 90, 8, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(369, 90, 8, 0, Math.PI * 2); ctx.stroke(); // Ossicone L
         ctx.beginPath(); ctx.rect(395, 95, 8, 25); ctx.stroke();
-        ctx.beginPath(); ctx.arc(399, 90, 8, 0, Math.PI * 2); ctx.stroke();
-        // Body & Legs
-        ctx.beginPath(); ctx.rect(305, 360, 180, 90); ctx.stroke();
-        ctx.beginPath(); ctx.rect(325, 450, 20, 55); ctx.stroke();
-        ctx.beginPath(); ctx.rect(445, 450, 20, 55); ctx.stroke();
+        ctx.beginPath(); ctx.arc(399, 90, 8, 0, Math.PI * 2); ctx.stroke(); // Ossicone R
+        ctx.beginPath(); ctx.ellipse(345, 140, 24, 12, -0.4, 0, Math.PI * 2); ctx.stroke(); // Ear
+        // Curved Neck & Mane
+        ctx.beginPath(); ctx.moveTo(355, 145); ctx.quadraticCurveTo(345, 260, 310, 360); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(405, 150); ctx.quadraticCurveTo(415, 260, 475, 360); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(340, 155); ctx.quadraticCurveTo(330, 260, 295, 360); ctx.stroke(); // Mane ridge
+        // Body & 4 Legs with Hooves
+        ctx.beginPath(); ctx.ellipse(390, 395, 95, 55, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.rect(320, 440, 20, 65); ctx.stroke(); // Leg 1
+        ctx.beginPath(); ctx.rect(350, 440, 20, 65); ctx.stroke(); // Leg 2
+        ctx.beginPath(); ctx.rect(420, 440, 20, 65); ctx.stroke(); // Leg 3
+        ctx.beginPath(); ctx.rect(450, 440, 20, 65); ctx.stroke(); // Leg 4
+        // Tail
+        ctx.beginPath(); ctx.moveTo(480, 390); ctx.quadraticCurveTo(520, 420, 515, 470); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(515, 475, 8, 14, 0, 0, Math.PI * 2); ctx.stroke(); // Tail tuft
         // 3D Body Spots
-        ctx.beginPath(); ctx.arc(380, 200, 14, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(370, 200, 14, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.arc(378, 260, 16, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(382, 320, 15, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(350, 400, 18, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(430, 400, 20, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(362, 320, 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(350, 395, 18, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(430, 395, 20, 0, Math.PI * 2); ctx.stroke();
         break;
       }
       case 'elephant': {
         // Body & Head
         ctx.beginPath(); ctx.ellipse(430, 300, 155, 110, 0, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.arc(250, 260, 80, 0, Math.PI * 2); ctx.stroke();
-        // 3D Ear with inner fold
+        ctx.beginPath(); ctx.arc(230, 240, 8, 0, Math.PI * 2); ctx.stroke(); // Eye
+        // 2 Large Floppy Ears with inner fold
         ctx.beginPath(); ctx.ellipse(300, 250, 48, 75, 0, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.ellipse(300, 250, 32, 55, 0, 0, Math.PI * 2); ctx.stroke();
-        // 3D Curved Trunk with wrinkles
+        ctx.beginPath(); ctx.ellipse(265, 250, 40, 65, 0, 0, Math.PI * 2); ctx.stroke(); // Ear 2
+        // 3D Curved Trunk with wrinkles & nostril
         ctx.beginPath(); ctx.moveTo(190, 280); ctx.quadraticCurveTo(100, 320, 135, 400); ctx.quadraticCurveTo(160, 410, 175, 375); ctx.stroke();
         for (let y = 300; y <= 370; y += 18) {
           ctx.beginPath(); ctx.arc(170, y, 15, -Math.PI / 2, Math.PI / 2); ctx.stroke();
         }
-        // 3D Tusk
+        // 2 3D Tusks
         ctx.beginPath(); ctx.moveTo(210, 320); ctx.quadraticCurveTo(150, 350, 180, 370); ctx.stroke();
-        // Legs
-        ctx.beginPath(); ctx.rect(345, 400, 42, 80); ctx.stroke();
-        ctx.beginPath(); ctx.rect(475, 400, 42, 80); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(225, 330); ctx.quadraticCurveTo(165, 360, 195, 380); ctx.stroke();
+        // 4 Pillar Legs
+        ctx.beginPath(); ctx.rect(320, 400, 38, 85); ctx.stroke(); // Leg 1
+        ctx.beginPath(); ctx.rect(365, 400, 38, 85); ctx.stroke(); // Leg 2
+        ctx.beginPath(); ctx.rect(460, 400, 38, 85); ctx.stroke(); // Leg 3
+        ctx.beginPath(); ctx.rect(505, 400, 38, 85); ctx.stroke(); // Leg 4
+        // Tail
+        ctx.beginPath(); ctx.moveTo(580, 340); ctx.quadraticCurveTo(600, 380, 595, 430); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(595, 435, 6, 12, 0, 0, Math.PI * 2); ctx.stroke(); // Tuft
         break;
       }
       case 'turtle': {
@@ -421,15 +439,26 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         break;
       }
       case 'airplane': {
-        // 3D Fuselage Body Cylinder
+        // 3D Fuselage Body Cylinder & Nose Cone
         ctx.beginPath(); ctx.ellipse(400, 250, 240, 40, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(200, 250, 12, 40, 0, 0, Math.PI * 2); ctx.stroke(); // Cockpit nose ring
-        // 3D Wings & Engines
-        ctx.beginPath(); ctx.moveTo(360, 215); ctx.lineTo(290, 75); ctx.lineTo(430, 75); ctx.lineTo(440, 215); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.rect(340, 130, 40, 20); ctx.stroke(); // Jet Engine L
-        ctx.beginPath(); ctx.moveTo(600, 220); ctx.lineTo(655, 120); ctx.lineTo(685, 120); ctx.lineTo(635, 240); ctx.closePath(); ctx.stroke();
-        // Cockpit Windscreen
-        ctx.beginPath(); ctx.arc(205, 240, 18, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(190, 250, 15, 40, 0, 0, Math.PI * 2); ctx.stroke(); // Cockpit nose cone
+        // Cockpit Windscreen Glass
+        ctx.beginPath(); ctx.arc(205, 235, 18, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(205, 235, 12, 0, Math.PI * 2); ctx.stroke();
+        // 2 Main Wings (Left & Right)
+        ctx.beginPath(); ctx.moveTo(360, 215); ctx.lineTo(280, 70); ctx.lineTo(420, 70); ctx.lineTo(440, 215); ctx.closePath(); ctx.stroke(); // Left Wing
+        ctx.beginPath(); ctx.moveTo(360, 285); ctx.lineTo(280, 430); ctx.lineTo(420, 430); ctx.lineTo(440, 285); ctx.closePath(); ctx.stroke(); // Right Wing
+        // 2 Jet Engine Pods
+        ctx.beginPath(); ctx.rect(340, 100, 45, 22); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(340, 111, 6, 11, 0, 0, Math.PI * 2); ctx.stroke(); // Engine L Intake
+        ctx.beginPath(); ctx.rect(340, 378, 45, 22); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(340, 389, 6, 11, 0, 0, Math.PI * 2); ctx.stroke(); // Engine R Intake
+        // Passenger Window Portholes
+        for (let x = 270; x <= 550; x += 45) {
+          ctx.beginPath(); ctx.arc(x, 250, 8, 0, Math.PI * 2); ctx.stroke();
+        }
+        // Tail Fin Stabilizer
+        ctx.beginPath(); ctx.moveTo(590, 220); ctx.lineTo(650, 110); ctx.lineTo(685, 110); ctx.lineTo(635, 240); ctx.closePath(); ctx.stroke();
         break;
       }
       case 'bicycle': {
@@ -575,16 +604,24 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         break;
       }
       case 'dinosaur': {
-        // 3D Dino Body Contour
-        ctx.beginPath(); ctx.moveTo(150, 150); ctx.quadraticCurveTo(240, 150, 250, 260); ctx.quadraticCurveTo(360, 240, 480, 260); ctx.lineTo(660, 365); ctx.quadraticCurveTo(460, 425, 270, 370); ctx.closePath(); ctx.stroke();
-        // 3D Dorsal Spikes / Plates
+        // 4D Dino Head, Jaw, Teeth & Eye
+        ctx.beginPath(); ctx.moveTo(150, 150); ctx.quadraticCurveTo(240, 140, 250, 260); ctx.quadraticCurveTo(360, 240, 480, 260); ctx.lineTo(670, 365); ctx.quadraticCurveTo(460, 425, 270, 370); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(185, 175, 8, 0, Math.PI * 2); ctx.stroke(); // Eye
+        ctx.beginPath(); ctx.arc(187, 175, 3, 0, Math.PI * 2); ctx.stroke(); // Pupil
+        ctx.beginPath(); ctx.arc(160, 160, 4, 0, Math.PI * 2); ctx.stroke(); // Nostril
+        ctx.beginPath(); ctx.moveTo(150, 185); ctx.lineTo(200, 185); ctx.stroke(); // Mouth line
+        // 2 Front Arms with Claws
+        ctx.beginPath(); ctx.moveTo(260, 300); ctx.lineTo(220, 325); ctx.lineTo(210, 340); ctx.stroke(); // Arm 1
+        ctx.beginPath(); ctx.moveTo(275, 305); ctx.lineTo(235, 330); ctx.lineTo(225, 345); ctx.stroke(); // Arm 2
+        // 4D Dorsal Spikes / Plates
         for (let x = 270; x <= 550; x += 45) {
           ctx.beginPath(); ctx.moveTo(x, 240); ctx.lineTo(x + 20, 190); ctx.lineTo(x + 40, 245); ctx.closePath(); ctx.stroke();
         }
-        // Legs & Claws
-        ctx.beginPath(); ctx.rect(295, 370, 38, 80); ctx.stroke();
-        ctx.beginPath(); ctx.rect(425, 370, 38, 80); ctx.stroke();
-        ctx.beginPath(); ctx.arc(185, 175, 8, 0, Math.PI * 2); ctx.stroke(); // Eye
+        // 4 Legs with Claws
+        ctx.beginPath(); ctx.rect(295, 370, 38, 85); ctx.stroke(); // Rear Leg 1
+        ctx.beginPath(); ctx.rect(340, 370, 38, 85); ctx.stroke(); // Rear Leg 2
+        ctx.beginPath(); ctx.rect(425, 370, 38, 85); ctx.stroke(); // Front Leg 1
+        ctx.beginPath(); ctx.rect(470, 370, 38, 85); ctx.stroke(); // Front Leg 2
         break;
       }
       case 'dragon': {
@@ -599,19 +636,32 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         break;
       }
       case 'robot': {
-        // 3D Head Box & Antenna Light
+        // 4D Head Box, Antenna Light & Visor
         ctx.beginPath(); ctx.rect(315, 75, 170, 125); ctx.stroke();
         ctx.beginPath(); ctx.rect(325, 85, 150, 105); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(400, 75); ctx.lineTo(400, 25); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 18, 12, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 18, 12, 0, Math.PI * 2); ctx.stroke(); // Antenna ball
         // Eyes & Visor
         ctx.beginPath(); ctx.arc(355, 130, 20, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.arc(445, 130, 20, 0, Math.PI * 2); ctx.stroke();
-        // 3D Chest Box & Joints
+        ctx.beginPath(); ctx.rect(340, 165, 120, 15); ctx.stroke(); // Mouth grid speaker
+        // 4D Chest Box & Controls
         ctx.beginPath(); ctx.rect(275, 230, 250, 185); ctx.stroke();
         ctx.beginPath(); ctx.rect(315, 260, 170, 120); ctx.stroke(); // Chest panel
-        ctx.beginPath(); ctx.rect(195, 240, 55, 125); ctx.stroke();
-        ctx.beginPath(); ctx.rect(550, 240, 55, 125); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 320, 25, 0, Math.PI * 2); ctx.stroke(); // Gauge dial
+        ctx.beginPath(); ctx.moveTo(400, 320); ctx.lineTo(418, 305); ctx.stroke(); // Dial needle
+        // 2 Arms with Joint Spheres & 3-Finger Claws
+        ctx.beginPath(); ctx.arc(245, 250, 22, 0, Math.PI * 2); ctx.stroke(); // Shoulder L
+        ctx.beginPath(); ctx.rect(195, 240, 50, 130); ctx.stroke(); // Arm L
+        ctx.beginPath(); ctx.arc(220, 390, 18, 0, Math.PI * 2); ctx.stroke(); // Claw L
+        ctx.beginPath(); ctx.arc(555, 250, 22, 0, Math.PI * 2); ctx.stroke(); // Shoulder R
+        ctx.beginPath(); ctx.rect(555, 240, 50, 130); ctx.stroke(); // Arm R
+        ctx.beginPath(); ctx.arc(580, 390, 18, 0, Math.PI * 2); ctx.stroke(); // Claw R
+        // 2 Legs & 3D Feet
+        ctx.beginPath(); ctx.rect(315, 415, 45, 75); ctx.stroke(); // Leg L
+        ctx.beginPath(); ctx.rect(295, 485, 65, 20); ctx.stroke(); // Foot L
+        ctx.beginPath(); ctx.rect(440, 415, 45, 75); ctx.stroke(); // Leg R
+        ctx.beginPath(); ctx.rect(440, 485, 65, 20); ctx.stroke(); // Foot R
         break;
       }
       case 'alien_ufo': {
@@ -704,10 +754,21 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         for (let y = 200; y <= 410; y += 30) {
           ctx.beginPath(); ctx.ellipse(390, y, 25, 8, 0, 0, Math.PI * 2); ctx.stroke(); // 3D Trunk rings
         }
-        // Coconuts & 3D Fronds
+        // Coconuts
         ctx.beginPath(); ctx.arc(355, 190, 14, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.arc(380, 195, 14, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.arc(368, 208, 14, 0, Math.PI * 2); ctx.stroke();
+        // 6 Grand Arched Palm Leaf Fronds
+        // Frond 1 (Top Left)
+        ctx.beginPath(); ctx.moveTo(370, 180); ctx.quadraticCurveTo(240, 70, 150, 140); ctx.quadraticCurveTo(250, 130, 370, 180); ctx.stroke();
+        // Frond 2 (Top Right)
+        ctx.beginPath(); ctx.moveTo(370, 180); ctx.quadraticCurveTo(500, 70, 590, 140); ctx.quadraticCurveTo(490, 130, 370, 180); ctx.stroke();
+        // Frond 3 (Far Left)
+        ctx.beginPath(); ctx.moveTo(370, 180); ctx.quadraticCurveTo(200, 160, 120, 240); ctx.quadraticCurveTo(220, 210, 370, 180); ctx.stroke();
+        // Frond 4 (Far Right)
+        ctx.beginPath(); ctx.moveTo(370, 180); ctx.quadraticCurveTo(540, 160, 620, 240); ctx.quadraticCurveTo(520, 210, 370, 180); ctx.stroke();
+        // Frond 5 (Top Center)
+        ctx.beginPath(); ctx.moveTo(370, 180); ctx.quadraticCurveTo(380, 30, 370, 10); ctx.quadraticCurveTo(395, 40, 370, 180); ctx.stroke();
         break;
       }
       default:
