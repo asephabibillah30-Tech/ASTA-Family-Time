@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { Player } from '../../types/game';
 import type { ChatMessage } from '../../types/family';
 import type { UserAccount } from '../../types/auth';
-import { Send, PhoneCall, Video, Smile, Trash2, Check, CheckCheck, RotateCcw, ShieldCheck, ShieldAlert, CheckCircle2, Clock, X } from 'lucide-react';
+import { Send, PhoneCall, Video, Smile, Trash2, Check, CheckCheck, RotateCcw, ShieldCheck, ShieldAlert, CheckCircle2, Clock, X, Users } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
 
@@ -56,6 +56,8 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
   const [chatError, setChatError] = useState<string | null>(null);
   const [showCallModal, setShowCallModal] = useState<boolean>(false);
   const [showStickers, setShowStickers] = useState<boolean>(false);
+  const [showOnlineModal, setShowOnlineModal] = useState<boolean>(false);
+  const [filterOnlineOnly, setFilterOnlineOnly] = useState<boolean>(false);
   const [selectedMessageInfo, setSelectedMessageInfo] = useState<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -178,14 +180,30 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
                 🛡️ AI Safety, Adult & Cyber Filter
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-              {players.length} Anggota Online &bull; Bebas Konten Dewasa, Serangan Cyber, & Kode Rahasia ❤️
-            </p>
+            <button
+              onClick={() => {
+                sound.playClick();
+                setShowOnlineModal(true);
+              }}
+              className="text-[10px] text-slate-500 dark:text-slate-400 font-bold hover:text-rose-500 transition-colors text-left"
+            >
+              {players.filter(p => p.isOnline).length} dari {players.length} Anggota Online &bull; Bebas Konten Dewasa, Serangan Cyber, & Kode Rahasia ❤️
+            </button>
           </div>
         </div>
 
-        {/* Call simulation & Reset buttons */}
+        {/* Call simulation, Online settings & Reset buttons */}
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => {
+              sound.playClick();
+              setShowOnlineModal(true);
+            }}
+            className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 transition-all active:scale-90"
+            title="Pengaturan Anggota Online Obrolan"
+          >
+            <Users className="w-4 h-4" />
+          </button>
           {onResetChat && (
             <button
               onClick={onResetChat}
@@ -234,6 +252,63 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
         <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-300 flex items-center gap-1 bg-white dark:bg-slate-700 px-2.5 py-1 rounded-xl border border-emerald-200 dark:border-slate-600 shadow-2xs">
           🔒 Identitas Terkunci
         </span>
+      </div>
+
+      {/* Family Online Members Strip (Matching Beranda DashboardHome) */}
+      <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2 text-xs shrink-0 shadow-2xs overflow-hidden">
+        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+          <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 shrink-0 flex items-center gap-1">
+            <Users className="w-3.5 h-3.5 text-rose-500" /> Status Online Obrolan:
+          </span>
+
+          {players.map((p) => {
+            const isOnline = p.isOnline ?? false;
+            return (
+              <div
+                key={p.id}
+                onClick={() => {
+                  sound.playClick();
+                  setShowOnlineModal(true);
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border shrink-0 cursor-pointer transition-all active:scale-95 ${
+                  isOnline
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100'
+                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100'
+                }`}
+                title={isOnline ? `${p.name} (Online & Sedang Obrolan)` : `${p.name} (Offline / Tidak Login)`}
+              >
+                <div className="relative flex items-center justify-center">
+                  <span className="text-sm">{p.avatar}</span>
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white dark:border-slate-900 ${
+                      isOnline
+                        ? 'bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.9)]'
+                        : 'bg-red-500'
+                    }`}
+                  />
+                </div>
+                <span className="text-[11px] font-extrabold">{p.name}</span>
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                  isOnline
+                    ? 'bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                }`}>
+                  {isOnline ? '🟢 Online' : '🔴 Offline'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => {
+            sound.playClick();
+            setShowOnlineModal(true);
+          }}
+          className="px-2.5 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-family-coral dark:text-rose-300 text-[10px] font-black shrink-0 border border-rose-200 dark:border-rose-800 transition-all active:scale-95"
+        >
+          Pengaturan Status ⚙️
+        </button>
       </div>
 
       {/* Chat Messages Feed Area */}
@@ -611,6 +686,111 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
               className="w-full py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs transition-colors shadow-sm"
             >
               Tutup Info
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {/* Online Status & Members Modal */}
+      {showOnlineModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-pop-in">
+          <div className="relative w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 p-5 space-y-4 border-2 border-rose-200 dark:border-slate-700 shadow-2xl">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center text-xl shadow-inner">
+                  👥
+                </div>
+                <div>
+                  <h3 className="font-display font-black text-slate-900 dark:text-white text-base">
+                    Status Online Obrolan Keluarga
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {players.filter(p => p.isOnline).length} dari {players.length} anggota sedang online
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowOnlineModal(false)}
+                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Filter Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs">
+              <span className="font-bold text-slate-700 dark:text-slate-300">Filter Tampilan Obrolan:</span>
+              <button
+                onClick={() => setFilterOnlineOnly(!filterOnlineOnly)}
+                className={`px-3 py-1.5 rounded-xl font-black transition-all ${
+                  filterOnlineOnly
+                    ? 'bg-emerald-500 text-white shadow-xs'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                {filterOnlineOnly ? '🟢 Hanya Yang Online' : '🌐 Semua Anggota'}
+              </button>
+            </div>
+
+            {/* Members List */}
+            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+              {players
+                .filter(p => filterOnlineOnly ? p.isOnline : true)
+                .map((p) => {
+                  const isOnline = p.isOnline ?? false;
+                  return (
+                    <div
+                      key={p.id}
+                      className={`p-3 rounded-2xl border flex items-center justify-between transition-all ${
+                        isOnline
+                          ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800'
+                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 opacity-75'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <span className="text-3xl">{p.avatar}</span>
+                          <span
+                            className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 ${
+                              isOnline
+                                ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.9)]'
+                                : 'bg-red-500'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-display font-black text-sm text-slate-900 dark:text-white">
+                            {p.name} {p.rolePreset ? `(${p.rolePreset})` : ''}
+                          </h4>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
+                            {isOnline ? '🟢 Online & Terhubung Realtime' : '🔴 Offline / Tidak Aktif'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setInputText((prev) => `@${p.name} ` + prev);
+                          setShowOnlineModal(false);
+                          sound.playClick();
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-rose-50 text-rose-600 dark:text-rose-300 text-xs font-bold border border-rose-200 dark:border-slate-600 shadow-2xs transition-all active:scale-95"
+                      >
+                        Sapa @{p.name}
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+
+            <button
+              onClick={() => setShowOnlineModal(false)}
+              className="w-full py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs shadow-md transition-all active:scale-95"
+            >
+              Selesai Pengaturan
             </button>
 
           </div>
