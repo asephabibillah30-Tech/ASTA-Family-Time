@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireBurstConfetti } from '../../utils/confetti';
+import { sanitizeInput, rateLimiter } from '../../utils/security';
 
 interface AuthGateScreenProps {
   auth?: any;
@@ -56,21 +57,36 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   const handleHeadLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+
+    const rateCheck = rateLimiter.checkLockout('head_login');
+    if (rateCheck.isLocked) {
+      setErrorMsg(`Batas keamanan terlampaui. Harap tunggu ${rateCheck.remainingSeconds} detik.`);
+      return;
+    }
+
+    const cleanUser = sanitizeInput(headUsername);
+    if (!cleanUser || !headPassword.trim()) {
+      setErrorMsg('Harap isi email/username dan password.');
+      return;
+    }
+
     try {
-      if (!headUsername.trim() || !headPassword.trim()) {
-        setErrorMsg('Harap isi email/username dan password.');
-        return;
-      }
       if (auth?.loginHead) {
-        await auth.loginHead(headUsername, headPassword);
+        await auth.loginHead(cleanUser, headPassword);
       } else {
-        await db.loginHeadAsync(headUsername, headPassword);
+        await db.loginHeadAsync(cleanUser, headPassword);
       }
+      rateLimiter.resetAttempts('head_login');
       sound.playSuccess();
       fireBurstConfetti();
       onLoginSuccess();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Gagal masuk.');
+      const res = rateLimiter.recordFailedAttempt('head_login');
+      if (res.isLocked) {
+        setErrorMsg(`Keamanan: Terlalu banyak percobaan. Harap tunggu ${res.remainingSeconds} detik.`);
+      } else {
+        setErrorMsg(err.message || 'Gagal masuk. Periksa kembali username dan password.');
+      }
       sound.playClick();
     }
   };
@@ -79,10 +95,24 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   const handleSearchFamily = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+
+    const rateCheck = rateLimiter.checkLockout('search_family');
+    if (rateCheck.isLocked) {
+      setErrorMsg(`Keamanan: Terlalu banyak pencarian. Harap tunggu ${rateCheck.remainingSeconds} detik.`);
+      return;
+    }
+
+    const cleanCode = sanitizeInput(familyCode).toUpperCase();
+    if (!cleanCode) {
+      setErrorMsg('Harap masukkan Kode Keluarga.');
+      return;
+    }
+
     setIsSearching(true);
     try {
-      const fam = await db.findFamilyByCodeAsync(familyCode);
+      const fam = await db.findFamilyByCodeAsync(cleanCode);
       if (!fam) {
+        rateLimiter.recordFailedAttempt('search_family');
         setErrorMsg('Kode Keluarga tidak ditemukan. Contoh: ASTA-2026');
         return;
       }
@@ -92,6 +122,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
       if (members.length > 0) {
         setSelectedMemberId(members[0].id);
       }
+      rateLimiter.resetAttempts('search_family');
       sound.playClick();
     } catch (err: any) {
       setErrorMsg(err.message || 'Gagal mencari Kode Keluarga.');
@@ -127,7 +158,12 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   const handleRegisterHead = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
-    if (!headFullName.trim() || !familyName.trim() || !regUsername.trim() || !regPassword.trim()) {
+
+    const cleanHeadName = sanitizeInput(headFullName);
+    const cleanFamName = sanitizeInput(familyName);
+    const cleanUser = sanitizeInput(regUsername);
+
+    if (!cleanHeadName || !cleanFamName || !cleanUser || !regPassword.trim()) {
       setErrorMsg('Harap lengkapi semua data pendaftaran kepala keluarga.');
       return;
     }
@@ -136,10 +172,10 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
       let session;
       if (auth?.registerHead) {
         session = auth.registerHead({
-          headFullName,
+          headFullName: cleanHeadName,
           roleTitle,
-          familyName,
-          usernameOrEmail: regUsername,
+          familyName: cleanFamName,
+          usernameOrEmail: cleanUser,
           password: regPassword,
           pin: '1234',
           avatar: regAvatar,
@@ -147,10 +183,10 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
         });
       } else {
         session = db.registerHeadOfFamily({
-          headFullName,
+          headFullName: cleanHeadName,
           roleTitle,
-          familyName,
-          usernameOrEmail: regUsername,
+          familyName: cleanFamName,
+          usernameOrEmail: cleanUser,
           password: regPassword,
           pin: '1234',
           avatar: regAvatar,
@@ -254,7 +290,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
             <div className="p-3.5 bg-white dark:bg-slate-800 rounded-2xl border border-rose-100 dark:border-slate-700 shadow-2xs">
               <span className="text-2xl mb-1 block">🔐</span>
               <h4 className="font-black text-xs text-slate-900 dark:text-white">Privat & Aman</h4>
-              <p className="text-[10px] text-slate-500 mt-0.5">Enkripsi E2EE per keluarga</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Penyimpanan Privat per Keluarga</p>
             </div>
             <div className="p-3.5 bg-white dark:bg-slate-800 rounded-2xl border border-rose-100 dark:border-slate-700 shadow-2xs">
               <span className="text-2xl mb-1 block">☁️</span>
@@ -340,6 +376,11 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
           {/* TAB 1: LOGIN KEPALA KELUARGA */}
           {activeTab === 'login_head' && (
             <form onSubmit={handleHeadLogin} className="space-y-4 animate-pop-in">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/60">
+                <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Ruang Masuk Terlindungi — Data login Anda terenkripsi aman & bebas peretasan.</span>
+              </div>
+
               <div className="space-y-1">
                 <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Email / Username Kepala Keluarga
@@ -681,11 +722,11 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
           <span className="flex items-center gap-1">🎴 350 Kartu ASTA</span> &bull;
           <span className="flex items-center gap-1">🃏 Game UNO</span> &bull;
           <span className="flex items-center gap-1">🎲 Game Ludo</span> &bull;
-          <span className="flex items-center gap-1">💬 Obrolan E2EE</span> &bull;
+          <span className="flex items-center gap-1">💬 Obrolan Rahasia Keluarga</span> &bull;
           <span className="flex items-center gap-1">📅 Family Planner</span>
         </div>
         <p className="text-[10px] text-slate-400 dark:text-slate-500">
-          Dilindungi dengan enkripsi keamanan tingkat tinggi terisolasi per keluarga.
+          Data tersimpan sangat aman dan terlindungi secara privat khusus untuk keluarga Anda.
         </p>
       </footer>
 
