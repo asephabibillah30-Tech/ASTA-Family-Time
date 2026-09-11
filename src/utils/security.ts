@@ -210,3 +210,103 @@ export function decryptStorageData<T>(encryptedStr: string, keySeed: string = AP
     return null;
   }
 }
+
+// 7. Intelligent AI Safety Filter & Chat Content Moderation Engine
+export interface ChatModerationResult {
+  isValid: boolean;
+  errorMessage?: string;
+}
+
+export function moderateChatMessage(text: string): ChatModerationResult {
+  if (!text || typeof text !== 'string') {
+    return {
+      isValid: false,
+      errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+    };
+  }
+
+  const cleanText = text.trim();
+  const lowerText = cleanText.toLowerCase();
+
+  // 1. Check for Criminal, Terrorism, Violence, Harm, & Evil Planning Keywords
+  const dangerousPatterns = [
+    /teror(is|isme)?/i,
+    /bunuh/i,
+    /pembunuhan/i,
+    /racun/i,
+    /bom/i,
+    /ledakan/i,
+    /senjata/i,
+    /pistol/i,
+    /senapan/i,
+    /rampok/i,
+    /perampokan/i,
+    /culik/i,
+    /penculikan/i,
+    /sandera/i,
+    /perencanaan\s+jahat/i,
+    /rencana\s+jahat/i,
+    /eksekusi/i,
+    /sabotase/i,
+    /pembakaran/i,
+    /kejahatan/i,
+    /kriminal/i,
+    /penyerangan/i,
+    /santet/i,
+    /tindakan\s+ilegal/i,
+    /ancaman/i,
+    /ancam/i,
+    /bantay|bantai/i
+  ];
+
+  for (const pattern of dangerousPatterns) {
+    if (pattern.test(lowerText)) {
+      return {
+        isValid: false,
+        errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+      };
+    }
+  }
+
+  // 2. Check for Coded Communication & Secret Cipher Patterns (Obrolan Kode Rahasia)
+  const codedPatterns = [
+    /\b(code|kode|alfa|alpha|target|ops|op|agent|agen|signal|sinyal|pass|sandi)[-_\s]*[0-9a-z]+\b/i,
+    /\b[a-z]{1,3}[-_\s]*[0-9]{2,6}\b/i, // e.g. x-99, op888, a123
+    /\b[0-9]{3,8}[-_\s]*[a-z]{1,3}\b/i, // e.g. 999-x, 007-a
+    /^[0-9]{3,10}$/,                   // standalone numeric secret codes e.g. 007, 999, 123456
+    /^0x[0-9a-fA-F]{4,}$/,              // Hex code
+    /^[a-zA-Z0-9+/]{8,}={0,2}$/,        // Base64 secret code pattern without spaces
+    /^[*#$@!%^&]{3,}[0-9a-zA-Z]*$/,    // Symbol code signals like ##99#, *123*
+    /\b(rahasia|secret)\s+[0-9a-z]{1,10}\b/i
+  ];
+
+  // Exception check: regular family dates / times / numbers (e.g., "jam 7", "pukul 12", "5 menit", "10.00")
+  const isNormalFamilyTimeOrNumber = /^(jam|pukul|jam\s+\d{1,2}|\d{1,2}\s*menit|\d{1,2}\s*jam|tanggal\s+\d{1,2}|\d{1,2}\.\d{2}|\d{1,2}:\d{2})$/i.test(cleanText);
+
+  if (!isNormalFamilyTimeOrNumber) {
+    for (const pattern of codedPatterns) {
+      if (pattern.test(lowerText)) {
+        return {
+          isValid: false,
+          errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+        };
+      }
+    }
+  }
+
+  // 3. Check for Rude / Toxic / Inappropriate Words (Penyimpangan)
+  const inappropriatePatterns = [
+    /\b(anjing|babi|bangsat|kontol|memek|goblok|tolol|idiot|setan|iblis|bajingan)\b/i
+  ];
+
+  for (const pattern of inappropriatePatterns) {
+    if (pattern.test(lowerText)) {
+      return {
+        isValid: false,
+        errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+      };
+    }
+  }
+
+  return { isValid: true };
+}

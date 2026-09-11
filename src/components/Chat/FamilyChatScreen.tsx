@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { Player } from '../../types/game';
 import type { ChatMessage } from '../../types/family';
 import type { UserAccount } from '../../types/auth';
-import { Send, PhoneCall, Video, Smile, Trash2, Check, CheckCheck, RotateCcw, ShieldCheck, CheckCircle2, Clock, X } from 'lucide-react';
+import { Send, PhoneCall, Video, Smile, Trash2, Check, CheckCheck, RotateCcw, ShieldCheck, ShieldAlert, CheckCircle2, Clock, X } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
 
@@ -17,7 +17,7 @@ interface FamilyChatScreenProps {
     senderColor: string,
     text: string,
     mediaType?: ChatMessage['mediaType']
-  ) => void;
+  ) => { success: boolean; error?: string } | void;
   onAddReaction: (msgId: string, emoji: string, userId: string) => void;
   onDeleteMessage: (msgId: string) => void;
   onMarkAsRead?: (userId: string, userName: string, userAvatar?: string) => void;
@@ -53,6 +53,7 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
   onResetChat,
 }) => {
   const [inputText, setInputText] = useState('');
+  const [chatError, setChatError] = useState<string | null>(null);
   const [showCallModal, setShowCallModal] = useState<boolean>(false);
   const [showStickers, setShowStickers] = useState<boolean>(false);
   const [selectedMessageInfo, setSelectedMessageInfo] = useState<ChatMessage | null>(null);
@@ -99,7 +100,7 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    onSendMessage(
+    const res = onSendMessage(
       activeSender.id,
       activeSender.name,
       activeSender.avatar,
@@ -107,11 +108,19 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
       inputText.trim(),
       'text'
     );
+
+    if (res && typeof res === 'object' && res.success === false) {
+      setChatError(res.error || 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang');
+      sound.playTimerWarning();
+      return;
+    }
+
     setInputText('');
+    setChatError(null);
   };
 
   const handleQuickSend = (text: string) => {
-    onSendMessage(
+    const res = onSendMessage(
       activeSender.id,
       activeSender.name,
       activeSender.avatar,
@@ -119,10 +128,17 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
       text,
       'text'
     );
+
+    if (res && typeof res === 'object' && res.success === false) {
+      setChatError(res.error || 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang');
+      sound.playTimerWarning();
+      return;
+    }
+    setChatError(null);
   };
 
   const handleSendSticker = (sticker: { emoji: string; label: string }) => {
-    onSendMessage(
+    const res = onSendMessage(
       activeSender.id,
       activeSender.name,
       activeSender.avatar,
@@ -130,7 +146,15 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
       `${sticker.emoji} ${sticker.label}`,
       'sticker'
     );
+
+    if (res && typeof res === 'object' && res.success === false) {
+      setChatError(res.error || 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang');
+      sound.playTimerWarning();
+      return;
+    }
+
     setShowStickers(false);
+    setChatError(null);
     sound.playSuccess();
     fireSmallPop(0.5, 0.4);
   };
@@ -151,11 +175,11 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                🔒 Terenkripsi E2EE
+                🛡️ AI Safety Filter & E2EE
               </span>
             </div>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-              {players.length} Anggota Online &bull; Pesan Aman & Rahasia ❤️
+              {players.length} Anggota Online &bull; Disaring AI untuk Keharmonisan Keluarga ❤️
             </p>
           </div>
         </div>
@@ -397,6 +421,23 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
         </div>
       )}
 
+      {/* AI Moderation Warning Toast Banner */}
+      {chatError && (
+        <div className="bg-rose-600 text-white p-3 rounded-2xl border-2 border-rose-700 shadow-lg flex items-center justify-between gap-3 animate-bounce shrink-0">
+          <div className="flex items-center gap-2 text-xs font-bold">
+            <ShieldAlert className="w-5 h-5 shrink-0 text-amber-300" />
+            <span>{chatError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setChatError(null)}
+            className="p-1 rounded-lg hover:bg-white/20 text-white transition-all shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Input Message Bar */}
       <form onSubmit={handleSend} className="flex items-center gap-2 shrink-0">
         <button
@@ -415,7 +456,10 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
           type="text"
           placeholder={`Ketik pesan hangat sebagai ${activeSender.name}...`}
           value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
+          onChange={(e) => {
+            setInputText(e.target.value);
+            if (chatError) setChatError(null);
+          }}
           className="flex-1 px-4 py-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-medium focus:border-family-coral outline-none shadow-sm text-slate-800 dark:text-slate-100"
         />
 

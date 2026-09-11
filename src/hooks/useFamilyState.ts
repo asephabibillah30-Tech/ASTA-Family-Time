@@ -23,7 +23,7 @@ import { supabaseFamilyService } from '../services/db/supabaseFamilyService';
 import { postgresService } from '../services/db/postgresService';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti, fireSmallPop } from '../utils/confetti';
-import { encryptStorageData, decryptStorageData, sanitizeInput, generateCryptoToken } from '../utils/security';
+import { encryptStorageData, decryptStorageData, sanitizeInput, generateCryptoToken, moderateChatMessage } from '../utils/security';
 
 const MAX_NOTIF_BYTES = 5 * 1024 * 1024; // 5 MB PWA Cache Limit
 
@@ -643,10 +643,20 @@ export function useFamilyState(familyId?: string | null) {
     senderId: string, senderName: string, senderAvatar: string,
     senderColor: string, text: string,
     mediaType: ChatMessage['mediaType'] = 'text'
-  ) => {
+  ): { success: boolean; error?: string } => {
+    // 1. Intelligent AI Safety Filter Check
+    const moderation = moderateChatMessage(text);
+    if (!moderation.isValid) {
+      sound.playTimerWarning();
+      return {
+        success: false,
+        error: moderation.errorMessage || 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+      };
+    }
+
     const newMsg: ChatMessage = {
       id: 'msg-' + Date.now(),
-      senderId, senderName, senderAvatar, senderColor, text,
+      senderId, senderName, senderAvatar, senderColor, text: text.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       reactions: [],
       readBy: [{ userId: senderId, userName: senderName, userAvatar: senderAvatar, readAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }],
@@ -663,6 +673,7 @@ export function useFamilyState(familyId?: string | null) {
     const snippet = text.length > 35 ? text.substring(0, 35) + '...' : text;
     addNotification(`💬 ${senderName}: "${snippet}"`, 'chat', '💬', 'Pesan Obrolan Baru');
     sound.playClick();
+    return { success: true };
   };
 
   const addChatReaction = (msgId: string, emoji: string, userId: string) => {
