@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Volume2, VolumeX, Moon, Sun, Clock, RotateCcw, Music } from 'lucide-react';
 import type { GameSettings } from '../types/game';
 import { sound } from '../utils/sound';
@@ -35,7 +36,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     sound.playFunnyBonus();
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center">
       <div className="relative w-full max-w-md sm:max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-6 shadow-2xl border-3 border-slate-200 dark:border-slate-700 my-auto animate-pop-in text-left">
         {/* Header */}
@@ -178,6 +181,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           Tutup & Simpan
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

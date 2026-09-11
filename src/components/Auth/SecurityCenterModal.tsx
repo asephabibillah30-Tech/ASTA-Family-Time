@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { UserAccount, FamilyAccount } from '../../types/auth';
 import { db } from '../../services/db/databaseService';
 import type { SecurityAuditLog } from '../../services/db/databaseService';
@@ -72,7 +73,9 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
     }
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center">
       <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 border-3 border-emerald-400/30 dark:border-slate-700 shadow-2xl my-auto animate-pop-in text-left">
         
@@ -288,7 +291,8 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { FamilyChallenge } from '../../types/family';
 import { QUALITY_TIME_ACTIVITIES } from '../../data/familyData';
 import { Shuffle, CheckCircle2, Trophy } from 'lucide-react';
@@ -202,7 +203,7 @@ export const QualityTimeScreen: React.FC<QualityTimeScreenProps> = ({
       </div>
 
       {/* Random Picker Result Modal */}
-      {randomModal?.show && (
+      {randomModal?.show && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center">
           <div className="relative w-full max-w-md sm:max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl border-3 border-rose-400/40 dark:border-slate-700 text-center my-auto animate-pop-in space-y-4">
             <span className="text-6xl inline-block animate-bounce">{randomModal.emoji}</span>
@@ -228,7 +229,8 @@ export const QualityTimeScreen: React.FC<QualityTimeScreenProps> = ({
               SIAP, AYO KITA LAKUKAN! ❤️
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

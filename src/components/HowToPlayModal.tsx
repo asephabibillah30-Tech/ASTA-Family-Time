@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Sparkles, Award } from 'lucide-react';
 import { CATEGORIES } from '../data/cards';
 import type { CategoryType } from '../types/game';
@@ -13,7 +14,9 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
 
   const categoryKeys = Object.keys(CATEGORIES) as CategoryType[];
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center">
       <div className="relative w-full max-w-xl rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-amber-300 dark:border-slate-700 my-auto animate-pop-in text-left">
         {/* Header */}
@@ -146,6 +149,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
           Siap Bermain! 🚀
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

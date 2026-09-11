@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { PlannerEvent } from '../../types/family';
 import { ArrowLeft, Plus, CheckCircle2, Circle, Trash2, X } from 'lucide-react';
 import { sound } from '../../utils/sound';
@@ -122,8 +123,8 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
         ))}
       </div>
 
-      {/* Add Modal */}
-      {isAddOpen && (
+      {/* Add Modal - Rendered at document.body level via Portal */}
+      {isAddOpen && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center">
           <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xl rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 shadow-2xl border-3 border-blue-400/40 dark:border-slate-700 my-auto animate-pop-in">
             {/* Header */}
@@ -213,7 +214,8 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
