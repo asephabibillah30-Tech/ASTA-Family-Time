@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { UserAccount, FamilyAccount, RegisterHeadDTO, AddMemberDTO } from '../types/auth';
 import { db } from '../services/db/databaseService';
+import { postgresService } from '../services/db/postgresService';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti } from '../utils/confetti';
 
@@ -43,90 +44,113 @@ export function useAuth() {
     }
   }, [currentFamily]);
 
-  // Heartbeat & Presence Listener (Multi-tab & Real-time Presence Sync)
+  // ── Ref untuk Supabase Realtime channel ──────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const realtimeChannelRef = useRef<any>(null);
+
+  // ── Real-time Presence via Supabase Realtime WebSocket ────────────────
+  // Saat user connect → event 'join' langsung muncul di semua device.
+  // Saat browser/tab ditutup → WebSocket putus → Supabase otomatis broadcast 'leave'.
+  // Tidak perlu polling sama sekali.
   useEffect(() => {
     if (!currentFamily?.id || !currentUser?.id) return;
 
     const familyId = currentFamily.id;
     const userId = currentUser.id;
+    const supabase = postgresService.getClient();
 
-    // Fungsi refresh presence dari semua sumber
-    const refreshPresence = () => {
-      setOnlineUserIds(db.getOnlineUserIds(familyId, userId));
-    };
+    // ── Cleanup channel lama jika ada ──
+    if (realtimeChannelRef.current) {
+      realtimeChannelRef.current.unsubscribe();
+      realtimeChannelRef.current = null;
+    }
 
-    // Fungsi tandai user offline (hapus dari localStorage presence map)
-    const markOffline = () => {
-      db.markUserOffline(familyId, userId);
-    };
-
-    // Send immediate heartbeat for active user
+    // ── Juga kirim heartbeat ke localStorage (fallback same-device) ──
     db.sendHeartbeat(familyId, userId);
-    refreshPresence();
 
-    // Ambil cloud presence langsung saat login (cross-device)
-    db.fetchCloudPresence(familyId).then(() => {
+    if (supabase) {
+      // ── Supabase Realtime Presence (WebSocket, instant cross-device) ──
+      const channel = supabase.channel(`family_presence_${familyId}`, {
+        config: { presence: { key: userId } }
+      });
+
+      channel
+        .on('presence', { event: 'sync' }, () => {
+          // Dipanggil setiap kali state berubah (join/leave/reconnect)
+          const state = channel.presenceState<{ userId: string }>();
+          const onlineIds = Object.keys(state);
+          // Pastikan user sendiri selalu ada
+          if (!onlineIds.includes(userId)) onlineIds.push(userId);
+          setOnlineUserIds(onlineIds);
+          // Cache ke localStorage agar getOnlineUserIds() sinkron
+          db.cacheOnlineIds(familyId, onlineIds);
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          console.log('[Presence] join:', key, newPresences);
+          setOnlineUserIds(prev => prev.includes(key) ? prev : [...prev, key]);
+          db.cacheOnlineIds(familyId, undefined, key, 'join');
+        })
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+          console.log('[Presence] leave:', key, leftPresences);
+          setOnlineUserIds(prev => prev.filter(id => id !== key));
+          db.cacheOnlineIds(familyId, undefined, key, 'leave');
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            // Track kehadiran user ini di channel
+            await channel.track({
+              userId,
+              online_at: new Date().toISOString(),
+            });
+          }
+        });
+
+      realtimeChannelRef.current = channel;
+
+    } else {
+      // ── Fallback: localStorage + BroadcastChannel (same-device only) ──
+      const refreshPresence = () => {
+        setOnlineUserIds(db.getOnlineUserIds(familyId, userId));
+      };
       refreshPresence();
-    });
 
-    // Kirim heartbeat lokal setiap 15 detik
-    const heartbeatInterval = setInterval(() => {
-      db.sendHeartbeat(familyId, userId);
-      refreshPresence();
-    }, 15000);
-
-    // Poll cloud presence setiap 15 detik (cross-device presence dari Supabase)
-    const cloudPollInterval = setInterval(async () => {
-      await db.fetchCloudPresence(familyId);
-      refreshPresence();
-    }, 15000);
-
-    // Listen to storage events (cross-tab same device)
-    const handleStorage = (e: StorageEvent) => {
-      if (
-        e.key === `asta_presence_${familyId}` ||
-        e.key === `asta_cloud_presence_${familyId}`
-      ) {
-        refreshPresence();
-      }
-    };
-
-    window.addEventListener('storage', handleStorage);
-
-    // Tandai offline saat tab disembunyikan / browser ditutup
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        markOffline();
-      } else if (document.visibilityState === 'visible') {
-        // Tab kembali aktif — kirim heartbeat lagi
+      const heartbeatInterval = setInterval(() => {
         db.sendHeartbeat(familyId, userId);
         refreshPresence();
+      }, 5000);
+
+      const handleStorage = (e: StorageEvent) => {
+        if (e.key === `asta_presence_${familyId}`) refreshPresence();
+      };
+      window.addEventListener('storage', handleStorage);
+
+      let ch: BroadcastChannel | null = null;
+      if ('BroadcastChannel' in window) {
+        ch = new BroadcastChannel(`asta_presence_${familyId}`);
+        ch.onmessage = () => refreshPresence();
       }
-    };
 
-    const handlePageHide = () => {
-      markOffline();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pagehide', handlePageHide);
-
-    // BroadcastChannel untuk cross-tab di browser yang sama
-    let ch: BroadcastChannel | null = null;
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      ch = new BroadcastChannel(`asta_presence_${familyId}`);
-      ch.onmessage = () => {
-        refreshPresence();
+      return () => {
+        clearInterval(heartbeatInterval);
+        window.removeEventListener('storage', handleStorage);
+        if (ch) ch.close();
       };
     }
 
+    // ── Tandai offline saat tab disembunyikan / ditutup ──
+    // Untuk Supabase Realtime: WebSocket putus otomatis → tidak perlu manual.
+    // Tapi untuk localStorage fallback, kita tetap bersihkan.
+    const handlePageHide = () => {
+      db.markUserOffline(familyId, userId);
+    };
+    window.addEventListener('pagehide', handlePageHide);
+
     return () => {
-      clearInterval(heartbeatInterval);
-      clearInterval(cloudPollInterval);
-      window.removeEventListener('storage', handleStorage);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('pagehide', handlePageHide);
-      if (ch) ch.close();
+      if (realtimeChannelRef.current) {
+        realtimeChannelRef.current.unsubscribe();
+        realtimeChannelRef.current = null;
+      }
     };
   }, [currentFamily?.id, currentUser?.id]);
 

@@ -871,6 +871,39 @@ class DatabaseService {
       return [];
     }
   }
+
+  /**
+   * Cache daftar online IDs dari Supabase Realtime ke localStorage.
+   * Dipanggil dari useAuth saat Realtime event 'sync'/'join'/'leave' diterima.
+   * Sehingga getOnlineUserIds() sinkron dengan state WebSocket.
+   */
+  public cacheOnlineIds(
+    familyId: string,
+    allIds?: string[],
+    changedId?: string,
+    action?: 'join' | 'leave'
+  ): void {
+    try {
+      const cacheKey = `asta_realtime_presence_${familyId}`;
+
+      if (allIds) {
+        // Set penuh dari event 'sync'
+        const map: Record<string, number> = {};
+        allIds.forEach(id => { map[id] = Date.now(); });
+        localStorage.setItem(cacheKey, JSON.stringify(map));
+      } else if (changedId && action) {
+        // Update parsial dari event 'join'/'leave'
+        const raw = localStorage.getItem(cacheKey);
+        const map: Record<string, number> = raw ? JSON.parse(raw) : {};
+        if (action === 'join') {
+          map[changedId] = Date.now();
+        } else {
+          delete map[changedId];
+        }
+        localStorage.setItem(cacheKey, JSON.stringify(map));
+      }
+    } catch { /* ignore */ }
+  }
 }
 
 export const db = new DatabaseService();
