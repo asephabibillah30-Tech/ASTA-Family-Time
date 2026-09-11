@@ -12,7 +12,7 @@ export interface SketchTemplate {
 }
 
 export const SKETCH_TEMPLATES: SketchTemplate[] = [
-  { id: 'house', name: 'Rumah & Gunung', emoji: '🏠', category: 'Bangunan' },
+  { id: 'house', name: 'Rumah Minimalis 3D', emoji: '🏠', category: 'Bangunan' },
   { id: 'cat', name: 'Kucing Lucu', emoji: '🐈', category: 'Hewan' },
   { id: 'cake', name: 'Kue Ulang Tahun', emoji: '🎂', category: 'Makanan' },
   { id: 'car', name: 'Mobil Balap', emoji: '🚗', category: 'Kendaraan' },
@@ -94,48 +94,67 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
     switch (sketchId) {
       case 'house': {
-        // Sun with 3D rays
-        ctx.beginPath(); ctx.arc(700, 100, 45, 0, Math.PI * 2); ctx.stroke();
-        for (let a = 0; a < 360; a += 45) {
-          const rad = (a * Math.PI) / 180;
-          ctx.beginPath();
-          ctx.moveTo(700 + Math.cos(rad) * 55, 100 + Math.sin(rad) * 55);
-          ctx.lineTo(700 + Math.cos(rad) * 72, 100 + Math.sin(rad) * 72);
-          ctx.stroke();
+        // 1. Main 3D House Body Facade
+        ctx.beginPath(); ctx.rect(170, 200, 330, 230); ctx.stroke(); // Main front wall
+        
+        // 2. 3D Side Elevation Wall (Perspective Depth)
+        ctx.beginPath(); ctx.moveTo(500, 200); ctx.lineTo(650, 130); ctx.lineTo(650, 350); ctx.lineTo(500, 430); ctx.closePath(); ctx.stroke();
+        
+        // 3. 3D Roof Gable Front
+        ctx.beginPath(); ctx.moveTo(140, 200); ctx.lineTo(335, 60); ctx.lineTo(530, 200); ctx.closePath(); ctx.stroke();
+        
+        // 4. 3D Side Roof Extension (Depth)
+        ctx.beginPath(); ctx.moveTo(335, 60); ctx.lineTo(485, 10); ctx.lineTo(670, 130); ctx.lineTo(530, 200); ctx.stroke();
+        
+        // 5. 3D Chimney with Smoke Rings
+        ctx.beginPath(); ctx.rect(440, 45, 45, 90); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(462.5, 45, 22.5, 7, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(480, 20, 12, 0, Math.PI * 2); ctx.stroke(); // Smoke ring 1
+        ctx.beginPath(); ctx.arc(500, 0, 16, 0, Math.PI * 2); ctx.stroke();  // Smoke ring 2
+        
+        // 6. 3D Attic Round Window with Cross Grid
+        ctx.beginPath(); ctx.arc(335, 130, 28, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(335, 130, 22, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(335, 108); ctx.lineTo(335, 152); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(313, 130); ctx.lineTo(357, 130); ctx.stroke();
+        
+        // 7. 3D Double Main Door & Porch Canopy
+        ctx.beginPath(); ctx.rect(300, 280, 70, 150); ctx.stroke(); // Door frame
+        ctx.beginPath(); ctx.moveTo(335, 280); ctx.lineTo(335, 430); ctx.stroke(); // Center split
+        ctx.beginPath(); ctx.arc(325, 360, 5, 0, Math.PI * 2); ctx.stroke(); // Left handle
+        ctx.beginPath(); ctx.arc(345, 360, 5, 0, Math.PI * 2); ctx.stroke(); // Right handle
+        ctx.beginPath(); ctx.rect(285, 268, 100, 12); ctx.stroke(); // Canopy overhang
+        ctx.beginPath(); ctx.rect(290, 280, 10, 150); ctx.stroke();  // Left porch pillar
+        ctx.beginPath(); ctx.rect(370, 280, 10, 150); ctx.stroke();  // Right porch pillar
+        
+        // 8. 3D Windows with Glass Panes & Shutters
+        // Left Window
+        ctx.beginPath(); ctx.rect(200, 250, 65, 80); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(232.5, 250); ctx.lineTo(232.5, 330); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(200, 290); ctx.lineTo(265, 290); ctx.stroke();
+        ctx.beginPath(); ctx.rect(195, 330, 75, 8); ctx.stroke(); // Window Sill
+        ctx.beginPath(); ctx.rect(180, 250, 20, 80); ctx.stroke(); // Left shutter
+        ctx.beginPath(); ctx.rect(265, 250, 20, 80); ctx.stroke(); // Right shutter
+        
+        // Right Window
+        ctx.beginPath(); ctx.rect(405, 250, 65, 80); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(437.5, 250); ctx.lineTo(437.5, 330); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(405, 290); ctx.lineTo(470, 290); ctx.stroke();
+        ctx.beginPath(); ctx.rect(400, 330, 75, 8); ctx.stroke(); // Window Sill
+        ctx.beginPath(); ctx.rect(385, 250, 20, 80); ctx.stroke(); // Left shutter
+        ctx.beginPath(); ctx.rect(470, 250, 20, 80); ctx.stroke(); // Right shutter
+        
+        // 9. 3D Side Garage Extension (Right Side)
+        ctx.beginPath(); ctx.rect(500, 270, 140, 160); ctx.stroke();
+        ctx.beginPath(); ctx.rect(515, 300, 110, 130); ctx.stroke(); // Garage door
+        for (let y = 320; y < 430; y += 22) {
+          ctx.beginPath(); ctx.moveTo(515, y); ctx.lineTo(625, y); ctx.stroke(); // Roll-up door panels
         }
-        // 3D Mountains
-        ctx.beginPath(); ctx.moveTo(40, 430); ctx.lineTo(240, 180); ctx.lineTo(440, 430); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(340, 430); ctx.lineTo(540, 220); ctx.lineTo(740, 430); ctx.stroke();
-        // Snow caps & 3D ridge
-        ctx.beginPath(); ctx.moveTo(200, 230); ctx.lineTo(240, 260); ctx.lineTo(280, 230); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(240, 180); ctx.lineTo(240, 430); ctx.stroke();
-        // House Main Front Body
-        ctx.beginPath(); ctx.rect(260, 260, 270, 180); ctx.stroke();
-        // 3D Side Wall Perspective
-        ctx.beginPath(); ctx.moveTo(530, 260); ctx.lineTo(580, 220); ctx.lineTo(580, 390); ctx.lineTo(530, 440); ctx.stroke();
-        // 3D Roof
-        ctx.beginPath(); ctx.moveTo(230, 260); ctx.lineTo(395, 140); ctx.lineTo(560, 260); ctx.closePath(); ctx.stroke();
-        // 3D Side Roof Perspective
-        ctx.beginPath(); ctx.moveTo(395, 140); ctx.lineTo(445, 110); ctx.lineTo(605, 220); ctx.lineTo(560, 260); ctx.stroke();
-        // 3D Chimney
-        ctx.beginPath(); ctx.rect(460, 140, 35, 60); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(477.5, 140, 17.5, 6, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(495, 115, 10, 0, Math.PI * 2); ctx.stroke(); // Smoke ring
-        // Door & 3D overhang knob
-        ctx.beginPath(); ctx.rect(365, 335, 65, 105); ctx.stroke();
-        ctx.beginPath(); ctx.arc(418, 390, 6, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.rect(355, 328, 85, 8); ctx.stroke(); // 3D Door frame header
-        // Windows with 3D sill
-        ctx.beginPath(); ctx.rect(285, 295, 55, 55); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(312.5, 295); ctx.lineTo(312.5, 350); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(285, 322.5); ctx.lineTo(340, 322.5); ctx.stroke();
-        ctx.beginPath(); ctx.rect(280, 350, 65, 6); ctx.stroke(); // Sill
-        ctx.beginPath(); ctx.rect(445, 295, 55, 55); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(472.5, 295); ctx.lineTo(472.5, 350); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(445, 322.5); ctx.lineTo(500, 322.5); ctx.stroke();
-        ctx.beginPath(); ctx.rect(440, 350, 65, 6); ctx.stroke(); // Sill
-        // Ground line
-        ctx.beginPath(); ctx.moveTo(0, 440); ctx.lineTo(800, 440); ctx.stroke();
+        
+        // 10. 3D Front Walkway & Ground Pavement Line
+        ctx.beginPath(); ctx.moveTo(0, 430); ctx.lineTo(800, 430); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(300, 430); ctx.lineTo(260, 495); ctx.lineTo(410, 495); ctx.lineTo(370, 430); ctx.stroke(); // Paved pathway
+        ctx.beginPath(); ctx.moveTo(280, 460); ctx.lineTo(390, 460); ctx.stroke(); // Paver line
         break;
       }
       case 'cat': {
