@@ -3,6 +3,8 @@ import type { FinanceTransaction, SavingsTarget } from '../../types/family';
 import { ArrowLeft, Wallet, Plus, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 
+import { sanitizeInput } from '../../utils/security';
+
 interface FamilyFinanceScreenProps {
   transactions: FinanceTransaction[];
   savingsTargets: SavingsTarget[];
@@ -30,9 +32,10 @@ export const FamilyFinanceScreen: React.FC<FamilyFinanceScreenProps> = ({
   const handleAddTransaction = (e: React.FormEvent) => {
     e.preventDefault();
     const num = parseInt(amount);
-    if (!num || isNaN(num) || !note.trim()) return;
+    const cleanNote = sanitizeInput(note);
+    if (!num || isNaN(num) || !cleanNote) return;
 
-    onAddTransaction(type, num, type === 'income' ? 'Pemasukan' : 'Pengeluaran', note.trim());
+    onAddTransaction(type, num, type === 'income' ? 'Pemasukan' : 'Pengeluaran', cleanNote);
     setAmount('');
     setNote('');
   };
@@ -105,6 +108,11 @@ export const FamilyFinanceScreen: React.FC<FamilyFinanceScreenProps> = ({
 
           {/* Add Form */}
           <form onSubmit={handleAddTransaction} className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/60">
+              <span className="text-emerald-500">🛡️</span>
+              <span>Perlindungan Keamanan Aktif — Catatan transaksi disaring otomatis & disimpan secara privat.</span>
+            </div>
+
             <div className="flex gap-2">
               <button
                 type="button"
@@ -134,6 +142,7 @@ export const FamilyFinanceScreen: React.FC<FamilyFinanceScreenProps> = ({
               <input
                 type="text"
                 required
+                maxLength={80}
                 placeholder="Catatan (misal: Beli Buah)"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -141,7 +150,12 @@ export const FamilyFinanceScreen: React.FC<FamilyFinanceScreenProps> = ({
               />
             </div>
 
-            <button type="submit" className="w-full py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs">
+            <div className="flex justify-between items-center px-1 text-[10px] text-slate-400 font-bold">
+              <span>Otomatis dibersihkan dari simbol berbahaya</span>
+              <span>{note.length}/80</span>
+            </div>
+
+            <button type="submit" className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition-all">
               Simpan Transaksi
             </button>
           </form>

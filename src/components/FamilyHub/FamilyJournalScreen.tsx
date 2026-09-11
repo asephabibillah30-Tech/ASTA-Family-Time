@@ -5,6 +5,8 @@ import { JOURNAL_MOODS } from '../../data/familyData';
 import { ArrowLeft, Send } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
+import { sanitizeInput } from '../../utils/security';
+
 interface FamilyJournalScreenProps {
   players: Player[];
   entries: JournalEntry[];
@@ -26,14 +28,15 @@ export const FamilyJournalScreen: React.FC<FamilyJournalScreenProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) return;
+    const cleanReason = sanitizeInput(reason);
+    if (!cleanReason) return;
 
     onAddEntry(
       activePlayer.id,
       activePlayer.name,
       activePlayer.avatar,
       selectedMood,
-      reason.trim()
+      cleanReason
     );
 
     setReason('');
@@ -118,6 +121,10 @@ export const FamilyJournalScreen: React.FC<FamilyJournalScreenProps> = ({
 
         {/* Reason */}
         <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/60">
+            <span>🛡️ Perlindungan Keamanan Aktif — Jurnal emosi disaring dari skrip berbahaya & disimpan privat.</span>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
               Apa yang membuatmu merasa seperti itu? (Ceritakan dengan santai):
@@ -125,11 +132,16 @@ export const FamilyJournalScreen: React.FC<FamilyJournalScreenProps> = ({
             <textarea
               required
               rows={3}
+              maxLength={250}
               placeholder="Contoh: Tadi di sekolah senang sekali bisa bermain bola bersama teman..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full px-4 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium outline-none focus:border-emerald-500"
             />
+            <div className="flex justify-between items-center mt-1 px-1 text-[10px] text-slate-400 font-bold">
+              <span>Teks otomatis dibersihkan dari simbol berbahaya</span>
+              <span>{reason.length}/250</span>
+            </div>
           </div>
 
           <button

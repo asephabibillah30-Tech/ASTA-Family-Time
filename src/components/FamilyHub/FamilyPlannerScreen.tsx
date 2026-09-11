@@ -4,6 +4,8 @@ import type { PlannerEvent } from '../../types/family';
 import { ArrowLeft, Plus, CheckCircle2, Circle, Trash2, X } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
+import { sanitizeInput } from '../../utils/security';
+
 interface FamilyPlannerScreenProps {
   events: PlannerEvent[];
   onAddEvent: (event: Omit<PlannerEvent, 'id'>) => void;
@@ -28,10 +30,11 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    const cleanTitle = sanitizeInput(title);
+    if (!cleanTitle) return;
 
     onAddEvent({
-      title: title.trim(),
+      title: cleanTitle,
       date,
       time,
       category,
@@ -144,6 +147,10 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
 
             {/* Form Body */}
             <form onSubmit={handleSubmit} className="space-y-4 text-left">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 p-2.5 rounded-2xl border border-blue-200 dark:border-blue-800/60">
+                <span>🛡️ Perlindungan Keamanan Aktif — Agenda disaring otomatis & disimpan secara privat.</span>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Nama Kegiatan:
@@ -151,11 +158,16 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
                 <input
                   type="text"
                   required
+                  maxLength={60}
                   placeholder="Misal: Sholat Berjamaah / Family Game"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-xs font-bold outline-none focus:border-blue-500"
                 />
+                <div className="flex justify-between items-center mt-1 px-1 text-[10px] text-slate-400 font-bold">
+                  <span>Teks otomatis dibersihkan dari simbol berbahaya</span>
+                  <span>{title.length}/60</span>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

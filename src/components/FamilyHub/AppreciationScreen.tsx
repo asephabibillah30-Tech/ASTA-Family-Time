@@ -4,6 +4,8 @@ import type { AppreciationItem } from '../../types/family';
 import { ArrowLeft, Send } from 'lucide-react';
 
 
+import { sanitizeInput } from '../../utils/security';
+
 interface AppreciationScreenProps {
   players: Player[];
   appreciations: AppreciationItem[];
@@ -33,12 +35,13 @@ export const AppreciationScreen: React.FC<AppreciationScreenProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    const cleanMsg = sanitizeInput(message);
+    if (!cleanMsg) return;
 
     onSendAppreciation(
       sender.id, sender.name, sender.avatar,
       receiver.id, receiver.name, receiver.avatar,
-      message.trim(),
+      cleanMsg,
       selectedBadge
     );
 
@@ -124,14 +127,25 @@ export const AppreciationScreen: React.FC<AppreciationScreenProps> = ({
 
         {/* Message */}
         <form onSubmit={handleSubmit} className="space-y-3">
-          <textarea
-            required
-            rows={2}
-            placeholder="Tuliskan ucapan terima kasih atau pujian tulusmu..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
-          />
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-2xl border border-rose-200 dark:border-rose-800/60">
+            <span>🛡️ Perlindungan Keamanan Aktif — Pesan apresiasi disaring dari simbol & skrip berbahaya.</span>
+          </div>
+
+          <div>
+            <textarea
+              required
+              rows={2}
+              maxLength={200}
+              placeholder="Tuliskan ucapan terima kasih atau pujian tulusmu..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
+            />
+            <div className="flex justify-between items-center mt-1 px-1 text-[10px] text-slate-400 font-bold">
+              <span>Teks otomatis dibersihkan dari simbol berbahaya</span>
+              <span>{message.length}/200</span>
+            </div>
+          </div>
 
           <button
             type="submit"
