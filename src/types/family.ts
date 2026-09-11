@@ -95,6 +95,9 @@ export interface FamilyHabit {
   completedToday: boolean;
   streakDays: number;
   category: 'spiritual' | 'health' | 'learning' | 'togetherness';
+  description?: string;
+  assignedTo?: string;
+  createdAt?: string;
 }
 
 export interface FinanceTransaction {

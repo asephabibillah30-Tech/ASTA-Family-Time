@@ -248,6 +248,14 @@ class SupabaseFamilyService {
     } catch (e) { console.warn('upsertHabit error:', e); }
   }
 
+  async deleteHabit(familyId: string, id: string): Promise<void> {
+    const supabase = this.getClient();
+    if (!supabase || !familyId || !id) return;
+    try {
+      await supabase.from('habits').delete().eq('family_id', familyId).eq('id', id);
+    } catch (e) { console.warn('deleteHabit error:', e); }
+  }
+
   // ── FINANCE TRANSACTIONS ──────────────────────────────────
 
   async loadTransactions(familyId: string): Promise<FinanceTransaction[]> {

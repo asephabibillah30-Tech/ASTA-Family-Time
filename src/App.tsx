@@ -228,6 +228,8 @@ export function App() {
                 habits={family.habits}
                 familyStreak={family.familyStreak}
                 onToggleHabit={family.toggleHabit}
+                onAddHabit={family.addHabit}
+                onDeleteHabit={family.deleteHabit}
                 onBack={() => setSubScreen(null)}
               />
             )}

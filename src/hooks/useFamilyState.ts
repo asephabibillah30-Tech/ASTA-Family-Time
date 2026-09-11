@@ -23,7 +23,7 @@ import { supabaseFamilyService } from '../services/db/supabaseFamilyService';
 import { postgresService } from '../services/db/postgresService';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti, fireSmallPop } from '../utils/confetti';
-import { encryptStorageData, decryptStorageData } from '../utils/security';
+import { encryptStorageData, decryptStorageData, sanitizeInput, generateCryptoToken } from '../utils/security';
 
 const MAX_NOTIF_BYTES = 5 * 1024 * 1024; // 5 MB PWA Cache Limit
 
@@ -543,6 +543,54 @@ export function useFamilyState(familyId?: string | null) {
     sound.playClick();
   };
 
+  const addHabit = (data: {
+    title: string;
+    emoji: string;
+    category: 'spiritual' | 'health' | 'learning' | 'togetherness';
+    description?: string;
+    assignedTo?: string;
+  }): boolean => {
+    const cleanTitle = sanitizeInput(data.title);
+    if (!cleanTitle || cleanTitle.length < 3) return false;
+
+    const cleanEmoji = data.emoji?.trim() || '🌱';
+    const cleanDesc = data.description ? sanitizeInput(data.description) : undefined;
+
+    const newHabit: FamilyHabit = {
+      id: 'hb-' + generateCryptoToken().substring(0, 10),
+      title: cleanTitle,
+      emoji: cleanEmoji,
+      category: data.category || 'togetherness',
+      completedToday: false,
+      streakDays: 0,
+      description: cleanDesc,
+    };
+
+    setHabits((prev) => [newHabit, ...prev]);
+
+    if (familyId) {
+      supabaseFamilyService.upsertHabit(familyId, newHabit).catch(console.warn);
+    }
+
+    addNotification(
+      `🌱 Kebiasaan baru "${newHabit.title}" telah ditambahkan!`,
+      'habit',
+      newHabit.emoji,
+      'Kebiasaan Baru'
+    );
+    sound.playSuccess();
+    fireBurstConfetti();
+    return true;
+  };
+
+  const deleteHabit = (id: string) => {
+    setHabits((prev) => prev.filter((h) => h.id !== id));
+    if (familyId) {
+      supabaseFamilyService.deleteHabit(familyId, id).catch(console.warn);
+    }
+    sound.playClick();
+  };
+
   const toggleChallenge = (id: string) => {
     setChallenges((prev) =>
       prev.map((c) => {
@@ -716,6 +764,8 @@ export function useFamilyState(familyId?: string | null) {
     toggleChallenge,
     habits,
     toggleHabit,
+    addHabit,
+    deleteHabit,
     transactions,
     addFinanceTransaction,
     savingsTargets,
