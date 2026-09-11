@@ -26,6 +26,7 @@ interface HeaderProps {
   onGoHome: () => void;
   onOpenManageFamily: () => void;
   onOpenSecurityCenter?: () => void;
+  onOpenAdminLogin?: () => void;
   onSwitchMember?: (memberId: string) => void;
   onLogout: () => void;
   onRestartGame?: () => void;
@@ -49,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   onGoHome,
   onOpenManageFamily,
   onOpenSecurityCenter,
+  onOpenAdminLogin,
   onSwitchMember: _onSwitchMember,
   onLogout,
   onRestartGame,
@@ -507,6 +509,19 @@ export const Header: React.FC<HeaderProps> = ({
                       >
                         <Users className="w-4 h-4 text-indigo-600" />
                         <span>Kelola Anggota Keluarga 👑</span>
+                      </button>
+                    )}
+
+                    {onOpenAdminLogin && (
+                      <button
+                        onClick={() => {
+                          sound.playClick();
+                          onOpenAdminLogin();
+                        }}
+                        className="w-full px-3 py-2 rounded-xl text-left text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/60 flex items-center gap-2"
+                      >
+                        <Crown className="w-4 h-4 text-amber-500" />
+                        <span>Portal Admin & Pengelola 🔐</span>
                       </button>
                     )}
 

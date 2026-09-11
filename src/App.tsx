@@ -29,6 +29,8 @@ import { RegisterHeadModal } from './components/Auth/RegisterHeadModal';
 import { ManageFamilyModal } from './components/Auth/ManageFamilyModal';
 import { SecurityCenterModal } from './components/Auth/SecurityCenterModal';
 import { AuthGateScreen } from './components/Auth/AuthGateScreen';
+import { AdminLoginModal } from './components/Admin/AdminLoginModal';
+import { AdminDashboardScreen } from './components/Admin/AdminDashboardScreen';
 import type { MainTab, AppScreen, Player } from './types/game';
 
 export function App() {
@@ -46,11 +48,13 @@ export function App() {
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
-  // Auth Modals State
+  // Auth & Admin Modals State
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isManageFamilyOpen, setIsManageFamilyOpen] = useState(false);
   const [isSecurityCenterOpen, setIsSecurityCenterOpen] = useState(false);
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
 
   // Map family members from auth into Game Players
   const integratedPlayers: Player[] = useMemo(() => {
@@ -128,6 +132,7 @@ export function App() {
         }}
         onOpenManageFamily={() => setIsManageFamilyOpen(true)}
         onOpenSecurityCenter={() => setIsSecurityCenterOpen(true)}
+        onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
         onSwitchMember={auth.switchActiveMember}
         onLogout={auth.logout}
         onRestartGame={game.restartSamePlayers}
@@ -190,9 +195,33 @@ export function App() {
           />
         )}
 
-        {/* Standard Tab Navigation */}
-        {game.screen === 'home' && (
+        {/* Admin Dashboard Viewport */}
+        {isAdminDashboardOpen ? (
+          <AdminDashboardScreen
+            currentFamily={auth.currentFamily}
+            currentUser={auth.currentUser}
+            players={integratedPlayers}
+            familyMembers={auth.familyMembers}
+            familyStreak={family.familyStreak}
+            totalLovePoints={family.totalLovePoints}
+            onBack={() => setIsAdminDashboardOpen(false)}
+            onUpdateFamilySettings={(_updated) => {
+              if (auth.currentFamily) {
+                auth.refreshSession();
+              }
+            }}
+            onBonusPoints={(_memberId, _bonus) => {
+              auth.refreshSession();
+            }}
+            onRemoveMember={(memberId) => {
+              auth.deleteFamilyMember(memberId);
+            }}
+          />
+        ) : (
           <>
+            {/* Standard Tab Navigation */}
+            {game.screen === 'home' && (
+              <>
             {/* Sub Screens */}
             {subScreen === 'planner' && (
               <FamilyPlannerScreen
@@ -330,11 +359,13 @@ export function App() {
             )}
           </>
         )}
+        </>
+        )}
 
       </main>
 
       {/* Persistent Bottom Navigation */}
-      {game.screen === 'home' && (
+      {game.screen === 'home' && !isAdminDashboardOpen && (
         <BottomNav
           currentTab={currentTab}
           onSelectTab={handleSelectTab}
@@ -353,6 +384,19 @@ export function App() {
         onUpdateSettings={game.updateSettings}
         onResetGame={game.resetToHome}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* Admin Login Portal Modal */}
+      <AdminLoginModal
+        isOpen={isAdminLoginOpen}
+        currentFamilyCode={auth.currentFamily?.familyCode || 'ASTA-2026'}
+        onClose={() => setIsAdminLoginOpen(false)}
+        onLoginSuccess={(_adminRole) => {
+          setIsAdminLoginOpen(false);
+          setIsAdminDashboardOpen(true);
+          setSubScreen(null);
+          setCurrentTab('home');
+        }}
       />
 
       {/* Auth & Family Management Modals */}
