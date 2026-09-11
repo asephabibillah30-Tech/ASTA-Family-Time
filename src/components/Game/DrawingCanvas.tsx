@@ -621,26 +621,26 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       {/* Main Drawing Viewport */}
       <div className="w-full flex flex-col md:flex-row items-stretch gap-4">
       
-      {/* 1. DRAWING TOOLBAR (Left side on Desktop, Top/Bottom on Mobile) */}
+      {/* 1. DRAWING TOOLBAR (Left side on Desktop, Scrollable Bar on Mobile) */}
       {!isReadOnly && (
-        <div className="bg-amber-100/90 dark:bg-slate-800/90 p-3 rounded-3xl border-3 border-amber-300 dark:border-slate-700 shadow-bubbly-amber flex flex-row md:flex-col items-center justify-between gap-3 shrink-0">
+        <div className="w-full md:w-auto bg-amber-100/90 dark:bg-slate-800/90 p-2.5 sm:p-3 rounded-3xl border-3 border-amber-300 dark:border-slate-700 shadow-bubbly-amber flex flex-row md:flex-col items-center justify-between gap-2.5 sm:gap-3 shrink-0 overflow-x-auto max-w-full touch-pan-x">
           
           {/* Main Drawing Tools */}
-          <div className="flex flex-row md:flex-col items-center gap-2">
+          <div className="flex flex-row md:flex-col items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Pencil */}
             <button
               onClick={() => {
                 setActiveTool('pencil');
                 sound.playClick();
               }}
-              className={`p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
+              className={`p-2 sm:p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
                 activeTool === 'pencil'
                   ? 'bg-amber-400 text-slate-900 border-amber-500 font-extrabold shadow-md scale-105'
                   : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-amber-50'
               }`}
               title="Pensil (Garis Halus)"
             >
-              <Pencil className="w-5 h-5" />
+              <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Brush */}
@@ -649,14 +649,14 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 setActiveTool('brush');
                 sound.playClick();
               }}
-              className={`p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
+              className={`p-2 sm:p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
                 activeTool === 'brush'
                   ? 'bg-amber-400 text-slate-900 border-amber-500 font-extrabold shadow-md scale-105'
                   : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-amber-50'
               }`}
               title="Kuas (Garis Tebal)"
             >
-              <Paintbrush className="w-5 h-5" />
+              <Paintbrush className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Eraser */}
@@ -665,14 +665,14 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 setActiveTool('eraser');
                 sound.playClick();
               }}
-              className={`p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
+              className={`p-2 sm:p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
                 activeTool === 'eraser'
                   ? 'bg-rose-400 text-white border-rose-500 font-extrabold shadow-md scale-105'
                   : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-rose-50'
               }`}
               title="Penghapus"
             >
-              <Eraser className="w-5 h-5" />
+              <Eraser className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Bucket */}
@@ -681,14 +681,14 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 setActiveTool('bucket');
                 sound.playClick();
               }}
-              className={`p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
+              className={`p-2 sm:p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
                 activeTool === 'bucket'
                   ? 'bg-sky-400 text-slate-900 border-sky-500 font-extrabold shadow-md scale-105'
                   : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-sky-50'
               }`}
               title="Ember Cat (Isi Warna)"
             >
-              <PaintBucket className="w-5 h-5" />
+              <PaintBucket className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Stamp Tool */}
@@ -697,20 +697,20 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 setActiveTool('stamp');
                 sound.playClick();
               }}
-              className={`p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
+              className={`p-2 sm:p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
                 activeTool === 'stamp'
                   ? 'bg-purple-400 text-slate-900 border-purple-500 font-extrabold shadow-md scale-105'
                   : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-purple-50'
               }`}
               title="Stempel Emoji / Stiker"
             >
-              <Smile className="w-5 h-5" />
+              <Smile className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
           {/* Stamp Selector when active */}
           {activeTool === 'stamp' && (
-            <div className="flex flex-row md:flex-col gap-1 overflow-x-auto p-1 bg-white/80 dark:bg-slate-700 rounded-2xl border border-purple-300">
+            <div className="flex flex-row md:flex-col gap-1 overflow-x-auto p-1 bg-white/80 dark:bg-slate-700 rounded-2xl border border-purple-300 shrink-0">
               {EMOJI_STAMPS.map(s => (
                 <button
                   key={s}
@@ -718,7 +718,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                     setSelectedStamp(s);
                     sound.playClick();
                   }}
-                  className={`text-lg p-1 rounded-xl transition-all ${selectedStamp === s ? 'bg-purple-200 dark:bg-purple-900 scale-110' : 'hover:bg-slate-100'}`}
+                  className={`text-base sm:text-lg p-1 rounded-xl transition-all ${selectedStamp === s ? 'bg-purple-200 dark:bg-purple-900 scale-110' : 'hover:bg-slate-100'}`}
                 >
                   {s}
                 </button>
@@ -729,7 +729,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           <div className="h-px md:h-auto w-full md:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden md:block" />
 
           {/* Line Width Slider */}
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-1 shrink-0">
             <span className="text-[10px] font-black text-amber-900 dark:text-amber-300 hidden md:block">
               UKURAN
             </span>
@@ -739,7 +739,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               max="32"
               value={lineWidth}
               onChange={(e) => setLineWidth(Number(e.target.value))}
-              className="w-16 md:w-20 accent-amber-500 cursor-pointer"
+              className="w-14 sm:w-16 md:w-20 accent-amber-500 cursor-pointer"
               title={`Ukuran Kuas: ${lineWidth}px`}
             />
             <div
@@ -751,7 +751,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           <div className="h-px md:h-auto w-full md:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden md:block" />
 
           {/* Color Palette Grid */}
-          <div className="grid grid-cols-4 md:grid-cols-2 gap-1.5 max-w-[120px] md:max-w-none overflow-x-auto md:overflow-visible">
+          <div className="grid grid-flow-col grid-rows-2 md:grid-flow-row md:grid-cols-2 gap-1 sm:gap-1.5 shrink-0 max-w-full overflow-x-auto">
             {COLOR_PALETTE.map((c) => (
               <button
                 key={c}
@@ -760,7 +760,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                   if (activeTool === 'eraser') setActiveTool('brush');
                   sound.playClick();
                 }}
-                className={`w-6 h-6 sm:w-7 sm:h-7 rounded-xl border-2 transition-transform active:scale-90 ${
+                className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-xl border-2 transition-transform active:scale-90 ${
                   color === c && activeTool !== 'eraser'
                     ? 'scale-115 border-slate-900 dark:border-white shadow-md ring-2 ring-amber-400'
                     : 'border-white/80 dark:border-slate-700 shadow-2xs hover:scale-105'
@@ -774,7 +774,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           <div className="h-px md:h-auto w-full md:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden md:block" />
 
           {/* Action Buttons: Undo & Clear */}
-          <div className="flex flex-row md:flex-col items-center gap-1.5">
+          <div className="flex flex-row md:flex-col items-center gap-1.5 shrink-0">
             <button
               onClick={handleUndo}
               disabled={undoStack.length <= 1}

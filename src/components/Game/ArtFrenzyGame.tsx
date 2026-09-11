@@ -401,7 +401,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const sortedLeaderboard = [...players].sort((a, b) => b.score - a.score);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 space-y-3 font-body select-none">
+    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 pb-32 sm:pb-16 space-y-3 font-body select-none">
       
       {/* 0. MODE SELECTION MODAL */}
       {showModeModal && (
