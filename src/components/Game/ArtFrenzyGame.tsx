@@ -4,7 +4,7 @@ import { DrawingCanvas } from './DrawingCanvas';
 import { 
   ArrowLeft, Clock, Send, 
   Sparkles, MessageSquare, Users, Crown, Pencil,
-  Globe, Share2, Copy, Check, Play
+  Globe, Share2, Copy, Check, Play, Lightbulb, Zap, PlusCircle, RotateCcw, Home
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireBurstConfetti } from '../../utils/confetti';
@@ -27,37 +27,42 @@ interface ChatMessage {
 
 // Database of family-friendly Indonesian secret words with categories
 const SECRET_WORDS_DB = [
-  { word: 'JERAPAH', category: 'Hewan', hint: 'Lehernya sangat panjang' },
-  { word: 'KUCING', category: 'Hewan', hint: 'Suka nge-meow dan makan ikan' },
-  { word: 'KUE ULANG TAHUN', category: 'Makanan', hint: 'Ada lilin di atasnya saat merayakan umur' },
-  { word: 'SEPEDA', category: 'Kendaraan', hint: 'Dikayuh dengan dua roda' },
-  { word: 'RUMAH', category: 'Bangunan', hint: 'Tempat berkumpul keluarga' },
-  { word: 'PESAWAT', category: 'Kendaraan', hint: 'Terbang di udara dengan sayap' },
-  { word: 'PELANGI', category: 'Alam', hint: 'Muncul setelah hujan dengan 7 warna' },
-  { word: 'BUNGA', category: 'Tanaman', hint: 'Wangi dan mekar di taman' },
-  { word: 'KACAMATA', category: 'Benda', hint: 'Dipakai di mata untuk melihat lebih jelas' },
-  { word: 'GAJAH', category: 'Hewan', hint: 'Punya belalai panjang dan telinga lebar' },
-  { word: 'ES KRIM', category: 'Makanan', hint: 'Manis, dingin, dan cepat meleleh' },
-  { word: 'MATAHARI', category: 'Alam', hint: 'Bersinar terang di siang hari' },
-  { word: 'PIZZA', category: 'Makanan', hint: 'Roti bulat potongan segitiga dari Italia' },
-  { word: 'KURA KURA', category: 'Hewan', hint: 'Jalannya lambat dan punya tempurung keras' },
-  { word: 'PISANG', category: 'Buah', hint: 'Warna kuning kesukaan monyet' },
-  { word: 'NAGA', category: 'Mitos', hint: 'Makhluk mitos yang mengeluarkan api' },
+  { word: 'JERAPAH', category: 'Hewan 🐾', hint: 'Lehernya sangat panjang', colorClue: 'Kuning & Cokelat 🐆' },
+  { word: 'KUCING', category: 'Hewan 🐾', hint: 'Suka nge-meow dan makan ikan', colorClue: 'Oranye / Abu-abu 🐈' },
+  { word: 'KUE ULANG TAHUN', category: 'Makanan 🍕', hint: 'Ada lilin di atasnya saat merayakan umur', colorClue: 'Putih & Merah Muda 🎂' },
+  { word: 'SEPEDA', category: 'Kendaraan 🚗', hint: 'Dikayuh dengan dua roda', colorClue: 'Biru & Hitam 🚲' },
+  { word: 'RUMAH', category: 'Bangunan 🏠', hint: 'Tempat berkumpul keluarga', colorClue: 'Atap Merah & Dinding Kuning 🏠' },
+  { word: 'PESAWAT', category: 'Kendaraan 🚗', hint: 'Terbang di udara dengan sayap', colorClue: 'Putih & Biru ✈️' },
+  { word: 'PELANGI', category: 'Alam 🌺', hint: 'Muncul setelah hujan dengan 7 warna', colorClue: 'MeJiKuHiBiNiU 🌈' },
+  { word: 'BUNGA', category: 'Tanaman 🌺', hint: 'Wangi dan mekar di taman', colorClue: 'Merah Muda & Hijau 🌸' },
+  { word: 'KACAMATA', category: 'Benda 🏠', hint: 'Dipakai di mata untuk melihat lebih jelas', colorClue: 'Hitam / Transparan 👓' },
+  { word: 'GAJAH', category: 'Hewan 🐾', hint: 'Punya belalai panjang dan telinga lebar', colorClue: 'Abu-abu 🐘' },
+  { word: 'ES KRIM', category: 'Makanan 🍕', hint: 'Manis, dingin, dan cepat meleleh', colorClue: 'Cokelat & Merah Muda 🍦' },
+  { word: 'MATAHARI', category: 'Alam 🌺', hint: 'Bersinar terang di siang hari', colorClue: 'Kuning Kunyit & Oranye ☀️' },
+  { word: 'PIZZA', category: 'Makanan 🍕', hint: 'Roti bulat potongan segitiga dari Italia', colorClue: 'Kuning Keju & Red Pepperoni 🍕' },
+  { word: 'KURA KURA', category: 'Hewan 🐾', hint: 'Jalannya lambat dan punya tempurung keras', colorClue: 'Hijau Tua & Cokelat 🐢' },
+  { word: 'PISANG', category: 'Buah 🍕', hint: 'Warna kuning kesukaan monyet', colorClue: 'Kuning Cerah 🍌' },
+  { word: 'NAGA', category: 'Mitos 🦸', hint: 'Makhluk mitos yang mengeluarkan api', colorClue: 'Merah Api & Emas 🐉' },
 ];
 
 export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPlayers, onBack }) => {
   const [playMode, setPlayMode] = useState<PlayMode>('solo_bot');
   const [showModeModal, setShowModeModal] = useState<boolean>(true);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [isGameOver, setIsGameOver] = useState(false);
+
+  // Power-Up Boosters usage state per round
+  const [hasUsedExtraLetters, setHasUsedExtraLetters] = useState(false);
+  const [hasUsedAddTime, setHasUsedAddTime] = useState(false);
 
   const [players, setPlayers] = useState<Player[]>(
     initialPlayers.length > 0
       ? initialPlayers
       : [
           { id: '1', name: 'Aris (Anda)', avatar: '👦', score: 1250, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
-          { id: '2', name: 'Bot Bella', avatar: '👧', score: 980, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
-          { id: '3', name: 'Bot Papa Asep', avatar: '👨‍💼', score: 760, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
-          { id: '4', name: 'Bot Mamah Ita', avatar: '👩‍💼', score: 550, cardsCompleted: 0, color: 'bg-amber-500', isOnline: false },
+          { id: '2', name: 'Bot Bella 🤖', avatar: '👧', score: 980, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
+          { id: '3', name: 'Bot Papa 🤖', avatar: '👨‍💼', score: 760, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
+          { id: '4', name: 'Bot Mamah 🤖', avatar: '👩‍💼', score: 550, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
         ]
   );
 
@@ -73,7 +78,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   // Chat & Guess Stream
   const [guessInput, setGuessInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { id: '1', senderName: 'Bot Bella', text: 'Semangat menggambar!', timestamp: '14:30' },
+    { id: '1', senderName: 'Bot Bella 🤖', text: 'Semangat menggambar!', timestamp: '14:30' },
     { id: '2', senderName: 'Sistem', text: '🎮 Mode Main Sendiri vs AI Bot Aktif! Tebak gambar lukisan!', isSystem: true, timestamp: '14:30' },
   ]);
 
@@ -86,6 +91,8 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     const randomIdx = Math.floor(Math.random() * SECRET_WORDS_DB.length);
     setActiveWordObj(SECRET_WORDS_DB[randomIdx]);
     setRevealedHints([]);
+    setHasUsedExtraLetters(false);
+    setHasUsedAddTime(false);
     setTimeLeft(60);
     setIsRoundActive(true);
     setRoundWinnerMsg(null);
@@ -96,6 +103,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     sound.playClick();
     setPlayMode(mode);
     setShowModeModal(false);
+    setIsGameOver(false);
+    setCurrentRound(1);
+    setDrawerIndex(0);
 
     if (mode === 'solo_bot') {
       setPlayers([
@@ -108,7 +118,6 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         { id: '1', senderName: 'Sistem', text: '🤖 Mode Bermain Sendiri (vs AI Bot) dimulai! Nikmati permainan solo!', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
       ]);
     } else {
-      // Online Friends mode
       setPlayers(
         initialPlayers.length > 0
           ? initialPlayers.map(p => ({ ...p, isOnline: true }))
@@ -132,6 +141,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     sound.playCardShuffle();
     if (currentRound >= maxRounds) {
       setIsRoundActive(false);
+      setIsGameOver(true);
       sound.playVictory();
       fireBurstConfetti();
       return;
@@ -156,7 +166,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   // Round Timer Countdown Loop & AI Bot Auto-Guessing in Solo Mode
   useEffect(() => {
-    if (!isRoundActive) return;
+    if (!isRoundActive || isGameOver) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -193,7 +203,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         }
 
         // AI Bot Automated Chat & Guess Logic when in Solo Mode
-        if (playMode === 'solo_bot' && prev % 14 === 0 && prev > 10) {
+        if (playMode === 'solo_bot' && prev % 12 === 0 && prev > 10) {
           const botNames = ['Bot Bella 🤖', 'Bot Papa 🤖', 'Bot Mamah 🤖'];
           const randomBot = botNames[Math.floor(Math.random() * botNames.length)];
           const wrongGuesses = ['Kucing?', 'Mobil?', 'Rumah?', 'Kue?', 'Matahari?', 'Gajah?'];
@@ -215,7 +225,47 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRoundActive, activeWordObj, revealedHints, advanceTurn, playMode]);
+  }, [isRoundActive, isGameOver, activeWordObj, revealedHints, advanceTurn, playMode]);
+
+  // Power-Up 1: Extra Letters Hint (+2 Huruf)
+  const handleUseExtraLetters = () => {
+    if (hasUsedExtraLetters) return;
+    sound.playFunnyBonus();
+    setHasUsedExtraLetters(true);
+
+    const unrevealedIdxs = activeWordObj.word
+      .split('')
+      .map((char, i) => (char !== ' ' ? i : -1))
+      .filter((i) => i !== -1 && !revealedHints.includes(i));
+
+    if (unrevealedIdxs.length > 0) {
+      const picks = unrevealedIdxs.sort(() => 0.5 - Math.random()).slice(0, 2);
+      setRevealedHints((prev) => [...prev, ...picks]);
+    }
+  };
+
+  // Power-Up 2: Add Time (+15 Seconds)
+  const handleUseAddTime = () => {
+    if (hasUsedAddTime) return;
+    sound.playClick();
+    setHasUsedAddTime(true);
+    setTimeLeft((prev) => prev + 15);
+  };
+
+  // Power-Up 3: Color Clue
+  const handleUseColorClue = () => {
+    sound.playClick();
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        senderName: 'Sistem',
+        text: `🎨 Petunjuk Warna Khas Objek: ${activeWordObj.colorClue || 'Warna Warni'}`,
+        isSystem: true,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+  };
 
   // Handle Guess Submission
   const handleSendGuess = (e: React.FormEvent) => {
@@ -313,6 +363,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     }).join('');
   };
 
+  // Sorted players for Podium Ceremony
+  const sortedLeaderboard = [...players].sort((a, b) => b.score - a.score);
+
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 space-y-3 font-body select-none">
       
@@ -403,6 +456,82 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             >
               Kembali ke Arena Game
             </button>
+
+          </div>
+        </div>
+      )}
+
+      {/* 0. PODIUM WINNER CEREMONY SCREEN */}
+      {isGameOver && (
+        <div className="fixed inset-0 z-50 bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-pop-in">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-8 max-w-lg w-full border-4 border-amber-400 dark:border-amber-600 shadow-2xl text-center space-y-5">
+            
+            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-300 via-amber-400 to-yellow-500 flex items-center justify-center text-4xl mx-auto shadow-lg animate-bounce border-4 border-white">
+              👑
+            </div>
+
+            <div>
+              <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-black text-xs uppercase tracking-wider">
+                🎉 UPACARA KEMENANGAN SELESAI
+              </span>
+              <h2 className="font-display font-black text-2xl sm:text-3xl text-slate-900 dark:text-white mt-2">
+                Pemenang Art Frenzy! 🏆
+              </h2>
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                Selamat! Keluarga mendapatkan <span className="font-black text-amber-500">+200 ⭐ Love Points</span>!
+              </p>
+            </div>
+
+            {/* Podium Ranks */}
+            <div className="grid grid-cols-3 gap-2 items-end pt-4">
+              {/* 2nd Place */}
+              {sortedLeaderboard[1] && (
+                <div className="bg-slate-100 dark:bg-slate-700 p-3 rounded-2xl border-2 border-slate-300 text-center space-y-1">
+                  <span className="text-2xl">🥈</span>
+                  <div className="font-black text-xs truncate">{sortedLeaderboard[1].name}</div>
+                  <div className="text-[10px] font-bold text-slate-500">{sortedLeaderboard[1].score} pts</div>
+                </div>
+              )}
+
+              {/* 1st Place */}
+              {sortedLeaderboard[0] && (
+                <div className="bg-gradient-to-b from-amber-100 to-amber-200 dark:from-amber-950 dark:to-amber-900 p-4 rounded-2xl border-3 border-amber-400 text-center space-y-1 shadow-md scale-105">
+                  <span className="text-3xl">🥇</span>
+                  <div className="font-black text-sm text-slate-900 dark:text-white truncate">{sortedLeaderboard[0].name}</div>
+                  <div className="text-xs font-black text-amber-700 dark:text-amber-300">{sortedLeaderboard[0].score} pts</div>
+                </div>
+              )}
+
+              {/* 3rd Place */}
+              {sortedLeaderboard[2] && (
+                <div className="bg-amber-50 dark:bg-slate-700 p-3 rounded-2xl border-2 border-amber-300 text-center space-y-1">
+                  <span className="text-2xl">🥉</span>
+                  <div className="font-black text-xs truncate">{sortedLeaderboard[2].name}</div>
+                  <div className="text-[10px] font-bold text-slate-500">{sortedLeaderboard[2].score} pts</div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => handleSelectMode(playMode)}
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-600 hover:opacity-90 text-white font-display font-black text-xs shadow-md flex items-center justify-center gap-1.5"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>MAIN LAGI</span>
+              </button>
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  onBack();
+                }}
+                className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-display font-black text-xs hover:bg-slate-200 flex items-center justify-center gap-1.5"
+              >
+                <Home className="w-4 h-4" />
+                <span>ARENA GAME</span>
+              </button>
+            </div>
 
           </div>
         </div>
@@ -508,18 +637,45 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         </div>
 
         {/* Center: Secret Word for Drawer or Hint for Guessers */}
-        <div className="bg-white/10 backdrop-blur-md px-4 sm:px-6 py-2 rounded-2xl border border-white/20 text-center w-full sm:w-auto">
+        <div className="bg-white/10 backdrop-blur-md px-4 sm:px-6 py-2 rounded-2xl border border-white/20 text-center w-full sm:w-auto space-y-1">
           <div className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">
             {currentDrawer.name.includes('Aris') ? 'Kata Rahasia Anda (Lukis Ini!)' : `Kategori: ${activeWordObj.category}`}
           </div>
           <div className="font-display font-black text-lg sm:text-2xl text-amber-300 tracking-wider">
             {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
           </div>
-          {activeWordObj.hint && (
-            <div className="text-[10px] text-slate-300 font-medium italic mt-0.5">
-              Petunjuk: "{activeWordObj.hint}"
-            </div>
-          )}
+          
+          {/* POWER-UP HINT BOOSTERS STRIP */}
+          <div className="flex items-center justify-center gap-1.5 pt-1">
+            <button
+              onClick={handleUseExtraLetters}
+              disabled={hasUsedExtraLetters}
+              className="px-2 py-1 rounded-xl bg-amber-400 hover:bg-amber-500 disabled:opacity-40 text-slate-900 font-black text-[10px] flex items-center gap-1 active:scale-95 transition-all shadow-xs"
+              title="Buka 2 Huruf Rahasia Extra"
+            >
+              <Lightbulb className="w-3 h-3 text-slate-900" />
+              <span>+2 Huruf</span>
+            </button>
+
+            <button
+              onClick={handleUseAddTime}
+              disabled={hasUsedAddTime}
+              className="px-2 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white font-black text-[10px] flex items-center gap-1 active:scale-95 transition-all shadow-xs"
+              title="Tambah Waktu 15 Detik"
+            >
+              <PlusCircle className="w-3 h-3" />
+              <span>+15s</span>
+            </button>
+
+            <button
+              onClick={handleUseColorClue}
+              className="px-2 py-1 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-black text-[10px] flex items-center gap-1 active:scale-95 transition-all shadow-xs"
+              title="Tampilkan Petunjuk Warna Objek"
+            >
+              <Zap className="w-3 h-3" />
+              <span>Petunjuk Warna</span>
+            </button>
+          </div>
         </div>
 
       </div>

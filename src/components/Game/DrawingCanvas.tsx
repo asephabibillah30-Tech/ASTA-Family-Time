@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Pencil, Paintbrush, Eraser, PaintBucket, RotateCcw, Trash2 } from 'lucide-react';
+import { Pencil, Paintbrush, Eraser, PaintBucket, RotateCcw, Trash2, Smile } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
-export type ToolType = 'pencil' | 'brush' | 'eraser' | 'bucket';
+export type ToolType = 'pencil' | 'brush' | 'eraser' | 'bucket' | 'stamp';
 
 interface DrawingCanvasProps {
   isReadOnly?: boolean;
@@ -18,6 +18,8 @@ const COLOR_PALETTE = [
   '#84CC16', '#A855F7', '#78350F', '#0284C7',
 ];
 
+const EMOJI_STAMPS = ['⭐', '❤️', '🌸', '👑', '😃', '🚗', '🍦', '🎈'];
+
 export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   isReadOnly = false,
   onCanvasChange,
@@ -26,6 +28,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [activeTool, setActiveTool] = useState<ToolType>('brush');
+  const [selectedStamp, setSelectedStamp] = useState<string>('⭐');
   const [color, setColor] = useState<string>('#3B82F6');
   const [lineWidth, setLineWidth] = useState<number>(8);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -238,6 +241,20 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     if (isReadOnly) return;
     const { x, y } = getCanvasCoords(e);
 
+    if (activeTool === 'stamp') {
+      sound.playClick();
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.font = `${Math.max(28, lineWidth * 3.5)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(selectedStamp, x, y);
+      saveCanvasState();
+      return;
+    }
+
     if (activeTool === 'bucket') {
       sound.playClick();
       floodFill(x, y, color);
@@ -267,7 +284,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || isReadOnly || activeTool === 'bucket') return;
+    if (!isDrawing || isReadOnly || activeTool === 'bucket' || activeTool === 'stamp') return;
     const { x, y } = getCanvasCoords(e);
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -361,7 +378,41 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             >
               <PaintBucket className="w-5 h-5" />
             </button>
+
+            {/* Stamp Tool */}
+            <button
+              onClick={() => {
+                setActiveTool('stamp');
+                sound.playClick();
+              }}
+              className={`p-2.5 rounded-2xl transition-all active:scale-90 border-2 ${
+                activeTool === 'stamp'
+                  ? 'bg-purple-400 text-slate-900 border-purple-500 font-extrabold shadow-md scale-105'
+                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-purple-50'
+              }`}
+              title="Stempel Emoji / Stiker"
+            >
+              <Smile className="w-5 h-5" />
+            </button>
           </div>
+
+          {/* Stamp Selector when active */}
+          {activeTool === 'stamp' && (
+            <div className="flex flex-row md:flex-col gap-1 overflow-x-auto p-1 bg-white/80 dark:bg-slate-700 rounded-2xl border border-purple-300">
+              {EMOJI_STAMPS.map(s => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    setSelectedStamp(s);
+                    sound.playClick();
+                  }}
+                  className={`text-lg p-1 rounded-xl transition-all ${selectedStamp === s ? 'bg-purple-200 dark:bg-purple-900 scale-110' : 'hover:bg-slate-100'}`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="h-px md:h-auto w-full md:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden md:block" />
 
