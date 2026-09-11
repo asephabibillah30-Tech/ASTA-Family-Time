@@ -180,25 +180,29 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
           if (cloudFamData && cloudFamData.length > 0) {
             cloudMapped = cloudFamData.map(f => {
               const members = (cloudUserData || []).filter(u => u.family_id === f.id);
-              const headUser = members.find(u => u.is_head || u.id === f.head_user_id) || members[0];
+              const headUser = (cloudUserData || []).find(u => u.id === f.head_user_id) 
+                || members.find(u => u.is_head || u.role === 'head_family') 
+                || members[0];
+
               return {
                 id: f.id,
                 familyCode: f.family_code || 'ASTA-0000',
                 familyName: f.family_name || 'Keluarga ASTA',
-                headName: headUser?.full_name || 'Kepala Keluarga',
-                headEmail: headUser?.username || headUser?.email || `${f.family_code}@asta.family`,
+                headName: headUser?.full_name || headUser?.username || 'Kepala Keluarga',
+                headEmail: headUser?.username || headUser?.email || `${(f.family_code || 'asta').toLowerCase()}@asta.family`,
                 headAvatar: headUser?.avatar || '👨‍💼',
-                membersCount: members.length || 1,
-                totalLovePoints: f.total_love_points || 100,
-                streakDays: f.streak_days || 1,
+                membersCount: members.length > 0 ? members.length : 1,
+                totalLovePoints: typeof f.total_love_points === 'number' ? f.total_love_points : 100,
+                streakDays: typeof f.streak_days === 'number' ? f.streak_days : 1,
                 createdAt: f.created_at ? f.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-                status: 'active'
+                status: f.status === 'suspended' ? 'suspended' : 'active'
               };
             });
           }
         }
 
-        const combined = [...cloudMapped, ...mappedLocal];
+        // Supabase cloud mapped FIRST, then local cache (Cloud data overwrites local cache)
+        const combined = [...mappedLocal, ...cloudMapped];
         const uniqueFamiliesMap = new Map<string, RegisteredFamily>();
 
         if (combined.length > 0) {
@@ -280,27 +284,42 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
     }
   };
 
-  const handleToggleFamilyStatus = (famId: string) => {
+  const handleToggleFamilyStatus = async (famId: string) => {
     sound.playClick();
-    setFamilies(prev => prev.map(f => {
-      if (f.id === famId) {
-        const nextStatus = f.status === 'active' ? 'suspended' : 'active';
-        notify(`Status akun ${f.familyName} diubah menjadi: ${nextStatus.toUpperCase()}`);
-        return { ...f, status: nextStatus };
+    const target = families.find(f => f.id === famId);
+    if (!target) return;
+    const nextStatus = target.status === 'active' ? 'suspended' : 'active';
+
+    setFamilies(prev => prev.map(f => f.id === famId ? { ...f, status: nextStatus } : f));
+    notify(`Status akun ${target.familyName} diubah menjadi: ${nextStatus.toUpperCase()}`);
+
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      try {
+        await supabase.from('families').update({ status: nextStatus }).eq('id', famId);
+      } catch (e) {
+        console.warn('Gagal mengupdate status keluarga di Supabase:', e);
       }
-      return f;
-    }));
+    }
   };
 
-  const handleAddBonusToFamily = (famId: string) => {
+  const handleAddBonusToFamily = async (famId: string) => {
     sound.playFunnyBonus();
-    setFamilies(prev => prev.map(f => {
-      if (f.id === famId) {
-        notify(`⭐ Menambahkan 500 Bonus Love Points untuk ${f.familyName}!`);
-        return { ...f, totalLovePoints: f.totalLovePoints + 500 };
+    const target = families.find(f => f.id === famId);
+    if (!target) return;
+    const newPoints = target.totalLovePoints + 500;
+
+    setFamilies(prev => prev.map(f => f.id === famId ? { ...f, totalLovePoints: newPoints } : f));
+    notify(`⭐ Menambahkan 500 Bonus Love Points untuk ${target.familyName}!`);
+
+    const supabase = postgresService.getClient();
+    if (supabase) {
+      try {
+        await supabase.from('families').update({ total_love_points: newPoints }).eq('id', famId);
+      } catch (e) {
+        console.warn('Gagal mengupdate love points keluarga di Supabase:', e);
       }
-      return f;
-    }));
+    }
   };
 
   const handleTestCyberSimulation = () => {
