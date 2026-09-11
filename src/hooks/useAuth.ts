@@ -47,35 +47,61 @@ export function useAuth() {
   useEffect(() => {
     if (!currentFamily?.id || !currentUser?.id) return;
 
+    const familyId = currentFamily.id;
+    const userId = currentUser.id;
+
+    // Fungsi refresh presence dari semua sumber
+    const refreshPresence = () => {
+      setOnlineUserIds(db.getOnlineUserIds(familyId, userId));
+    };
+
     // Send immediate heartbeat for active user
-    db.sendHeartbeat(currentFamily.id, currentUser.id);
-    setOnlineUserIds(db.getOnlineUserIds(currentFamily.id, currentUser.id));
+    db.sendHeartbeat(familyId, userId);
+    refreshPresence();
 
-    // Send heartbeat every 5 seconds
-    const interval = setInterval(() => {
-      db.sendHeartbeat(currentFamily.id, currentUser.id);
-      setOnlineUserIds(db.getOnlineUserIds(currentFamily.id, currentUser.id));
-    }, 5000);
+    // Ambil cloud presence langsung saat login (cross-device)
+    db.fetchCloudPresence(familyId).then((cloudIds) => {
+      if (cloudIds.length > 0) {
+        refreshPresence();
+      }
+    });
 
-    // Listen to storage events and BroadcastChannel for real-time presence across tabs/devices
+    // Kirim heartbeat lokal setiap 15 detik
+    const heartbeatInterval = setInterval(() => {
+      db.sendHeartbeat(familyId, userId);
+      refreshPresence();
+    }, 15000);
+
+    // Poll cloud presence setiap 15 detik (cross-device presence dari Supabase)
+    const cloudPollInterval = setInterval(async () => {
+      await db.fetchCloudPresence(familyId);
+      refreshPresence();
+    }, 15000);
+
+    // Listen to storage events (cross-tab same device)
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === `asta_presence_${currentFamily.id}`) {
-        setOnlineUserIds(db.getOnlineUserIds(currentFamily.id, currentUser.id));
+      if (
+        e.key === `asta_presence_${familyId}` ||
+        e.key === `asta_cloud_presence_${familyId}`
+      ) {
+        refreshPresence();
       }
     };
 
     window.addEventListener('storage', handleStorage);
 
+    // BroadcastChannel untuk cross-tab di browser yang sama
     let ch: BroadcastChannel | null = null;
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      ch = new BroadcastChannel(`asta_presence_${currentFamily.id}`);
+      ch = new BroadcastChannel(`asta_presence_${familyId}`);
       ch.onmessage = () => {
-        setOnlineUserIds(db.getOnlineUserIds(currentFamily.id, currentUser.id));
+        refreshPresence();
       };
     }
 
     return () => {
-      clearInterval(interval);
+      clearInterval(heartbeatInterval);
+      clearInterval(cloudPollInterval);
       window.removeEventListener('storage', handleStorage);
       if (ch) ch.close();
     };

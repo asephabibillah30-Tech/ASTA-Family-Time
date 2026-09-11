@@ -249,3 +249,19 @@ CREATE POLICY "Allow anon all on game_history" ON game_history FOR ALL TO anon, 
 ALTER TABLE security_audit_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow anon all on security_audit_logs" ON security_audit_logs;
 CREATE POLICY "Allow anon all on security_audit_logs" ON security_audit_logs FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+-- TABEL USER_PRESENCE (Status Online Cross-Device)
+CREATE TABLE IF NOT EXISTS user_presence (
+    user_id TEXT PRIMARY KEY,
+    family_id TEXT NOT NULL,
+    last_seen_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_online BOOLEAN DEFAULT TRUE,
+    CONSTRAINT fk_presence_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_presence_family ON user_presence(family_id);
+CREATE INDEX IF NOT EXISTS idx_user_presence_last_seen ON user_presence(last_seen_at);
+
+ALTER TABLE user_presence ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on user_presence" ON user_presence;
+CREATE POLICY "Allow anon all on user_presence" ON user_presence FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
