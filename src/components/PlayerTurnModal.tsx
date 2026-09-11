@@ -48,10 +48,9 @@ export const PlayerTurnModal: React.FC<PlayerTurnModalProps> = ({
 
         {/* Next Player Highlight */}
         <div className="my-4 space-y-3">
-          <div className="flex items-center justify-center gap-1 text-xs font-bold text-family-coral uppercase tracking-wider">
+          <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-family-coral uppercase tracking-wider">
             <Heart className="w-3.5 h-3.5 fill-family-coral" />
             <span>Giliran Berikutnya</span>
-            <Heart className="w-3.5 h-3.5 fill-family-coral" />
           </div>
 
           <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-tr from-family-coral to-family-pink p-1 shadow-bubbly-coral animate-float">

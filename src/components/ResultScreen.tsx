@@ -39,7 +39,6 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
         <p className="text-sm sm:text-base text-family-coral font-bold flex items-center justify-center gap-1.5">
           <Sparkles className="w-4 h-4" />
           Keluarga Hebat, Permainan Luar Biasa!
-          <Sparkles className="w-4 h-4" />
         </p>
       </div>
 
