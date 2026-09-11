@@ -9,6 +9,7 @@ import { AlphabetGame } from './AlphabetGame';
 import { HijaiyahGame } from './HijaiyahGame';
 import { VegetableGame } from './VegetableGame';
 import { AnimalGame } from './AnimalGame';
+import { VehicleGame } from './VehicleGame';
 import { ShortStoryGame } from './ShortStoryGame';
 import { Play } from 'lucide-react';
 import { sound } from '../../utils/sound';
@@ -19,10 +20,14 @@ interface GameHubProps {
 }
 
 export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) => {
-  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet' | 'hijaiyah' | 'vegetable' | 'animal' | 'story'>('hub');
+  const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet' | 'hijaiyah' | 'vegetable' | 'animal' | 'vehicle' | 'story'>('hub');
 
   if (activeGame === 'story') {
     return <ShortStoryGame onBack={() => setActiveGame('hub')} />;
+  }
+
+  if (activeGame === 'vehicle') {
+    return <VehicleGame onBack={() => setActiveGame('hub')} />;
   }
 
   if (activeGame === 'animal') {
@@ -365,6 +370,35 @@ export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) =>
           >
             <Play className="w-4 h-4 fill-white" />
             <span>MAIN BINATANG CERIA</span>
+          </button>
+        </div>
+
+        {/* 10. Game Dunia Kendaraan Ceria */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-6 border-3 border-blue-300 dark:border-blue-800 shadow-bubbly-sky flex flex-col justify-between space-y-4 hover:scale-[1.01] transition-all">
+          <div>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-sky-500 to-indigo-600 text-white flex items-center justify-center text-2xl sm:text-3xl shadow-md mb-3">
+              🚗
+            </div>
+            <div className="inline-block px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-[10px] font-extrabold mb-1">
+              SUARA KENDARAAN • 21 KENDARAAN
+            </div>
+            <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
+              Dunia Kendaraan ✈️🚢
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2 font-medium">
+              Mengenal 21 jenis kendaraan darat, udara, laut & konstruksi lengkap dengan audio Bahasa Indonesia, suara mesin, fakta edukatif, putar otomatis, kuis & teka-teki!
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              setActiveGame('vehicle');
+            }}
+            className="w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:opacity-90 text-white font-display font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>MAIN KENDARAAN CERIA</span>
           </button>
         </div>
 
