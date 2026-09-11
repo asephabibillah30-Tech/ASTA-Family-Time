@@ -73,8 +73,9 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4 bg-slate-950/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 border-3 border-emerald-400/30 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-pop-in mt-24 mb-20" style={{maxHeight: 'calc(100vh - 180px)'}}>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-3 pt-28 pb-24 sm:p-6">
+        <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-5 sm:p-7 border-3 border-emerald-400/30 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-pop-in">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
@@ -289,6 +290,7 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
