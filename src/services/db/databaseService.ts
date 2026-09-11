@@ -1,5 +1,5 @@
 import type { FamilyAccount, UserAccount, RegisterHeadDTO, AddMemberDTO, AuthSession } from '../../types/auth';
-import { fastHashSync, sanitizeInput, encryptStorageData, decryptStorageData } from '../../utils/security';
+import { fastHashSync, sanitizeInput, rateLimiter, encryptStorageData, decryptStorageData } from '../../utils/security';
 import { postgresService } from './postgresService';
 
 // Storage Keys
@@ -54,8 +54,14 @@ function saveData<T>(key: string, data: T): void {
 }
 
 export function generateFamilyCode(): string {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `ASTA-${num}`;
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let part1 = '';
+  let part2 = '';
+  for (let i = 0; i < 4; i++) {
+    part1 += chars.charAt(Math.floor(Math.random() * chars.length));
+    part2 += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `ASTA-${part1}-${part2}`;
 }
 
 class DatabaseService {
@@ -605,22 +611,37 @@ class DatabaseService {
     const family = this.getFamilyByCode(cleanCode);
     if (!family) {
       this.logSecurity('LOGIN_ANGGOTA_GAGAL', 'FAILED', `Kode keluarga ${cleanCode} tidak valid.`);
-      throw new Error('Kode Keluarga tidak valid. Contoh: ASTA-2026');
+      throw new Error('Kode Keluarga tidak valid.');
     }
 
     const user = this.users.find(u => u.id === userId && u.familyId === family.id);
     if (!user) {
-      throw new Error('Anggota keluarga tidak ditemukan dalam kode keluarga ini.');
+      throw new Error('Profil keluarga tidak ditemukan.');
     }
 
-    const inputHash = fastHashSync(pin.trim());
-    const isValid = (user.pin && (user.pin === inputHash || user.pin === pin.trim()));
+    const rateKey = `pin_${family.id}_${user.id}`;
+    const rateCheck = rateLimiter.checkLockout(rateKey);
+    if (rateCheck.isLocked) {
+      this.logSecurity('LOGIN_PIN_TERKUNCI', 'BLOCKED', `Batas percobaan PIN terlampaui. Kunci ${rateCheck.remainingSeconds}s.`, family.id, user.id, user.fullName);
+      throw new Error(`🔒 Akses Terkunci: 5x PIN Salah. Demi keamanan, harap tunggu ${rateCheck.remainingSeconds} detik.`);
+    }
+
+    const cleanPin = pin.trim();
+    const inputHash = fastHashSync(cleanPin);
+    const isValid = (user.pin && (user.pin === inputHash || user.pin === cleanPin));
 
     if (!isValid) {
-      this.logSecurity('LOGIN_ANGGOTA_GAGAL', 'FAILED', 'PIN anggota salah.', family.id, user.id, user.fullName);
-      throw new Error('PIN anggota salah.');
+      const res = rateLimiter.recordFailedAttempt(rateKey);
+      this.logSecurity('LOGIN_ANGGOTA_GAGAL', 'FAILED', `PIN anggota salah. Percobaan sisa: ${res.attemptsLeft}`, family.id, user.id, user.fullName);
+
+      if (res.isLocked) {
+        throw new Error(`🔒 Akses Terkunci: 5x PIN Salah. Demi keamanan keluarga, harap tunggu ${res.remainingSeconds} detik.`);
+      }
+
+      throw new Error(`PIN Keamanan salah. Sisa percobaan: ${res.attemptsLeft}`);
     }
 
+    rateLimiter.resetAttempts(rateKey);
     this.logSecurity('LOGIN_ANGGOTA_SUKSES', 'SUCCESS', `Masuk berhasil sebagai ${user.fullName} (${user.roleTitle})`, family.id, user.id, user.fullName);
 
     const session: AuthSession = { user, family };

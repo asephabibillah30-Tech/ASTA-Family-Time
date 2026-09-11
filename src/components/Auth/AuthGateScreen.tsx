@@ -449,10 +449,10 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                 </form>
               ) : (
                 <form onSubmit={handleMemberLogin} className="space-y-4">
-                  <div className="p-3.5 bg-teal-50 dark:bg-teal-950/70 rounded-2xl border border-teal-200 dark:border-teal-800 flex items-center justify-between">
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between">
                     <div>
-                      <span className="text-[9px] font-black text-teal-600 dark:text-teal-400 uppercase tracking-wider">Keluarga Ditemukan:</span>
-                      <h4 className="font-black text-xs sm:text-sm text-slate-900 dark:text-white">{foundFamily.familyName}</h4>
+                      <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Ruang Keluarga Ditemukan:</span>
+                      <h4 className="font-black text-xs sm:text-sm text-slate-900 dark:text-white">Keluarga ({foundFamily.familyCode})</h4>
                     </div>
                     <button
                       type="button"
@@ -463,13 +463,19 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                     </button>
                   </div>
 
-                  {/* Member Profiles Grid */}
+                  {/* Zero Data Leakage Privacy Notice */}
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Perlindungan Privasi: Identitas & nama asli anggota disembunyikan sampai PIN terverifikasi.</span>
+                  </div>
+
+                  {/* Member Profiles Anonymized Grid */}
                   <div className="space-y-1.5">
                     <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Pilih Profil Anda:
+                      Pilih Slot Profil Anda:
                     </label>
                     <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-                      {familyMembers.map((m) => {
+                      {familyMembers.map((m, idx) => {
                         const isSelected = m.id === selectedMemberId;
                         return (
                           <button
@@ -487,8 +493,12 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                           >
                             <span className="text-2xl shrink-0">{m.avatar}</span>
                             <div className="min-w-0 flex-1">
-                              <div className="text-xs font-black truncate text-slate-900 dark:text-white">{m.fullName}</div>
-                              <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">{m.roleTitle}</div>
+                              <div className="text-xs font-black truncate text-slate-900 dark:text-white">
+                                {m.roleTitle || `Profil #${idx + 1}`}
+                              </div>
+                              <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                <span>🔒 Terkunci PIN</span>
+                              </div>
                             </div>
                           </button>
                         );
@@ -516,7 +526,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                     className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-display font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
                     <UserCheck className="w-4 h-4" />
-                    <span>MASUK SEBAGAI ANGGOTA</span>
+                    <span>VERIFIKASI PIN & MASUK</span>
                   </button>
                 </form>
               )}
