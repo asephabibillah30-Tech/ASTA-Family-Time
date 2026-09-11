@@ -93,7 +93,7 @@ export const FamilyHabitScreen: React.FC<FamilyHabitScreenProps> = ({
             </span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/40 text-emerald-200 flex items-center gap-1 border border-emerald-400/30">
               <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              AES-256 E2EE & Anti-XSS Protected
+              Data Terlindungi & Sangat Aman
             </span>
           </div>
           <h3 className="font-display font-black text-2xl">
@@ -148,7 +148,7 @@ export const FamilyHabitScreen: React.FC<FamilyHabitScreenProps> = ({
           <div>
             <h4 className="font-display font-black text-sm">Tambah Kebiasaan Baru</h4>
             <p className="text-[11px] font-bold text-amber-600/80 dark:text-amber-400/80">
-              Formulir lengkap dengan keamanan siber E2EE
+              Formulir aman terlindungi untuk keluarga
             </p>
           </div>
         </div>

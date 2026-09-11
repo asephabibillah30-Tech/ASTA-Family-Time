@@ -129,9 +129,9 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
           <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 rounded-2xl flex items-center gap-2.5 text-xs text-emerald-900 dark:text-emerald-300">
             <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <div>
-              <p className="font-bold">Keamanan Data Cyber Aktif</p>
+              <p className="font-bold">Perlindungan Data Aman & Privat</p>
               <p className="text-[10px] text-emerald-700 dark:text-emerald-400">
-                Input disaring dari injeksi skrip (Anti-XSS) dan dienkripsi AES-256 E2EE saat disimpan.
+                Semua data kebiasaan disimpan secara rahasia dan terlindungi otomatis agar hanya bisa diakses oleh keluarga Anda.
               </p>
             </div>
           </div>
@@ -166,7 +166,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
               className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
             />
             <div className="flex justify-between items-center mt-1 px-1">
-              <span className="text-[10px] text-slate-400">Disaring dari tag HTML & script</span>
+              <span className="text-[10px] text-slate-400">Teks otomatis dibersihkan dari simbol berbahaya</span>
               <span className="text-[10px] text-slate-400 font-bold">{title.length}/60</span>
             </div>
           </div>

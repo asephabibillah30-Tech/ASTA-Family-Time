@@ -126,10 +126,10 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
             <Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
             <div>
               <span className="text-xs font-black text-indigo-900 dark:text-indigo-200 block">
-                🔒 Penyimpanan Terenkripsi End-to-End (E2EE Aktif)
+                🔒 Perlindungan Privasi Keluarga (Data Tersimpan Sangat Aman)
               </span>
               <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium">
-                Data keuangan, transaksi, PIN, & obrolan dienkripsi dengan kunci turunan keluarga (AES-256 E2EE).
+                Data penting seperti keuangan, tabungan, PIN, dan pesan obrolan dikunci rapat agar tidak bisa diintip atau diakses oleh pihak luar.
               </p>
             </div>
           </div>
