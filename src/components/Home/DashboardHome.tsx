@@ -40,72 +40,72 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   const todayEvents = plannerEvents.slice(0, 3);
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6 animate-pop-in">
+    <div className="max-w-6xl mx-auto px-2.5 sm:px-6 lg:px-8 py-3 sm:py-4 space-y-4 sm:space-y-6 animate-pop-in overflow-x-hidden w-full">
       
       {/* Top Greeting & Stats Bar */}
-      <div className="bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 rounded-3xl p-4 sm:p-6 text-white shadow-bubbly-coral relative overflow-hidden">
+      <div className="bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 text-white shadow-bubbly-coral relative overflow-hidden w-full">
         {/* Floating subtle emojis */}
-        <span className="absolute -top-4 -right-4 text-7xl opacity-20 pointer-events-none">❤️</span>
-        <span className="absolute bottom-1 right-24 text-4xl opacity-25 pointer-events-none">✨</span>
+        <span className="absolute -top-4 -right-4 text-6xl sm:text-7xl opacity-20 pointer-events-none">❤️</span>
+        <span className="absolute bottom-1 right-20 sm:right-24 text-3xl sm:text-4xl opacity-25 pointer-events-none">✨</span>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-          <div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md mb-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 relative z-10 w-full">
+          <div className="min-w-0 flex-1">
+            <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-extrabold uppercase px-2.5 py-0.5 sm:py-1 rounded-full bg-white/20 backdrop-blur-md mb-1.5 sm:mb-2">
               <span>👨‍👩‍👧‍👦</span> ASTA Family Dashboard
             </span>
-            <h1 className="font-display font-black text-2xl sm:text-3xl tracking-tight leading-snug">
+            <h1 className="font-display font-black text-xl sm:text-3xl tracking-tight leading-snug break-words">
               Selamat Datang, Keluarga! ❤️
             </h1>
-            <p className="text-rose-100 text-xs sm:text-sm font-medium mt-1">
+            <p className="text-rose-100 text-xs sm:text-sm font-medium mt-0.5 sm:mt-1 leading-relaxed">
               Hari ini sudahkah kita punya 30 menit berkualitas untuk bersama?
             </p>
           </div>
 
           {/* Stat Badges */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 w-full sm:w-auto">
             {/* Streak */}
-            <div className="bg-white/20 backdrop-blur-md px-3.5 py-2 rounded-2xl flex items-center gap-2 border border-white/30">
-              <Flame className="w-5 h-5 text-amber-300 fill-amber-300 animate-pulse" />
-              <div>
-                <span className="text-[10px] text-rose-100 font-bold block leading-none">Streak</span>
-                <span className="font-display font-black text-base leading-none text-white">{familyStreak} Hari</span>
+            <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl flex items-center gap-2 border border-white/30 flex-1 sm:flex-initial min-w-0">
+              <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 fill-amber-300 animate-pulse shrink-0" />
+              <div className="min-w-0">
+                <span className="text-[9px] sm:text-[10px] text-rose-100 font-bold block leading-none truncate">Streak</span>
+                <span className="font-display font-black text-sm sm:text-base leading-none text-white truncate block">{familyStreak} Hari</span>
               </div>
             </div>
 
             {/* Love Points */}
-            <div className="bg-white/20 backdrop-blur-md px-3.5 py-2 rounded-2xl flex items-center gap-2 border border-white/30">
-              <Star className="w-5 h-5 text-yellow-300 fill-yellow-300" />
-              <div>
-                <span className="text-[10px] text-rose-100 font-bold block leading-none">Love Points</span>
-                <span className="font-display font-black text-base leading-none text-white">{totalLovePoints} ⭐</span>
+            <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl flex items-center gap-2 border border-white/30 flex-1 sm:flex-initial min-w-0">
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 fill-yellow-300 shrink-0" />
+              <div className="min-w-0">
+                <span className="text-[9px] sm:text-[10px] text-rose-100 font-bold block leading-none truncate">Love Points</span>
+                <span className="font-display font-black text-sm sm:text-base leading-none text-white truncate block">{totalLovePoints} ⭐</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Family Avatars Strip */}
-        <div className="mt-5 pt-4 border-t border-white/20 flex items-center gap-2 overflow-x-auto pb-1">
-          <span className="text-xs font-bold text-rose-100 shrink-0">Anggota:</span>
+        <div className="mt-3.5 sm:mt-5 pt-3 sm:pt-4 border-t border-white/20 flex items-center gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
+          <span className="text-[11px] sm:text-xs font-bold text-rose-100 shrink-0">Anggota:</span>
           {players.map((p) => {
             const isOnline = p.isOnline ?? false;
             return (
               <div
                 key={p.id}
-                className="flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-bold border border-white/20 shrink-0 relative transition-all"
+                className="flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-full text-xs font-bold border border-white/20 shrink-0 relative transition-all"
                 title={isOnline ? `${p.name} (Online & Sedang Login)` : `${p.name} (Offline / Belum Login)`}
               >
                 <div className="relative flex items-center justify-center">
-                  <span className="text-base">{p.avatar}</span>
+                  <span className="text-sm sm:text-base">{p.avatar}</span>
                   <span
-                    className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-900 ${
+                    className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 border-slate-900 ${
                       isOnline 
                         ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.9)]' 
                         : 'bg-red-500'
                     }`}
                   />
                 </div>
-                <span>{p.name}</span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold flex items-center gap-0.5 ${
+                <span className="truncate max-w-[80px] sm:max-w-[120px]">{p.name}</span>
+                <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-extrabold flex items-center gap-0.5 ${
                   isOnline 
                     ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/40' 
                     : 'bg-red-500/30 text-red-200 border border-red-400/40'
