@@ -417,7 +417,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     <div
       className={
         isForcedLandscapeMode
-          ? 'fixed inset-0 z-[9999] bg-slate-950 p-1.5 sm:p-2.5 w-screen h-screen flex flex-col justify-between overflow-hidden select-none font-body text-white'
+          ? 'fixed inset-0 z-[9999] bg-slate-950 p-1.5 sm:p-2.5 w-screen h-screen overflow-y-auto touch-pan-y select-none font-body text-white flex flex-col justify-start gap-1.5'
           : 'w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 pb-32 sm:pb-16 space-y-3 font-body select-none'
       }
     >
@@ -592,8 +592,8 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       {/* SPECIAL UNIFIED COMPACT LAYOUT WHEN IN FORCED LANDSCAPE MODE */}
       {isForcedLandscapeMode ? (
         <>
-          {/* 1. COMPACT UNIFIED TOP HEADER BAR */}
-          <div className="bg-slate-900/90 rounded-2xl px-2.5 py-1 border border-indigo-500/40 flex items-center justify-between gap-2 shrink-0 h-11">
+          {/* 1. STICKY COMPACT UNIFIED TOP HEADER BAR */}
+          <div className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md rounded-2xl px-2.5 py-1 border border-indigo-500/40 flex items-center justify-between gap-2 shrink-0 h-11 shadow-lg">
             {/* Left: Back + Drawer Badge */}
             <div className="flex items-center gap-2 min-w-0">
               <button
@@ -659,11 +659,11 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             </div>
           </div>
 
-          {/* 2. MAIN SIDE-BY-SIDE GAMEPLAY BODY (Canvas Left 8 Cols, Players & Chat Right 4 Cols) */}
-          <div className="grid grid-cols-12 gap-2 flex-1 min-h-0 pt-1.5 overflow-hidden">
+          {/* 2. MAIN SCROLLABLE GAMEPLAY BODY (Canvas & Sidebars Grid) */}
+          <div className="grid grid-cols-12 gap-2 flex-1 min-h-0 pt-1.5 overflow-y-auto touch-pan-y pb-10">
             
-            {/* Left Column: Canvas Area (8 cols) */}
-            <div className="col-span-8 h-full flex flex-col min-h-0 overflow-hidden">
+            {/* Left Column: Canvas Area (8 cols on Tablet/Landscape, 12 cols on narrow portrait) */}
+            <div className="col-span-12 sm:col-span-7 md:col-span-8 flex flex-col min-h-[320px] max-h-[75vh]">
               {roundWinnerMsg && (
                 <div className="bg-emerald-500 text-white p-1 rounded-xl font-display font-black text-xs text-center shadow-md animate-bounce mb-1">
                   {roundWinnerMsg}
@@ -686,11 +686,11 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               </div>
             </div>
 
-            {/* Right Column: Leaderboard & Chat Box (4 cols) */}
-            <div className="col-span-4 h-full flex flex-col gap-1.5 min-h-0 overflow-hidden">
+            {/* Right Column: Leaderboard & Chat Box (4 cols on Tablet/Landscape, 12 cols on narrow portrait) */}
+            <div className="col-span-12 sm:col-span-5 md:col-span-4 flex flex-col gap-1.5 min-h-[300px] overflow-y-auto touch-pan-y">
               
               {/* Top Half: Leaderboard (Compact height) */}
-              <div className="bg-slate-900/90 rounded-2xl p-2 border border-slate-700 space-y-1 flex flex-col max-h-[35%] overflow-y-auto shrink-0">
+              <div className="bg-slate-900/90 rounded-2xl p-2 border border-slate-700 space-y-1 flex flex-col max-h-[160px] overflow-y-auto shrink-0">
                 <div className="flex items-center justify-between border-b pb-1 border-slate-700">
                   <span className="font-display font-black text-[11px] text-white flex items-center gap-1">
                     <Users className="w-3.5 h-3.5 text-rose-400" /> PEMAIN ({players.length})
@@ -711,13 +711,13 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               </div>
 
               {/* Bottom Half: Chat Stream & Guess Box */}
-              <div className="bg-slate-900/90 rounded-2xl p-2 border border-slate-700 flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="bg-slate-900/90 rounded-2xl p-2 border border-slate-700 flex flex-col flex-1 min-h-[180px] overflow-hidden">
                 <div className="flex items-center justify-between border-b pb-1 border-slate-700 shrink-0">
                   <span className="font-display font-black text-[11px] text-white flex items-center gap-1">
                     <MessageSquare className="w-3.5 h-3.5 text-amber-400" /> TEBAKAN
                   </span>
                 </div>
-                <div className="flex-1 overflow-y-auto py-1 space-y-1 text-[10px] pr-1">
+                <div className="flex-1 overflow-y-auto py-1 space-y-1 text-[10px] pr-1 max-h-[220px]">
                   {chatMessages.map((msg) => (
                     <div
                       key={msg.id}
