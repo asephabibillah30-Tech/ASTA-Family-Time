@@ -246,35 +246,51 @@ export function moderateChatMessage(text: string): ChatModerationResult {
 
   const testPattern = (pattern: RegExp) => pattern.test(lowerText) || pattern.test(deobfuscatedText);
 
-  // 1. Check for Criminal, Terrorism, Violence, Harm, & Evil Planning Keywords
+  // 1. Check for Criminal, Terrorism, Violence, Harm, & Evil Planning Keywords (Anti-Obfuscation Mode)
   const dangerousPatterns = [
-    /teror(is|isme)?/i,
+    /teror/i,
+    /teroris/i,
+    /terorisme/i,
     /bunuh/i,
     /pembunuhan/i,
+    /membunuh/i,
     /racun/i,
+    /meracun/i,
     /bom/i,
     /ledakan/i,
+    /merakitbom/i,
+    /perakitanbom/i,
     /senjata/i,
     /pistol/i,
     /senapan/i,
     /rampok/i,
     /perampokan/i,
+    /merampok/i,
     /culik/i,
     /penculikan/i,
+    /menculik/i,
     /sandera/i,
-    /perencanaan\s*jahat/i,
-    /rencana\s*jahat/i,
+    /penyanderaan/i,
+    /perencanaanjahat/i,
+    /rencanajahat/i,
+    /perencanaan/i,
     /eksekusi/i,
     /sabotase/i,
     /pembakaran/i,
+    /membakar/i,
     /kejahatan/i,
     /kriminal/i,
     /penyerangan/i,
+    /menyerang/i,
     /santet/i,
-    /tindakan\s*ilegal/i,
+    /tindakanilegal/i,
     /ancaman/i,
     /ancam/i,
-    /bantay|bantai/i
+    /bantai/i,
+    /pembantaian/i,
+    /narkoba/i,
+    /sabu/i,
+    /ganja/i
   ];
 
   for (const pattern of dangerousPatterns) {
