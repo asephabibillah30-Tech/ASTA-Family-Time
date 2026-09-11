@@ -231,7 +231,8 @@ export function moderateChatMessage(text: string): ChatModerationResult {
   // Deobfuscation Engine:
   // 1. Converts leetspeak numbers/symbols to letters (0->o, 3->e, 1->i, 4->a, 5->s, 7->t, 8->b, @->a, $->s, !->i)
   // 2. Removes all spaces, dots, dashes, underscores, and special characters to detect obfuscated words like "n g e n t 0 t"
-  // 3. Replaces wildcard symbols (*, #, @, $, %, +, -, _, ., !, ?) with vowel placeholders
+  // 3. Strips non-alphabet characters to uncover hidden words like "t.e.r.o.r", "b-u-n-u-h", "k_o_n_t_o_l"
+  // 4. Replaces wildcard symbols (*, #, @, $, %, +, -, _, ., !, ?) with vowel placeholders
   const deobfuscatedText = lowerText
     .replace(/0/g, 'o')
     .replace(/1/g, 'i')
@@ -245,12 +246,51 @@ export function moderateChatMessage(text: string): ChatModerationResult {
     .replace(/!/g, 'i')
     .replace(/[^a-z0-9]/g, '');
 
+  const textWithoutSymbols = lowerText.replace(/[^a-z]/g, '');
+
   const wildcardSubstitutedText = lowerText
     .replace(/[*#@$%+\-_.\?!]/g, 'o')
     .replace(/[^a-z0-9]/g, '');
 
   const testPattern = (pattern: RegExp) => 
-    pattern.test(lowerText) || pattern.test(deobfuscatedText) || pattern.test(wildcardSubstitutedText);
+    pattern.test(lowerText) || 
+    pattern.test(deobfuscatedText) || 
+    pattern.test(textWithoutSymbols) || 
+    pattern.test(wildcardSubstitutedText);
+
+  // 0. Strict Anti-Symbolic Signs & Obfuscation Filter (Penyaring Tanda Simbolis & Obfuskasi Kode)
+  const symbolicMaskingPatterns = [
+    // Words with interspersed symbols like "t*e*r*o*r", "b-u-n-u-h", "n_g_e_n_t_o_t", "k.o.n.t.o.l"
+    /([a-z0-9][*#@$%^&~+=_|\/\\.-]){2,}[a-z0-9]/i,
+    // Consecutive masking symbols like "***", "###", "$$$", "@@@", "!@#$", "**"
+    /[*#@$%^&~+=|\\<>{}\[\]]{2,}/,
+    // Symbols embedded within words like "t*ror", "b*nuh", "k*ntol", "s*x", "b*kep"
+    /\b[a-z]{1,4}[*#@$%^&~+=_|\/\\][a-z]{1,4}\b/i,
+    // Pure symbol sequences without readable words
+    /^[^a-zA-Z0-9\s\u4e00-\u9fa5\u0600-\u06FF\u1F600-\u1F64F\u1F300-\u1F5FF\u1F680-\u1F6FF\u1F1E0-\u1F1FF]+$/,
+    // Morse code or cipher symbols
+    /^[\.\-\s]{4,}$/,
+    // Secret code symbols pattern
+    /[!@#$%^&*()_+=\-\[\]{};:'",.<>?\/\\|]{4,}/
+  ];
+
+  for (const pattern of symbolicMaskingPatterns) {
+    if (pattern.test(cleanText)) {
+      return {
+        isValid: false,
+        errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+      };
+    }
+  }
+
+  // Check overall symbol density: If non-alphanumeric/non-space symbols exceed 35% of message length and message is >= 4 chars
+  const symbolCount = (cleanText.match(/[^a-zA-Z0-9\s]/g) || []).length;
+  if (cleanText.length >= 4 && (symbolCount / cleanText.length) > 0.35) {
+    return {
+      isValid: false,
+      errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+    };
+  }
 
   // Fuzzy Wildcard & Asterisk Stem Masking Engine (Catches symbol masking like "ngen**t*t", "k*nt*l", "b*k*p", "t*r*r", "b*n*h")
   const wildcardMaskedPatterns = [
