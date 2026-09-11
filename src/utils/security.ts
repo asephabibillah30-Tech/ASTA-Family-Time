@@ -308,6 +308,53 @@ export function moderateChatMessage(text: string): ChatModerationResult {
     }
   }
 
+  // 4. Sexual & Adult Content Moderation (Penyaring Konten Seksual & Dewasa)
+  const adultContentPatterns = [
+    /seks(ual)?/i,
+    /porn(o|ografi)?/i,
+    /bokep/i,
+    /vulg(ar)?/i,
+    /telanjang/i,
+    /penis/i,
+    /vagina/i,
+    /kontol/i,
+    /memek/i,
+    /pepek/i,
+    /itil/i,
+    /ngentot/i,
+    /ngewe/i,
+    /bersetubuh/i,
+    /gairah\s+seks/i,
+    /syahwat/i,
+    /perkosa(an)?/i,
+    /pemerkosaan/i,
+    /pelecehan\s+seksual/i,
+    /cabul/i,
+    /pencabulan/i,
+    /masturbasi/i,
+    /onani/i,
+    /open\s+bo/i,
+    /prostitusi/i,
+    /video\s+dewasa/i,
+    /film\s+dewasa/i,
+    /konten\s+dewasa/i,
+    /bikin\s+anak/i,
+    /berhubungan\s+badan/i,
+    /berhubungan\s+intim/i,
+    /kencan\s+dewasa/i,
+    /silit/i,
+    /tetek|payudara\s+seksi/i
+  ];
+
+  for (const pattern of adultContentPatterns) {
+    if (pattern.test(lowerText)) {
+      return {
+        isValid: false,
+        errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+      };
+    }
+  }
+
   // 4. Cyber Attack & Exploit Payload Detection (Penyaring Serangan Cyber)
   const cyberAttackPatterns = [
     // SQL Injection (SQLi)
