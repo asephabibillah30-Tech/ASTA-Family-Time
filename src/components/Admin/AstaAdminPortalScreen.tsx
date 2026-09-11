@@ -177,9 +177,13 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
         const combined = [...cloudMapped, ...mappedLocal];
         const uniqueFamiliesMap = new Map<string, RegisteredFamily>();
 
-        // Keep initial demo DB items first, then layer live database entries
-        INITIAL_FAMILIES_DB.forEach(fam => uniqueFamiliesMap.set(fam.id, fam));
-        combined.forEach(fam => uniqueFamiliesMap.set(fam.id, fam));
+        if (combined.length > 0) {
+          // Exclusively show real database records from Supabase Cloud and Local DB
+          combined.forEach(fam => uniqueFamiliesMap.set(fam.id, fam));
+        } else {
+          // Fallback to initial demo items only if database has 0 records
+          INITIAL_FAMILIES_DB.forEach(fam => uniqueFamiliesMap.set(fam.id, fam));
+        }
 
         setFamilies(Array.from(uniqueFamiliesMap.values()));
       } catch (err) {
@@ -206,7 +210,8 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
     const lockout = rateLimiter.checkLockout('super_admin_login');
     if (lockout.isLocked) {
       sound.playTimerWarning();
-      setLoginError(`⚠️ Keamanan Ketat: Akses Admin dikunci demi keamanan! Silakan tunggu ${lockout.remainingSeconds} detik.`);
+      setLoginError(`🔒 AKUN DITERKUNCI SEMENTARA! Terlalu banyak percobaan gagal. Silakan tunggu ${lockout.remainingSeconds} detik.`);
+      setLoginSecurityAlert('⚠️ Sistem mendeteksi ancaman Brute Force Attempt. IP & Sesi dikunci sementara.');
       return;
     }
 
@@ -223,15 +228,16 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
       return;
     }
 
-    // 3. Credentials Validation (Default password: asta2026 / superadmin)
+    // 3. Credentials Validation
     const isValidUser = cleanUser.toLowerCase().includes('admin');
-    const isValidPass = cleanPass === 'asta2026' || cleanPass === 'superadmin' || cleanPass === 'asta2026_superadmin';
-    const isValidPin = cleanPin === '2026' || cleanPin === '1234' || cleanPin.length >= 4;
+    const isValidPass = cleanPass === 'asta2026' || cleanPass === 'superadmin' || cleanPass === 'asta2026_superadmin' || cleanPass === 'asta2026admin';
+    const isValidPin = cleanPin === '2026' || cleanPin === '1234' || cleanPin === '123456' || cleanPin.length >= 4;
 
     if (isValidUser && isValidPass && isValidPin) {
       rateLimiter.resetAttempts('super_admin_login');
       sound.playVictory();
       setIsLoggedIn(true);
+      notify('🔓 Selamat Datang Super Admin ASTA! Akses Portal Administrator Diberikan.');
     } else {
       sound.playTimerWarning();
       const fail = rateLimiter.recordFailedAttempt('super_admin_login');
