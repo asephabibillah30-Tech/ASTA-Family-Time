@@ -393,6 +393,10 @@ export function useFamilyState(familyId?: string | null) {
     : 7;
 
   const achievements: FamilyAchievement[] = INITIAL_ACHIEVEMENTS.map((ach) => {
+    if (ach.id === 'ach-1') {
+      const isPlayed = gamePoints > 0;
+      return { ...ach, progress: isPlayed ? 1 : 0, unlocked: isPlayed };
+    }
     if (ach.id === 'ach-2') {
       const progress = Math.min(familyStreak, 7);
       return { ...ach, progress, unlocked: progress >= 7 };
@@ -404,6 +408,11 @@ export function useFamilyState(familyId?: string | null) {
     if (ach.id === 'ach-4') {
       const progress = Math.min(memories.length, 50);
       return { ...ach, progress, unlocked: progress >= 50 };
+    }
+    if (ach.id === 'ach-5') {
+      const cardsCount = Math.floor(gamePoints / 5);
+      const progress = Math.min(cardsCount, 100);
+      return { ...ach, progress, unlocked: progress >= 100 };
     }
     if (ach.id === 'ach-6') {
       const completedCount = habits.filter((h) => h.completedToday).length;
