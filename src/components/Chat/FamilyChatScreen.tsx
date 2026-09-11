@@ -5,6 +5,7 @@ import type { UserAccount } from '../../types/auth';
 import { Send, PhoneCall, Video, Smile, Trash2, Check, CheckCheck, RotateCcw, ShieldCheck, ShieldAlert, CheckCircle2, Clock, X, Users } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
+import { moderateChatMessage } from '../../utils/security';
 
 interface FamilyChatScreenProps {
   players: Player[];
@@ -100,14 +101,23 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    const clean = inputText.trim();
+    if (!clean) return;
+
+    // Direct Pre-flight Client Moderation Check
+    const localCheck = moderateChatMessage(clean);
+    if (!localCheck.isValid) {
+      setChatError(localCheck.errorMessage || 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang');
+      sound.playTimerWarning();
+      return;
+    }
 
     const res = onSendMessage(
       activeSender.id,
       activeSender.name,
       activeSender.avatar,
       activeSender.color || 'bg-rose-500',
-      inputText.trim(),
+      clean,
       'text'
     );
 

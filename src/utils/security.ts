@@ -228,6 +228,24 @@ export function moderateChatMessage(text: string): ChatModerationResult {
   const cleanText = text.trim();
   const lowerText = cleanText.toLowerCase();
 
+  // Deobfuscation Engine:
+  // 1. Converts leetspeak numbers/symbols to letters (0->o, 3->e, 1->i, 4->a, 5->s, 7->t, 8->b, @->a, $->s, !->i)
+  // 2. Removes all spaces, dots, dashes, underscores, and special characters to detect obfuscated words like "n g e n t 0 t"
+  const deobfuscatedText = lowerText
+    .replace(/0/g, 'o')
+    .replace(/1/g, 'i')
+    .replace(/3/g, 'e')
+    .replace(/4/g, 'a')
+    .replace(/5/g, 's')
+    .replace(/7/g, 't')
+    .replace(/8/g, 'b')
+    .replace(/@/g, 'a')
+    .replace(/\$/g, 's')
+    .replace(/!/g, 'i')
+    .replace(/[^a-z0-9]/g, '');
+
+  const testPattern = (pattern: RegExp) => pattern.test(lowerText) || pattern.test(deobfuscatedText);
+
   // 1. Check for Criminal, Terrorism, Violence, Harm, & Evil Planning Keywords
   const dangerousPatterns = [
     /teror(is|isme)?/i,
@@ -244,8 +262,8 @@ export function moderateChatMessage(text: string): ChatModerationResult {
     /culik/i,
     /penculikan/i,
     /sandera/i,
-    /perencanaan\s+jahat/i,
-    /rencana\s+jahat/i,
+    /perencanaan\s*jahat/i,
+    /rencana\s*jahat/i,
     /eksekusi/i,
     /sabotase/i,
     /pembakaran/i,
@@ -253,14 +271,14 @@ export function moderateChatMessage(text: string): ChatModerationResult {
     /kriminal/i,
     /penyerangan/i,
     /santet/i,
-    /tindakan\s+ilegal/i,
+    /tindakan\s*ilegal/i,
     /ancaman/i,
     /ancam/i,
     /bantay|bantai/i
   ];
 
   for (const pattern of dangerousPatterns) {
-    if (pattern.test(lowerText)) {
+    if (testPattern(pattern)) {
       return {
         isValid: false,
         errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
@@ -271,16 +289,15 @@ export function moderateChatMessage(text: string): ChatModerationResult {
   // 2. Check for Coded Communication & Secret Cipher Patterns (Obrolan Kode Rahasia)
   const codedPatterns = [
     /\b(code|kode|alfa|alpha|target|ops|op|agent|agen|signal|sinyal|pass|sandi)[-_\s]*[0-9a-z]+\b/i,
-    /\b[a-z]{1,3}[-_\s]*[0-9]{2,6}\b/i, // e.g. x-99, op888, a123
-    /\b[0-9]{3,8}[-_\s]*[a-z]{1,3}\b/i, // e.g. 999-x, 007-a
-    /^[0-9]{3,10}$/,                   // standalone numeric secret codes e.g. 007, 999, 123456
-    /^0x[0-9a-fA-F]{4,}$/,              // Hex code
-    /^[a-zA-Z0-9+/]{8,}={0,2}$/,        // Base64 secret code pattern without spaces
-    /^[*#$@!%^&]{3,}[0-9a-zA-Z]*$/,    // Symbol code signals like ##99#, *123*
+    /\b[a-z]{1,3}[-_\s]*[0-9]{2,6}\b/i,
+    /\b[0-9]{3,8}[-_\s]*[a-z]{1,3}\b/i,
+    /^[0-9]{3,10}$/,
+    /^0x[0-9a-fA-F]{4,}$/,
+    /^[a-zA-Z0-9+/]{8,}={0,2}$/,
+    /^[*#$@!%^&]{3,}[0-9a-zA-Z]*$/,
     /\b(rahasia|secret)\s+[0-9a-z]{1,10}\b/i
   ];
 
-  // Exception check: regular family dates / times / numbers (e.g., "jam 7", "pukul 12", "5 menit", "10.00")
   const isNormalFamilyTimeOrNumber = /^(jam|pukul|jam\s+\d{1,2}|\d{1,2}\s*menit|\d{1,2}\s*jam|tanggal\s+\d{1,2}|\d{1,2}\.\d{2}|\d{1,2}:\d{2})$/i.test(cleanText);
 
   if (!isNormalFamilyTimeOrNumber) {
@@ -296,11 +313,21 @@ export function moderateChatMessage(text: string): ChatModerationResult {
 
   // 3. Check for Rude / Toxic / Inappropriate Words (Penyimpangan)
   const inappropriatePatterns = [
-    /\b(anjing|babi|bangsat|kontol|memek|goblok|tolol|idiot|setan|iblis|bajingan)\b/i
+    /anjing/i,
+    /babi/i,
+    /bangsat/i,
+    /kontol/i,
+    /memek/i,
+    /goblok/i,
+    /tolol/i,
+    /idiot/i,
+    /setan/i,
+    /iblis/i,
+    /bajingan/i
   ];
 
   for (const pattern of inappropriatePatterns) {
-    if (pattern.test(lowerText)) {
+    if (testPattern(pattern)) {
       return {
         isValid: false,
         errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
@@ -310,10 +337,10 @@ export function moderateChatMessage(text: string): ChatModerationResult {
 
   // 4. Sexual & Adult Content Moderation (Penyaring Konten Seksual & Dewasa)
   const adultContentPatterns = [
-    /seks(ual)?/i,
-    /porn(o|ografi)?/i,
+    /seks/i,
+    /porn/i,
     /bokep/i,
-    /vulg(ar)?/i,
+    /vulg/i,
     /telanjang/i,
     /penis/i,
     /vagina/i,
@@ -324,30 +351,35 @@ export function moderateChatMessage(text: string): ChatModerationResult {
     /ngentot/i,
     /ngewe/i,
     /bersetubuh/i,
-    /gairah\s+seks/i,
+    /gairah/i,
     /syahwat/i,
-    /perkosa(an)?/i,
+    /perkosa/i,
     /pemerkosaan/i,
-    /pelecehan\s+seksual/i,
+    /pelecehan/i,
     /cabul/i,
     /pencabulan/i,
     /masturbasi/i,
     /onani/i,
-    /open\s+bo/i,
+    /openbo/i,
     /prostitusi/i,
-    /video\s+dewasa/i,
-    /film\s+dewasa/i,
-    /konten\s+dewasa/i,
-    /bikin\s+anak/i,
-    /berhubungan\s+badan/i,
-    /berhubungan\s+intim/i,
-    /kencan\s+dewasa/i,
+    /videodewasa/i,
+    /filmdewasa/i,
+    /kontendewasa/i,
+    /bikinanak/i,
+    /berhubunganbadan/i,
+    /berhubunganintim/i,
+    /kencandewasa/i,
     /silit/i,
-    /tetek|payudara\s+seksi/i
+    /tetek/i,
+    /payudara/i,
+    /toket/i,
+    /crot/i,
+    /sperma/i,
+    /sanggama/i
   ];
 
   for (const pattern of adultContentPatterns) {
-    if (pattern.test(lowerText)) {
+    if (testPattern(pattern)) {
       return {
         isValid: false,
         errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
@@ -355,37 +387,26 @@ export function moderateChatMessage(text: string): ChatModerationResult {
     }
   }
 
-  // 4. Cyber Attack & Exploit Payload Detection (Penyaring Serangan Cyber)
+  // 5. Cyber Attack & Exploit Payload Detection (Penyaring Serangan Cyber)
   const cyberAttackPatterns = [
-    // SQL Injection (SQLi)
     /(\b(select|union|insert|update|delete|drop|alter|truncate|exec|create)\b.+?\b(from|where|into|table|database|select)\b)/i,
     /('|\"|\b)(or|and)\s+('|\"|\d+)\s*=\s*('|\"|\d+)/i,
     /;\s*(drop|delete|exec|select|insert|update|alter)/i,
     /pg_sleep\s*\(|sleep\s*\(|benchmark\s*\(/i,
-
-    // Cross-Site Scripting (XSS) & Script/HTML Injections
     /<script[^>]*>[\s\S]*?<\/script>/i,
     /javascript\s*:/i,
     /\bon(error|load|click|mouseover|submit|focus|blur)\s*=/i,
     /<(iframe|object|embed|svg|applet|meta|link)[^>]*>/i,
     /document\.(cookie|location|referrer|domain)/i,
     /eval\s*\(|String\.fromCharCode\s*\(/i,
-
-    // Command Injection & Remote Code Execution (RCE)
     /;\s*(system|exec|passthru|shell_exec|popen|cmd|powershell|bash|sh|curl|wget)\b/i,
     /\b(rm\s+-rf|cmd\.exe|powershell\.exe|\/bin\/bash|\/bin\/sh)\b/i,
     /\|\s*(bash|sh|cmd|powershell)/i,
-
-    // Directory / Path Traversal (LFI / RFI)
     /(\.\.\/|\.\.\\){2,}/,
     /\/etc\/(passwd|shadow|group|hosts)/i,
     /c:\\windows\\(system32|repair|win\.ini)/i,
-
-    // Malicious Executable Links & Phishing Payloads
     /https?:\/\/[^\s]+\.(exe|bat|cmd|vbs|scr|sh|dll|msi|ps1|apk|jar)\b/i,
-
-    // Buffer Overflow & Repeat Crash Flood Attack
-    /(.)\1{120,}/ // 120+ repeated identical characters
+    /(.)\1{120,}/
   ];
 
   for (const pattern of cyberAttackPatterns) {
