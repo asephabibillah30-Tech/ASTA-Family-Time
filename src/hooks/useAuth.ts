@@ -55,15 +55,18 @@ export function useAuth() {
       setOnlineUserIds(db.getOnlineUserIds(familyId, userId));
     };
 
+    // Fungsi tandai user offline (hapus dari localStorage presence map)
+    const markOffline = () => {
+      db.markUserOffline(familyId, userId);
+    };
+
     // Send immediate heartbeat for active user
     db.sendHeartbeat(familyId, userId);
     refreshPresence();
 
     // Ambil cloud presence langsung saat login (cross-device)
-    db.fetchCloudPresence(familyId).then((cloudIds) => {
-      if (cloudIds.length > 0) {
-        refreshPresence();
-      }
+    db.fetchCloudPresence(familyId).then(() => {
+      refreshPresence();
     });
 
     // Kirim heartbeat lokal setiap 15 detik
@@ -90,6 +93,24 @@ export function useAuth() {
 
     window.addEventListener('storage', handleStorage);
 
+    // Tandai offline saat tab disembunyikan / browser ditutup
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        markOffline();
+      } else if (document.visibilityState === 'visible') {
+        // Tab kembali aktif — kirim heartbeat lagi
+        db.sendHeartbeat(familyId, userId);
+        refreshPresence();
+      }
+    };
+
+    const handlePageHide = () => {
+      markOffline();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+
     // BroadcastChannel untuk cross-tab di browser yang sama
     let ch: BroadcastChannel | null = null;
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -103,6 +124,8 @@ export function useAuth() {
       clearInterval(heartbeatInterval);
       clearInterval(cloudPollInterval);
       window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
       if (ch) ch.close();
     };
   }, [currentFamily?.id, currentUser?.id]);
@@ -192,6 +215,10 @@ export function useAuth() {
 
   // Logout -> Returns to Auth Gate
   const logout = () => {
+    // Tandai offline sebelum logout
+    if (currentUser?.id && currentFamily?.id) {
+      db.markUserOffline(currentFamily.id, currentUser.id);
+    }
     db.clearSession();
     setCurrentUser(null);
     setCurrentFamily(null);

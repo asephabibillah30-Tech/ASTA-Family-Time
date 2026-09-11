@@ -63,7 +63,10 @@ class DatabaseService {
 
   constructor() {
     this.families = loadData<FamilyAccount[]>(FAMILIES_KEY, []);
-    this.users = loadData<UserAccount[]>(USERS_KEY, []);
+    // PENTING: isOnline TIDAK BOLEH dipersist ke localStorage.
+    // Reset semua isOnline ke false saat load — status online hanya dari heartbeat aktif.
+    const rawUsers = loadData<UserAccount[]>(USERS_KEY, []);
+    this.users = rawUsers.map(u => ({ ...u, isOnline: false }));
     this.logs = loadData<SecurityAuditLog[]>(SECURITY_LOGS_KEY, [
       {
         id: 'log-init',
@@ -684,7 +687,7 @@ class DatabaseService {
       map[userId] = Date.now();
       localStorage.setItem(key, JSON.stringify(map));
 
-      // Update in-memory user list as online
+      // Update in-memory user list as online (TIDAK disimpan ke localStorage)
       this.users = this.users.map(u => u.id === userId ? { ...u, isOnline: true } : u);
 
       // Broadcast to same-browser tabs
@@ -711,6 +714,50 @@ class DatabaseService {
             this._ensurePresenceTable(supabase, userId, familyId);
           }
         });
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Tandai user offline — hapus dari localStorage presence map dan update Supabase.
+   * Dipanggil saat tab disembunyikan / browser ditutup.
+   */
+  public markUserOffline(familyId: string, userId: string): void {
+    if (!familyId || !userId) return;
+    try {
+      // 1. Hapus dari localStorage presence map
+      const key = `asta_presence_${familyId}`;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const map: Record<string, number> = JSON.parse(raw);
+        delete map[userId];
+        localStorage.setItem(key, JSON.stringify(map));
+      }
+
+      // Update in-memory
+      this.users = this.users.map(u => u.id === userId ? { ...u, isOnline: false } : u);
+
+      // 2. Update Supabase (set timestamp jauh ke masa lalu agar tidak terdeteksi online)
+      const supabase = postgresService.getClient();
+      if (supabase) {
+        Promise.resolve(supabase.from('user_presence').upsert(
+          {
+            user_id: userId,
+            family_id: familyId,
+            last_seen_at: new Date(Date.now() - 300000).toISOString(), // 5 menit lalu
+            is_online: false
+          },
+          { onConflict: 'user_id' }
+        )).catch(() => {});
+      }
+
+      // Broadcast offline ke tab lain
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const ch = new BroadcastChannel(`asta_presence_${familyId}`);
+        ch.postMessage({ type: 'PRESENCE_OFFLINE', userId });
+        ch.close();
       }
     } catch {
       // ignore
