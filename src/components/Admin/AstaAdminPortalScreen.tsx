@@ -3,7 +3,8 @@ import {
   ShieldCheck, Settings, Gamepad2, BarChart3, 
   ArrowLeft, Lock, ShieldAlert, 
   CheckCircle2, Plus,
-  Crown, LogOut, Search, Menu, X, Eye, EyeOff, AlertTriangle
+  Crown, LogOut, Search, Menu, X, Eye, EyeOff, AlertTriangle,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { rateLimiter, sanitizeInput } from '../../utils/security';
@@ -93,10 +94,17 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginSecurityAlert, setLoginSecurityAlert] = useState<string | null>(null);
 
-  // Registered Families State Management
+  // Registered Families State Management & Pagination (10 data per halaman)
   const [families, setFamilies] = useState<RegisteredFamily[]>(INITIAL_FAMILIES_DB);
   const [searchFamilyQuery, setSearchFamilyQuery] = useState('');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'active' | 'suspended'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset ke Halaman 1 saat filter atau kata pencarian berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchFamilyQuery, selectedStatusFilter]);
 
   // Master System Settings State
   const [platformTitle, setPlatformTitle] = useState('ASTA Family Time Super-App');
@@ -299,6 +307,10 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
     const matchesStatus = selectedStatusFilter === 'all' || f.status === selectedStatusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredFamilies.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedFamilies = filteredFamilies.slice(startIndex, startIndex + itemsPerPage);
 
   // UNAUTHENTICATED SUPER ADMIN LOGIN GATE SCREEN
   if (!isLoggedIn) {
@@ -645,7 +657,7 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
 
             {/* Families List Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredFamilies.map((fam) => (
+              {paginatedFamilies.map((fam) => (
                 <div
                   key={fam.id}
                   className="bg-slate-950 p-5 rounded-3xl border-2 border-slate-800 space-y-4 relative overflow-hidden"
@@ -715,6 +727,60 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
                 </div>
               ))}
             </div>
+
+            {/* Pagination Nav Controls (10 data per halaman) */}
+            {filteredFamilies.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs">
+                <div className="text-slate-400 font-medium text-center sm:text-left">
+                  Menampilkan <span className="font-bold text-white">{startIndex + 1}</span> - <span className="font-bold text-white">{Math.min(startIndex + itemsPerPage, filteredFamilies.length)}</span> dari <span className="font-bold text-amber-400">{filteredFamilies.length}</span> Kepala Keluarga
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      setCurrentPage(prev => Math.max(prev - 1, 1));
+                    }}
+                    disabled={currentPage === 1}
+                    className="p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center gap-1 font-bold"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Sebelumnya</span>
+                  </button>
+
+                  <div className="flex items-center gap-1 overflow-x-auto max-w-[180px] sm:max-w-none">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => {
+                          sound.playClick();
+                          setCurrentPage(pageNum);
+                        }}
+                        className={`w-8 h-8 rounded-xl text-xs font-black transition-all ${
+                          currentPage === pageNum
+                            ? 'bg-amber-400 text-slate-900 shadow-md'
+                            : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                    }}
+                    disabled={currentPage === totalPages}
+                    className="p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center gap-1 font-bold"
+                  >
+                    <span className="hidden sm:inline">Selanjutnya</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
