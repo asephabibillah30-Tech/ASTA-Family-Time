@@ -724,6 +724,14 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             isReadOnly={false}
             width={800}
             height={520}
+            initialSketchId={
+              activeWordObj.word.includes('RUMAH') ? 'house' :
+              activeWordObj.word.includes('KUCING') ? 'cat' :
+              activeWordObj.word.includes('KUE') ? 'cake' :
+              activeWordObj.word.includes('SEPEDA') || activeWordObj.word.includes('PESAWAT') ? 'car' :
+              activeWordObj.word.includes('ES KRIM') ? 'ice_cream' :
+              activeWordObj.word.includes('BUNGA') ? 'flower' : null
+            }
           />
         </div>
 
