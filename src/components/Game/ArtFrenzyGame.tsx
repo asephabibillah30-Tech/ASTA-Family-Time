@@ -4,7 +4,7 @@ import { DrawingCanvas } from './DrawingCanvas';
 import { 
   ArrowLeft, Clock, Send, 
   Sparkles, MessageSquare, Users, Crown, Pencil,
-  Globe, Share2, Copy, Check, Play, Lightbulb, Zap, PlusCircle, RotateCcw, Home
+  Globe, Share2, Copy, Check, Play, Lightbulb, Zap, PlusCircle, RotateCcw, Home, Maximize
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireBurstConfetti } from '../../utils/confetti';
@@ -96,6 +96,40 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     setTimeLeft(60);
     setIsRoundActive(true);
     setRoundWinnerMsg(null);
+  }, []);
+
+  // Force & Request Landscape Screen Orientation on Mobile/Tablet
+  const handleRequestLandscape = useCallback(() => {
+    sound.playClick();
+    try {
+      if (typeof window !== 'undefined') {
+        const docEl = document.documentElement as any;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(() => {});
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen().catch(() => {});
+        }
+        if (window.screen && window.screen.orientation && 'lock' in window.screen.orientation) {
+          (window.screen.orientation as any).lock('landscape').catch(() => {});
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.screen && window.screen.orientation && 'lock' in window.screen.orientation) {
+        (window.screen.orientation as any).lock('landscape').catch(() => {});
+      }
+    } catch {}
+
+    return () => {
+      try {
+        if (typeof window !== 'undefined' && window.screen && window.screen.orientation && 'unlock' in window.screen.orientation) {
+          window.screen.orientation.unlock();
+        }
+      } catch {}
+    };
   }, []);
 
   // Handle Mode Change
@@ -601,6 +635,16 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             </div>
           )}
 
+          {/* Landscape Orientation Toggle Button */}
+          <button
+            onClick={handleRequestLandscape}
+            className="px-2.5 py-1.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-900 font-display font-black text-xs flex items-center gap-1 active:scale-95 transition-all shadow-xs border border-amber-300"
+            title="Putar ke Mode Layar Landscape Miring (Layar Lebar)"
+          >
+            <Maximize className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">📱 LANDSCAPE</span>
+          </button>
+
           {/* Round Badge */}
           <div className="bg-indigo-600 text-white px-3 py-1.5 rounded-2xl font-display font-black text-xs sm:text-sm shadow-sm flex items-center gap-1">
             <span>ROUND</span>
@@ -608,6 +652,21 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           </div>
         </div>
 
+      </div>
+
+      {/* LANDSCAPE ORIENTATION RECOMMENDATION BANNER FOR MOBILE */}
+      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-900 p-2.5 rounded-2xl font-display font-black text-xs flex items-center justify-between gap-2 shadow-md sm:hidden border border-amber-300/60">
+        <div className="flex items-center gap-2">
+          <span className="text-lg animate-bounce">📱🔄</span>
+          <span>Game ini disarankan dalam posisi Landscape (Miring)!</span>
+        </div>
+        <button
+          onClick={handleRequestLandscape}
+          className="px-2.5 py-1 rounded-xl bg-slate-900 text-amber-300 text-[10px] font-black uppercase shrink-0 shadow-sm active:scale-95 flex items-center gap-1"
+        >
+          <Maximize className="w-3 h-3 text-amber-300" />
+          <span>Putar Layar</span>
+        </button>
       </div>
 
       {/* 2. GAME STATUS BAR (Drawer Name, Timer Countdown, Secret Word Display) */}

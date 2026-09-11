@@ -815,7 +815,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             onTouchStart={startDrawing}
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
-            className={`w-full h-auto aspect-[4/3] sm:aspect-[16/10] object-contain ${
+            className={`w-full h-auto aspect-[16/9] sm:aspect-[16/10] object-contain ${
               isReadOnly ? 'cursor-default' : activeTool === 'bucket' ? 'cursor-cell' : 'cursor-crosshair'
             }`}
           />
