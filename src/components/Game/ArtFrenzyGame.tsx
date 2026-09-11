@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { Player } from '../../types/game';
 import { DrawingCanvas } from './DrawingCanvas';
 import { 
-  ArrowLeft, Clock, Award, Send, 
-  Sparkles, MessageSquare, Users, Crown, Pencil
+  ArrowLeft, Clock, Send, 
+  Sparkles, MessageSquare, Users, Crown, Pencil,
+  Globe, Share2, Copy, Check, Play
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireBurstConfetti } from '../../utils/confetti';
@@ -12,6 +13,8 @@ interface ArtFrenzyGameProps {
   players: Player[];
   onBack: () => void;
 }
+
+export type PlayMode = 'solo_bot' | 'online_friends';
 
 interface ChatMessage {
   id: string;
@@ -43,14 +46,18 @@ const SECRET_WORDS_DB = [
 ];
 
 export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPlayers, onBack }) => {
+  const [playMode, setPlayMode] = useState<PlayMode>('solo_bot');
+  const [showModeModal, setShowModeModal] = useState<boolean>(true);
+  const [copiedCode, setCopiedCode] = useState(false);
+
   const [players, setPlayers] = useState<Player[]>(
     initialPlayers.length > 0
       ? initialPlayers
       : [
-          { id: '1', name: 'Aris', avatar: '👦', score: 1250, cardsCompleted: 0, color: 'bg-blue-500' },
-          { id: '2', name: 'Bella', avatar: '👧', score: 980, cardsCompleted: 0, color: 'bg-pink-500' },
-          { id: '3', name: 'Papa Asep', avatar: '👨‍💼', score: 760, cardsCompleted: 0, color: 'bg-purple-500' },
-          { id: '4', name: 'Mamah Ita', avatar: '👩‍💼', score: 550, cardsCompleted: 0, color: 'bg-amber-500' },
+          { id: '1', name: 'Aris (Anda)', avatar: '👦', score: 1250, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
+          { id: '2', name: 'Bot Bella', avatar: '👧', score: 980, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
+          { id: '3', name: 'Bot Papa Asep', avatar: '👨‍💼', score: 760, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
+          { id: '4', name: 'Bot Mamah Ita', avatar: '👩‍💼', score: 550, cardsCompleted: 0, color: 'bg-amber-500', isOnline: false },
         ]
   );
 
@@ -66,8 +73,8 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   // Chat & Guess Stream
   const [guessInput, setGuessInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { id: '1', senderName: 'Bella', text: 'Semangat menggambar!', timestamp: '14:30' },
-    { id: '2', senderName: 'Sistem', text: '🎮 Ronde baru dimulai! Tebak gambar lukisan Aris!', isSystem: true, timestamp: '14:30' },
+    { id: '1', senderName: 'Bot Bella', text: 'Semangat menggambar!', timestamp: '14:30' },
+    { id: '2', senderName: 'Sistem', text: '🎮 Mode Main Sendiri vs AI Bot Aktif! Tebak gambar lukisan!', isSystem: true, timestamp: '14:30' },
   ]);
 
   const [revealedHints, setRevealedHints] = useState<number[]>([]);
@@ -83,6 +90,42 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     setIsRoundActive(true);
     setRoundWinnerMsg(null);
   }, []);
+
+  // Handle Mode Change
+  const handleSelectMode = (mode: PlayMode) => {
+    sound.playClick();
+    setPlayMode(mode);
+    setShowModeModal(false);
+
+    if (mode === 'solo_bot') {
+      setPlayers([
+        { id: '1', name: 'Aris (Anda)', avatar: '👦', score: 1250, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
+        { id: '2', name: 'Bot Bella 🤖', avatar: '👧', score: 980, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
+        { id: '3', name: 'Bot Papa 🤖', avatar: '👨‍💼', score: 760, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
+        { id: '4', name: 'Bot Mamah 🤖', avatar: '👩‍💼', score: 550, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
+      ]);
+      setChatMessages([
+        { id: '1', senderName: 'Sistem', text: '🤖 Mode Bermain Sendiri (vs AI Bot) dimulai! Nikmati permainan solo!', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
+      ]);
+    } else {
+      // Online Friends mode
+      setPlayers(
+        initialPlayers.length > 0
+          ? initialPlayers.map(p => ({ ...p, isOnline: true }))
+          : [
+              { id: '1', name: 'Aris', avatar: '👦', score: 1250, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
+              { id: '2', name: 'Bella', avatar: '👧', score: 980, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
+              { id: '3', name: 'Papa Asep', avatar: '👨‍💼', score: 760, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
+              { id: '4', name: 'Mamah Ita', avatar: '👩‍💼', score: 550, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
+            ]
+      );
+      setChatMessages([
+        { id: '1', senderName: 'Sistem', text: '🌐 Mode Teman Online Aktif! Kode Keluarga: ASTA-2026', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
+      ]);
+    }
+
+    pickNewWord();
+  };
 
   // Handle Turn Rotation
   const advanceTurn = useCallback(() => {
@@ -111,7 +154,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     ]);
   }, [currentRound, drawerIndex, maxRounds, pickNewWord, players]);
 
-  // Round Timer Countdown Loop
+  // Round Timer Countdown Loop & AI Bot Auto-Guessing in Solo Mode
   useEffect(() => {
     if (!isRoundActive) return;
 
@@ -149,12 +192,30 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           }
         }
 
+        // AI Bot Automated Chat & Guess Logic when in Solo Mode
+        if (playMode === 'solo_bot' && prev % 14 === 0 && prev > 10) {
+          const botNames = ['Bot Bella 🤖', 'Bot Papa 🤖', 'Bot Mamah 🤖'];
+          const randomBot = botNames[Math.floor(Math.random() * botNames.length)];
+          const wrongGuesses = ['Kucing?', 'Mobil?', 'Rumah?', 'Kue?', 'Matahari?', 'Gajah?'];
+          const randomWrong = wrongGuesses[Math.floor(Math.random() * wrongGuesses.length)];
+          
+          setChatMessages((msg) => [
+            ...msg,
+            {
+              id: Date.now().toString(),
+              senderName: randomBot,
+              text: randomWrong,
+              timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+            },
+          ]);
+        }
+
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRoundActive, activeWordObj, revealedHints, advanceTurn]);
+  }, [isRoundActive, activeWordObj, revealedHints, advanceTurn, playMode]);
 
   // Handle Guess Submission
   const handleSendGuess = (e: React.FormEvent) => {
@@ -173,7 +234,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       fireBurstConfetti();
       setIsRoundActive(false);
 
-      const guesserName = 'Bella (Anda)'; // Current user guess
+      const guesserName = 'Aris (Anda)';
       const bonusGuesser = 100;
       const bonusDrawer = 50;
 
@@ -218,13 +279,29 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         ...prev,
         {
           id: Date.now().toString(),
-          senderName: 'Bella',
+          senderName: 'Aris (Anda)',
           text: guessInput,
           timestamp: nowTime,
         },
       ]);
       setGuessInput('');
     }
+  };
+
+  const handleCopyCode = () => {
+    sound.playClick();
+    navigator.clipboard.writeText('ASTA-2026');
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleShareWA = () => {
+    sound.playClick();
+    const message = `🎨 *Main ASTA Art Frenzy (Tebak Gambar) Bersama!*\n` +
+      `Yuk bergabung melukis & menebak gambar bareng keluarga sekarang di ASTA Family Time!\n\n` +
+      `🔑 *Kode Ruang Keluarga:* ASTA-2026\n` +
+      `👉 https://asta-family-time.vercel.app/`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   // Generate Masked Secret Word (e.g. "J E R A P A H" -> "_ E _ A _ A _")
@@ -239,49 +316,166 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 space-y-3 font-body select-none">
       
-      {/* 1. TOP TITLE & HEADER BAR */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-3 sm:p-4 border-3 border-indigo-200 dark:border-slate-800 shadow-bubbly-indigo flex items-center justify-between gap-3">
+      {/* 0. MODE SELECTION MODAL */}
+      {showModeModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-pop-in">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-8 max-w-xl w-full border-4 border-amber-300 dark:border-slate-700 shadow-2xl space-y-5">
+            
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-600 text-white flex items-center justify-center text-3xl mx-auto shadow-lg">
+                🎨
+              </div>
+              <h2 className="font-display font-black text-2xl sm:text-3xl text-slate-900 dark:text-white">
+                ASTA Art Frenzy
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                Pilih mode permainan favorit Anda untuk mulai melukis dan menebak gambar!
+              </p>
+            </div>
+
+            {/* Mode Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2">
+              
+              {/* Option 1: Bermain Sendiri (vs AI Bot) */}
+              <button
+                onClick={() => handleSelectMode('solo_bot')}
+                className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-700 dark:to-slate-700/80 border-3 border-amber-300 dark:border-amber-600 hover:scale-[1.02] active:scale-95 transition-all text-left space-y-2 flex flex-col justify-between group shadow-md"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="p-2.5 rounded-2xl bg-amber-400 text-slate-900 text-xl font-black shadow-xs">
+                      🤖
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-950 text-amber-900 dark:text-amber-300 text-[9px] font-black uppercase">
+                      MAIN SENDIRI
+                    </span>
+                  </div>
+                  <h3 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white mt-3">
+                    Bermain Sendiri (vs AI Bot)
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-snug">
+                    Latihan melukis & menebak gambar secara solo melawan AI Bot Keluarga (Bot Bella, Bot Papa, Bot Mamah).
+                  </p>
+                </div>
+
+                <div className="w-full py-2.5 rounded-xl bg-amber-500 group-hover:bg-amber-600 text-white font-display font-black text-xs text-center shadow-xs flex items-center justify-center gap-1.5">
+                  <Play className="w-4 h-4 fill-white" />
+                  <span>MULAI MAIN SENDIRI</span>
+                </div>
+              </button>
+
+              {/* Option 2: Bermain Sama Teman Online */}
+              <button
+                onClick={() => handleSelectMode('online_friends')}
+                className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-700 dark:to-slate-700/80 border-3 border-indigo-300 dark:border-indigo-600 hover:scale-[1.02] active:scale-95 transition-all text-left space-y-2 flex flex-col justify-between group shadow-md"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="p-2.5 rounded-2xl bg-indigo-600 text-white text-xl font-black shadow-xs">
+                      🌐
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-200 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-300 text-[9px] font-black uppercase">
+                      TEMAN ONLINE
+                    </span>
+                  </div>
+                  <h3 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white mt-3">
+                    Main Teman Online
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-snug">
+                    Bermain bersama keluarga & teman online secara real-time menggunakan Kode Keluarga.
+                  </p>
+                </div>
+
+                <div className="w-full py-2.5 rounded-xl bg-indigo-600 group-hover:bg-indigo-700 text-white font-display font-black text-xs text-center shadow-xs flex items-center justify-center gap-1.5">
+                  <Globe className="w-4 h-4" />
+                  <span>MAIN TEMAN ONLINE</span>
+                </div>
+              </button>
+
+            </div>
+
+            <button
+              onClick={() => {
+                sound.playClick();
+                onBack();
+              }}
+              className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-extrabold text-xs hover:bg-slate-200"
+            >
+              Kembali ke Arena Game
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {/* 1. TOP TITLE & HEADER BAR WITH MODE SWITCHER */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-3 sm:p-4 border-3 border-indigo-200 dark:border-slate-800 shadow-bubbly-indigo flex items-center justify-between gap-3 flex-wrap">
         
         {/* Left: Back Button & Title */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => {
               sound.playClick();
               onBack();
             }}
-            className="p-2 sm:p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition-all shadow-2xs"
+            className="p-2 sm:p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition-all shadow-2xs shrink-0"
             title="Kembali ke Hub Game"
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           
           <div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-display font-black text-base sm:text-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 bg-clip-text text-transparent">
                 ART FRENZY
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-black text-[9px] uppercase">
-                🎨 GAYA DESAIN REFERENSI
-              </span>
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  setShowModeModal(true);
+                }}
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs active:scale-95 transition-all ${
+                  playMode === 'solo_bot'
+                    ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300'
+                    : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300'
+                }`}
+              >
+                <span>{playMode === 'solo_bot' ? '🤖 Main Sendiri (Bot AI)' : '🌐 Teman Online (ASTA-2026)'}</span>
+                <span className="underline">Ubah</span>
+              </button>
             </div>
             <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold hidden sm:block">
-              Game Lukisan & Tebak Gambar Interaktif Keluarga
+              {playMode === 'solo_bot' ? 'Mode Solo vs AI Bot Keluarga' : 'Mode Multiplayer Teman Online (Kode: ASTA-2026)'}
             </p>
           </div>
         </div>
 
-        {/* Center/Right: Round & Score Badges */}
+        {/* Center/Right: Round & Score Badges + Share Online */}
         <div className="flex items-center gap-2">
+          {playMode === 'online_friends' && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleCopyCode}
+                className="px-2.5 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 text-[10px] font-black flex items-center gap-1"
+                title="Salin Kode Keluarga"
+              >
+                {copiedCode ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                <span>ASTA-2026</span>
+              </button>
+              <button
+                onClick={handleShareWA}
+                className="p-1.5 rounded-xl bg-emerald-500 text-white text-[10px] font-black hover:bg-emerald-600"
+                title="Bagikan ke WhatsApp"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Round Badge */}
           <div className="bg-indigo-600 text-white px-3 py-1.5 rounded-2xl font-display font-black text-xs sm:text-sm shadow-sm flex items-center gap-1">
             <span>ROUND</span>
             <span className="text-amber-300">{currentRound}/{maxRounds}</span>
-          </div>
-
-          {/* Leader Score */}
-          <div className="bg-amber-400 text-slate-900 px-3 py-1.5 rounded-2xl font-display font-black text-xs sm:text-sm shadow-sm hidden sm:flex items-center gap-1">
-            <Award className="w-4 h-4" />
-            <span>TOP: {Math.max(...players.map(p => p.score))} PTS</span>
           </div>
         </div>
 
@@ -316,10 +510,10 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         {/* Center: Secret Word for Drawer or Hint for Guessers */}
         <div className="bg-white/10 backdrop-blur-md px-4 sm:px-6 py-2 rounded-2xl border border-white/20 text-center w-full sm:w-auto">
           <div className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">
-            {currentDrawer.name === 'Aris' ? 'Kata Rahasia Anda (Lukis Ini!)' : `Kategori: ${activeWordObj.category}`}
+            {currentDrawer.name.includes('Aris') ? 'Kata Rahasia Anda (Lukis Ini!)' : `Kategori: ${activeWordObj.category}`}
           </div>
           <div className="font-display font-black text-lg sm:text-2xl text-amber-300 tracking-wider">
-            {currentDrawer.name === 'Aris' ? activeWordObj.word : renderMaskedWord()}
+            {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
           </div>
           {activeWordObj.hint && (
             <div className="text-[10px] text-slate-300 font-medium italic mt-0.5">
@@ -387,8 +581,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                 <Users className="w-5 h-5 text-rose-500" />
                 <span>PEMAIN ({players.length})</span>
               </h3>
-              <span className="text-[10px] font-black bg-rose-200 dark:bg-rose-950 text-rose-800 dark:text-rose-300 px-2 py-0.5 rounded-full">
-                LIVE SCORE
+              <span className="text-[10px] font-black bg-rose-200 dark:bg-rose-950 text-rose-800 dark:text-rose-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{playMode === 'solo_bot' ? 'VS BOT AI' : 'ONLINE'}</span>
               </span>
             </div>
 
