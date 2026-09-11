@@ -246,7 +246,7 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({ players, onB
                 ))}
               </div>
 
-              <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate">
+              <span className="text-[8px] sm:text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate leading-tight">
                 {tile.label}
               </span>
             </div>

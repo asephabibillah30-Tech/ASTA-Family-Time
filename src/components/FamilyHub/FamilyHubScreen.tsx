@@ -128,11 +128,11 @@ export const FamilyHubScreen: React.FC<FamilyHubScreenProps> = ({
                 {item.emoji}
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-display font-black text-base text-slate-900 dark:text-white">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <h3 className="font-display font-black text-sm sm:text-base text-slate-900 dark:text-white">
                     {item.title}
                   </h3>
-                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                  <span className="text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                     {item.badge}
                   </span>
                 </div>

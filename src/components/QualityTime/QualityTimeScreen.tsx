@@ -87,13 +87,13 @@ export const QualityTimeScreen: React.FC<QualityTimeScreenProps> = ({
               sound.playClick();
               setSelectedDuration('10');
             }}
-            className={`flex-1 py-2.5 px-3 rounded-xl font-display font-bold text-xs transition-all ${
+            className={`flex-1 py-2 px-1.5 sm:px-3 rounded-xl font-display font-bold text-[10px] sm:text-xs transition-all ${
               selectedDuration === '10'
                 ? 'bg-white dark:bg-slate-700 text-family-coral shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-800'
             }`}
           >
-            ⏱️ Punya 10 Menit
+            ⏱️ 10 Menit
           </button>
 
           <button
@@ -101,13 +101,13 @@ export const QualityTimeScreen: React.FC<QualityTimeScreenProps> = ({
               sound.playClick();
               setSelectedDuration('30');
             }}
-            className={`flex-1 py-2.5 px-3 rounded-xl font-display font-bold text-xs transition-all ${
+            className={`flex-1 py-2 px-1.5 sm:px-3 rounded-xl font-display font-bold text-[10px] sm:text-xs transition-all ${
               selectedDuration === '30'
                 ? 'bg-white dark:bg-slate-700 text-family-coral shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-800'
             }`}
           >
-            ⏱️ Punya 30 Menit
+            ⏱️ 30 Menit
           </button>
 
           <button
@@ -115,13 +115,13 @@ export const QualityTimeScreen: React.FC<QualityTimeScreenProps> = ({
               sound.playClick();
               setSelectedDuration('60');
             }}
-            className={`flex-1 py-2.5 px-3 rounded-xl font-display font-bold text-xs transition-all ${
+            className={`flex-1 py-2 px-1.5 sm:px-3 rounded-xl font-display font-bold text-[10px] sm:text-xs transition-all ${
               selectedDuration === '60'
                 ? 'bg-white dark:bg-slate-700 text-family-coral shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-800'
             }`}
           >
-            ⏱️ Punya 1 Jam
+            ⏱️ 1 Jam
           </button>
         </div>
 
