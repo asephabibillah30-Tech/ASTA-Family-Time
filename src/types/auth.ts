@@ -26,6 +26,7 @@ export interface UserAccount {
   lovePoints: number;
   isHead: boolean;
   createdAt: string;
+  isOnline?: boolean;
 }
 
 export interface FamilyAccount {

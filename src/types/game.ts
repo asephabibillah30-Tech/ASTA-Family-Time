@@ -41,6 +41,7 @@ export interface Player {
   score: number;
   cardsCompleted: number;
   color: string;
+  isOnline?: boolean;
 }
 
 export type GameModeId = 'random' | 'funny' | 'expression' | 'charades' | 'animal' | 'smart' | 'family' | 'speed' | 'custom';

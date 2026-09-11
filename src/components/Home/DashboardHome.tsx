@@ -85,15 +85,36 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         {/* Family Avatars Strip */}
         <div className="mt-5 pt-4 border-t border-white/20 flex items-center gap-2 overflow-x-auto pb-1">
           <span className="text-xs font-bold text-rose-100 shrink-0">Anggota:</span>
-          {players.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-bold border border-white/20 shrink-0"
-            >
-              <span className="text-base">{p.avatar}</span>
-              <span>{p.name}</span>
-            </div>
-          ))}
+          {players.map((p) => {
+            const isOnline = p.isOnline ?? false;
+            return (
+              <div
+                key={p.id}
+                className="flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-bold border border-white/20 shrink-0 relative transition-all"
+                title={isOnline ? `${p.name} (Online & Sedang Login)` : `${p.name} (Offline / Belum Login)`}
+              >
+                <div className="relative flex items-center justify-center">
+                  <span className="text-base">{p.avatar}</span>
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-900 ${
+                      isOnline 
+                        ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.9)]' 
+                        : 'bg-red-500'
+                    }`}
+                  />
+                </div>
+                <span>{p.name}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold flex items-center gap-0.5 ${
+                  isOnline 
+                    ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/40' 
+                    : 'bg-red-500/30 text-red-200 border border-red-400/40'
+                }`}>
+                  <span>{isOnline ? '🟢' : '🔴'}</span>
+                  <span>{isOnline ? 'Online' : 'Offline'}</span>
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 

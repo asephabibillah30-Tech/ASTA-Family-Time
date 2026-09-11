@@ -62,11 +62,12 @@ export function App() {
         rolePreset: m.roleTitle,
         score: m.lovePoints || 0,
         cardsCompleted: 0,
-        color: m.color || 'bg-blue-500'
+        color: m.color || 'bg-blue-500',
+        isOnline: auth.currentUser?.id === m.id || m.isOnline === true
       }));
     }
     return game.players;
-  }, [auth.familyMembers, game.players]);
+  }, [auth.familyMembers, auth.currentUser, game.players]);
 
   // Switch tabs
   const handleSelectTab = (tab: MainTab) => {
