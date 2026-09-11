@@ -22,6 +22,26 @@ export const SKETCH_TEMPLATES: SketchTemplate[] = [
   { id: 'boat', name: 'Perahu Layar', emoji: '⛵', category: 'Kendaraan' },
   { id: 'butterfly', name: 'Kupu-Kupu', emoji: '🦋', category: 'Hewan' },
   { id: 'fish', name: 'Ikan Laut', emoji: '🐟', category: 'Hewan' },
+  { id: 'giraffe', name: 'Jerapah Tinggi', emoji: '🦒', category: 'Hewan' },
+  { id: 'elephant', name: 'Gajah Besar', emoji: '🐘', category: 'Hewan' },
+  { id: 'turtle', name: 'Kura-Kura', emoji: '🐢', category: 'Hewan' },
+  { id: 'airplane', name: 'Pesawat Terbang', emoji: '✈️', category: 'Kendaraan' },
+  { id: 'bicycle', name: 'Sepeda Ceria', emoji: '🚲', category: 'Kendaraan' },
+  { id: 'pizza', name: 'Pizza Keju', emoji: '🍕', category: 'Makanan' },
+  { id: 'donut', name: 'Donat Manis', emoji: '🍩', category: 'Makanan' },
+  { id: 'rainbow', name: 'Pelangi Indah', emoji: '🌈', category: 'Alam' },
+  { id: 'sunflower', name: 'Bunga Matahari', emoji: '🌻', category: 'Tanaman' },
+  { id: 'sun_cloud', name: 'Matahari & Awan', emoji: '☀️', category: 'Alam' },
+  { id: 'dinosaur', name: 'Dinosaurus', emoji: '🦕', category: 'Mitos' },
+  { id: 'dragon', name: 'Naga Api', emoji: '🐉', category: 'Mitos' },
+  { id: 'robot', name: 'Robot AI', emoji: '🤖', category: 'Teknologi' },
+  { id: 'alien_ufo', name: 'UFO Angkasa', emoji: '🛸', category: 'Angkasa' },
+  { id: 'teddy_bear', name: 'Beruang Teddy', emoji: '🧸', category: 'Mainan' },
+  { id: 'crown', name: 'Mahkota Raja', emoji: '👑', category: 'Benda' },
+  { id: 'glasses', name: 'Kacamata', emoji: '👓', category: 'Benda' },
+  { id: 'football', name: 'Bola Sepak', emoji: '⚽', category: 'Olahraga' },
+  { id: 'guitar', name: 'Gitar Musik', emoji: '🎸', category: 'Musik' },
+  { id: 'palm_tree', name: 'Pohon Kelapa', emoji: '🌴', category: 'Alam' },
 ];
 
 interface DrawingCanvasProps {
@@ -266,6 +286,161 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         // Bubbles
         ctx.beginPath(); ctx.arc(150, 170, 14, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.arc(120, 110, 20, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+      case 'giraffe': {
+        ctx.beginPath(); ctx.rect(360, 150, 45, 230); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 140, 35, 22, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.rect(310, 360, 170, 85); ctx.stroke();
+        ctx.beginPath(); ctx.rect(330, 445, 18, 55); ctx.stroke();
+        ctx.beginPath(); ctx.rect(440, 445, 18, 55); ctx.stroke();
+        ctx.beginPath(); ctx.arc(382, 210, 12, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(382, 280, 14, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+      case 'elephant': {
+        ctx.beginPath(); ctx.ellipse(420, 300, 150, 105, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(250, 260, 75, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(290, 250, 45, 70, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(190, 280); ctx.quadraticCurveTo(110, 320, 140, 390); ctx.quadraticCurveTo(160, 400, 170, 370); ctx.stroke();
+        ctx.beginPath(); ctx.rect(340, 400, 38, 75); ctx.stroke();
+        ctx.beginPath(); ctx.rect(460, 400, 38, 75); ctx.stroke();
+        break;
+      }
+      case 'turtle': {
+        ctx.beginPath(); ctx.arc(400, 290, 140, Math.PI, 0); ctx.lineTo(260, 290); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(330, 290); ctx.lineTo(370, 190); ctx.lineTo(430, 190); ctx.lineTo(470, 290); ctx.stroke();
+        ctx.beginPath(); ctx.arc(200, 285, 40, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(185, 275, 5, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(300, 315, 28, 18, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(500, 315, 28, 18, 0, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+      case 'airplane': {
+        ctx.beginPath(); ctx.ellipse(400, 250, 230, 38, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(360, 215); ctx.lineTo(300, 85); ctx.lineTo(430, 85); ctx.lineTo(440, 215); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(600, 220); ctx.lineTo(650, 130); ctx.lineTo(680, 130); ctx.lineTo(630, 240); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(210, 245, 18, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+      case 'bicycle': {
+        ctx.beginPath(); ctx.arc(220, 350, 75, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(580, 350, 75, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(220, 350); ctx.lineTo(340, 350); ctx.lineTo(440, 220); ctx.lineTo(320, 220); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(440, 220); ctx.lineTo(450, 150); ctx.lineTo(480, 150); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(320, 220); ctx.lineTo(320, 180); ctx.lineTo(290, 180); ctx.lineTo(340, 180); ctx.stroke();
+        break;
+      }
+      case 'pizza': {
+        ctx.beginPath(); ctx.moveTo(400, 80); ctx.lineTo(180, 420); ctx.lineTo(620, 420); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.quadraticCurveTo(400, 460, 180, 420); ctx.stroke();
+        ctx.beginPath(); ctx.arc(340, 250, 24, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(450, 290, 24, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(380, 360, 24, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+      case 'donut': {
+        ctx.beginPath(); ctx.arc(400, 250, 150, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 250, 50, 0, Math.PI * 2); ctx.stroke();
+        [280, 350, 450, 510].forEach((x, i) => {
+          ctx.beginPath(); ctx.rect(x, 150 + i * 40, 16, 8); ctx.stroke();
+        });
+        break;
+      }
+      case 'rainbow': {
+        [280, 240, 200, 160].forEach((r) => {
+          ctx.beginPath(); ctx.arc(400, 400, r, Math.PI, 0); ctx.stroke();
+        });
+        ctx.beginPath(); ctx.arc(120, 390, 40, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(680, 390, 40, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+      case 'sunflower': {
+        ctx.beginPath(); ctx.arc(400, 200, 65, 0, Math.PI * 2); ctx.stroke();
+        for (let i = 0; i < 12; i++) {
+          const a = (i * Math.PI) / 6;
+          ctx.beginPath(); ctx.arc(400 + Math.cos(a) * 95, 200 + Math.sin(a) * 95, 30, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.beginPath(); ctx.moveTo(400, 265); ctx.lineTo(400, 480); ctx.stroke();
+        break;
+      }
+      case 'sun_cloud': {
+        ctx.beginPath(); ctx.arc(240, 180, 55, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(460, 270, 55, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(540, 240, 65, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(620, 270, 50, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+      case 'dinosaur': {
+        ctx.beginPath(); ctx.moveTo(160, 160); ctx.quadraticCurveTo(240, 160, 250, 270); ctx.quadraticCurveTo(360, 250, 480, 270); ctx.lineTo(640, 370); ctx.quadraticCurveTo(460, 420, 280, 370); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.rect(300, 370, 35, 75); ctx.stroke();
+        ctx.beginPath(); ctx.rect(420, 370, 35, 75); ctx.stroke();
+        break;
+      }
+      case 'dragon': {
+        ctx.beginPath(); ctx.moveTo(350, 170); ctx.lineTo(220, 60); ctx.lineTo(280, 210); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 280, 120, 80, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(400, 200); ctx.lineTo(550, 100); ctx.lineTo(500, 270); ctx.closePath(); ctx.stroke();
+        break;
+      }
+      case 'robot': {
+        ctx.beginPath(); ctx.rect(320, 80, 160, 120); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(400, 80); ctx.lineTo(400, 30); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 20, 10, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(360, 130, 18, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(440, 130, 18, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.rect(280, 230, 240, 180); ctx.stroke();
+        ctx.beginPath(); ctx.rect(200, 240, 50, 120); ctx.stroke();
+        ctx.beginPath(); ctx.rect(550, 240, 50, 120); ctx.stroke();
+        break;
+      }
+      case 'alien_ufo': {
+        ctx.beginPath(); ctx.arc(400, 210, 95, Math.PI, 0); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 230, 230, 48, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 180, 25, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(250, 275); ctx.lineTo(140, 460); ctx.lineTo(660, 460); ctx.lineTo(550, 275); ctx.closePath(); ctx.stroke();
+        break;
+      }
+      case 'teddy_bear': {
+        ctx.beginPath(); ctx.arc(400, 180, 85, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(320, 115, 32, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(480, 115, 32, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 350, 105, 90, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(275, 360, 32, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(525, 360, 32, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+      case 'crown': {
+        ctx.beginPath(); ctx.rect(220, 340, 360, 45); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(220, 340); ctx.lineTo(200, 150); ctx.lineTo(310, 260); ctx.lineTo(400, 110); ctx.lineTo(490, 260); ctx.lineTo(600, 150); ctx.lineTo(580, 340); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(200, 135, 14, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 95, 16, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(600, 135, 14, 0, Math.PI * 2); ctx.stroke();
+        break;
+      }
+      case 'glasses': {
+        ctx.beginPath(); ctx.rect(170, 200, 190, 130); ctx.stroke();
+        ctx.beginPath(); ctx.rect(440, 200, 190, 130); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 240, 35, Math.PI, 0); ctx.stroke();
+        break;
+      }
+      case 'football': {
+        ctx.beginPath(); ctx.arc(400, 250, 155, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(400, 200); ctx.lineTo(440, 230); ctx.lineTo(425, 280); ctx.lineTo(375, 280); ctx.lineTo(360, 230); ctx.closePath(); ctx.stroke();
+        break;
+      }
+      case 'guitar': {
+        ctx.beginPath(); ctx.ellipse(400, 360, 105, 95, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 230, 75, 65, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 250, 28, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.rect(385, 30, 30, 170); ctx.stroke();
+        break;
+      }
+      case 'palm_tree': {
+        ctx.beginPath(); ctx.arc(400, 520, 300, Math.PI, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(370, 430); ctx.quadraticCurveTo(390, 280, 350, 180); ctx.lineTo(390, 180); ctx.quadraticCurveTo(410, 280, 430, 430); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(360, 190, 12, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(380, 195, 12, 0, Math.PI * 2); ctx.stroke();
         break;
       }
       default:

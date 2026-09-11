@@ -41,9 +41,57 @@ const SECRET_WORDS_DB = [
   { word: 'MATAHARI', category: 'Alam 🌺', hint: 'Bersinar terang di siang hari', colorClue: 'Kuning Kunyit & Oranye ☀️' },
   { word: 'PIZZA', category: 'Makanan 🍕', hint: 'Roti bulat potongan segitiga dari Italia', colorClue: 'Kuning Keju & Red Pepperoni 🍕' },
   { word: 'KURA KURA', category: 'Hewan 🐾', hint: 'Jalannya lambat dan punya tempurung keras', colorClue: 'Hijau Tua & Cokelat 🐢' },
-  { word: 'PISANG', category: 'Buah 🍕', hint: 'Warna kuning kesukaan monyet', colorClue: 'Kuning Cerah 🍌' },
+  { word: 'DONAT', category: 'Makanan 🍕', hint: 'Kue bulat bolong tengah berikat meses', colorClue: 'Cokelat & Merah Muda 🍩' },
   { word: 'NAGA', category: 'Mitos 🦸', hint: 'Makhluk mitos yang mengeluarkan api', colorClue: 'Merah Api & Emas 🐉' },
+  { word: 'ROBOT', category: 'Teknologi 🤖', hint: 'Mesin canggih buatan manusia', colorClue: 'Perak & Biru 🤖' },
+  { word: 'UFO ANGKASA', category: 'Angkasa 🛸', hint: 'Piring terbang makhluk alien', colorClue: 'Hijau & Perak 🛸' },
+  { word: 'BERUANG TEDDY', category: 'Mainan 🧸', hint: 'Boneka beruang lucu empuk', colorClue: 'Cokelat Muda 🧸' },
+  { word: 'MAHKOTA', category: 'Benda 👑', hint: 'Hiasan kepala raja dan ratu', colorClue: 'Kuning Emas & Permata 👑' },
+  { word: 'BOLA SEPAK', category: 'Olahraga ⚽', hint: 'Ditendang ke gawang di lapangan', colorClue: 'Hitam & Putih ⚽' },
+  { word: 'GITAR', category: 'Musik 🎸', hint: 'Alat musik petik 6 senar', colorClue: 'Cokelat Kayu 🎸' },
+  { word: 'POHON KELAPA', category: 'Alam 🌴', hint: 'Tumbuh tinggi di pinggir pantai', colorClue: 'Hijau & Cokelat 🌴' },
+  { word: 'DINOSAURUS', category: 'Mitos 🦕', hint: 'Hewan purba raksasa jutaan tahun lalu', colorClue: 'Hijau Tua 🦕' },
+  { word: 'ROKET', category: 'Kendaraan 🚀', hint: 'Meluncur ke antariksa dan bulan', colorClue: 'Putih & Merah 🚀' },
+  { word: 'PERAHU', category: 'Kendaraan ⛵', hint: 'Mengapung di laut dengan layar', colorClue: 'Cokelat & Putih ⛵' },
+  { word: 'KUPU KUPU', category: 'Hewan 🦋', hint: 'Serangga cantik mengepakkan sayap', colorClue: 'Warna-Warni Indah 🦋' },
+  { word: 'IKAN', category: 'Hewan 🐟', hint: 'Berenang di air menggunakan sirip', colorClue: 'Oranye / Biru 🐟' },
+  { word: 'BUNGA MATAHARI', category: 'Tanaman 🌻', hint: 'Bunga besar berwarna kuning terang', colorClue: 'Kuning & Cokelat 🌻' },
 ];
+
+const getSketchIdForWord = (word: string): string | null => {
+  const w = word.toUpperCase();
+  if (w.includes('RUMAH')) return 'house';
+  if (w.includes('KUCING')) return 'cat';
+  if (w.includes('KUE')) return 'cake';
+  if (w.includes('MOBIL')) return 'car';
+  if (w.includes('ES KRIM')) return 'ice_cream';
+  if (w.includes('BUNGA MATAHARI')) return 'sunflower';
+  if (w.includes('BUNGA')) return 'flower';
+  if (w.includes('ROKET')) return 'rocket';
+  if (w.includes('PERAHU')) return 'boat';
+  if (w.includes('KUPU')) return 'butterfly';
+  if (w.includes('IKAN')) return 'fish';
+  if (w.includes('JERAPAH')) return 'giraffe';
+  if (w.includes('GAJAH')) return 'elephant';
+  if (w.includes('KURA')) return 'turtle';
+  if (w.includes('PESAWAT')) return 'airplane';
+  if (w.includes('SEPEDA')) return 'bicycle';
+  if (w.includes('PIZZA')) return 'pizza';
+  if (w.includes('DONAT')) return 'donut';
+  if (w.includes('PELANGI')) return 'rainbow';
+  if (w.includes('MATAHARI')) return 'sun_cloud';
+  if (w.includes('DINOSAURUS')) return 'dinosaur';
+  if (w.includes('NAGA')) return 'dragon';
+  if (w.includes('ROBOT')) return 'robot';
+  if (w.includes('UFO')) return 'alien_ufo';
+  if (w.includes('BERUANG')) return 'teddy_bear';
+  if (w.includes('MAHKOTA')) return 'crown';
+  if (w.includes('KACAMATA')) return 'glasses';
+  if (w.includes('BOLA')) return 'football';
+  if (w.includes('GITAR')) return 'guitar';
+  if (w.includes('KELAPA')) return 'palm_tree';
+  return null;
+};
 
 export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPlayers, onBack }) => {
   const [playMode, setPlayMode] = useState<PlayMode>('solo_bot');
@@ -677,14 +725,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                   isReadOnly={false}
                   width={800}
                   height={520}
-                  initialSketchId={
-                    activeWordObj.word.includes('RUMAH') ? 'house' :
-                    activeWordObj.word.includes('KUCING') ? 'cat' :
-                    activeWordObj.word.includes('KUE') ? 'cake' :
-                    activeWordObj.word.includes('SEPEDA') || activeWordObj.word.includes('PESAWAT') ? 'car' :
-                    activeWordObj.word.includes('ES KRIM') ? 'ice_cream' :
-                    activeWordObj.word.includes('BUNGA') ? 'flower' : null
-                  }
+                  initialSketchId={getSketchIdForWord(activeWordObj.word)}
                 />
               </div>
             </div>
@@ -971,14 +1012,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                 isReadOnly={false}
                 width={800}
                 height={520}
-                initialSketchId={
-                  activeWordObj.word.includes('RUMAH') ? 'house' :
-                  activeWordObj.word.includes('KUCING') ? 'cat' :
-                  activeWordObj.word.includes('KUE') ? 'cake' :
-                  activeWordObj.word.includes('SEPEDA') || activeWordObj.word.includes('PESAWAT') ? 'car' :
-                  activeWordObj.word.includes('ES KRIM') ? 'ice_cream' :
-                  activeWordObj.word.includes('BUNGA') ? 'flower' : null
-                }
+                initialSketchId={getSketchIdForWord(activeWordObj.word)}
               />
             </div>
 
