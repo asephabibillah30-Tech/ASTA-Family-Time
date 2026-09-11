@@ -133,7 +133,7 @@ export function App() {
       />
 
       {/* Main Content Viewport */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-5 pb-24 sm:pb-28 lg:pb-32 flex flex-col justify-start">
+      <main className="relative z-50 flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-5 pb-24 sm:pb-28 lg:pb-32 flex flex-col justify-start">
         
         {/* If in Active Card Game flow (Player Setup, Mode Select, Game Board, Result) */}
         {game.screen === 'players_setup' && (
