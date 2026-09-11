@@ -143,18 +143,18 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header 
       className="sticky top-0 z-40 w-full flex flex-col bg-white dark:bg-slate-900 shadow-md select-none transition-colors"
-      style={{ paddingTop: 'max(2.25rem, env(safe-area-inset-top, 1.25rem))' }}
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       
-      {/* 1. TOP ANNOUNCEMENT BAR (Ref: KayPOS Top Announcement Bar) */}
+      {/* 1. TOP ANNOUNCEMENT BAR (Visible on sm+ viewports to clear mobile top notch area) */}
       {showAnnouncement && (
-        <div className="w-full bg-gradient-to-r from-indigo-600 via-rose-600 to-purple-600 text-white text-[11px] font-bold px-3 sm:px-6 py-1.5 flex items-center justify-between shadow-xs border-b border-white/20">
+        <div className="w-full bg-gradient-to-r from-indigo-600 via-rose-600 to-purple-600 text-white text-[11px] font-bold px-3 sm:px-6 py-1.5 hidden sm:flex items-center justify-between shadow-xs border-b border-white/20">
           <div className="flex items-center gap-2 overflow-hidden min-w-0 flex-1">
             <span className="px-2 py-0.5 rounded-full bg-sky-400 text-slate-900 font-black text-[9px] uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
               <Megaphone className="w-3 h-3 text-slate-900" />
               PENGUMUMAN
             </span>
-            <p className="text-white font-bold text-[10px] sm:text-xs leading-tight sm:truncate">
+            <p className="text-white font-bold text-[10px] sm:text-xs leading-tight truncate">
               📣 Selamat Datang di Platform ASTA Family Time: Satu Aplikasi, Lebih Banyak Waktu Bersama Keluarga. ❤️
             </p>
           </div>

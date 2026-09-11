@@ -230,11 +230,11 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   return (
     <div 
       className="min-h-dvh bg-family-bg dark:bg-slate-950 flex flex-col justify-between p-3 sm:p-6 lg:p-8 font-body antialiased selection:bg-rose-200"
-      style={{ paddingTop: 'max(2.75rem, env(safe-area-inset-top, 1.5rem))' }}
+      style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}
     >
       
-      {/* 0. Top Announcement Bar */}
-      <div className="w-full max-w-md sm:max-w-xl lg:max-w-6xl mx-auto mb-2 bg-gradient-to-r from-indigo-600 via-rose-600 to-purple-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-2xl flex items-center justify-between shadow-xs border border-white/20">
+      {/* 0. Top Announcement Bar (Visible on sm+ screens) */}
+      <div className="w-full max-w-md sm:max-w-xl lg:max-w-6xl mx-auto mb-2 bg-gradient-to-r from-indigo-600 via-rose-600 to-purple-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-2xl hidden sm:flex items-center justify-between shadow-xs border border-white/20">
         <div className="flex items-center gap-2 overflow-hidden min-w-0 flex-1">
           <span className="px-2.5 py-0.5 rounded-full bg-sky-400 text-slate-900 font-black text-[9px] uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
             📢 PENGUMUMAN
