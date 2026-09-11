@@ -433,20 +433,73 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         break;
       }
       case 'bicycle': {
-        // 3D Wheels with Rim Depth & Spokes
-        ctx.beginPath(); ctx.arc(210, 350, 78, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(210, 350, 68, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(590, 350, 78, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(590, 350, 68, 0, Math.PI * 2); ctx.stroke();
-        for (let a = 0; a < 360; a += 60) {
+        // 1. Rear Wheel & Hub (X=200, Y=350)
+        ctx.beginPath(); ctx.arc(200, 350, 85, 0, Math.PI * 2); ctx.stroke(); // Tire
+        ctx.beginPath(); ctx.arc(200, 350, 72, 0, Math.PI * 2); ctx.stroke(); // Rim
+        ctx.beginPath(); ctx.arc(200, 350, 14, 0, Math.PI * 2); ctx.stroke(); // Hub cap
+        for (let a = 0; a < 360; a += 30) {
           const rad = (a * Math.PI) / 180;
-          ctx.beginPath(); ctx.moveTo(210, 350); ctx.lineTo(210 + Math.cos(rad) * 68, 350 + Math.sin(rad) * 68); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(590, 350); ctx.lineTo(590 + Math.cos(rad) * 68, 350 + Math.sin(rad) * 68); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(200, 350); ctx.lineTo(200 + Math.cos(rad) * 72, 350 + Math.sin(rad) * 72); ctx.stroke();
         }
-        // 3D Frame & Handlebars
-        ctx.beginPath(); ctx.moveTo(210, 350); ctx.lineTo(330, 350); ctx.lineTo(440, 220); ctx.lineTo(310, 220); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(440, 220); ctx.lineTo(455, 145); ctx.lineTo(490, 145); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(310, 220); ctx.lineTo(310, 175); ctx.lineTo(275, 175); ctx.lineTo(335, 175); ctx.stroke();
+
+        // 2. Front Wheel & Hub (X=600, Y=350)
+        ctx.beginPath(); ctx.arc(600, 350, 85, 0, Math.PI * 2); ctx.stroke(); // Tire
+        ctx.beginPath(); ctx.arc(600, 350, 72, 0, Math.PI * 2); ctx.stroke(); // Rim
+        ctx.beginPath(); ctx.arc(600, 350, 14, 0, Math.PI * 2); ctx.stroke(); // Hub cap
+        for (let a = 0; a < 360; a += 30) {
+          const rad = (a * Math.PI) / 180;
+          ctx.beginPath(); ctx.moveTo(600, 350); ctx.lineTo(600 + Math.cos(rad) * 72, 350 + Math.sin(rad) * 72); ctx.stroke();
+        }
+
+        // 3. Bottom Bracket & Chainring Gear (X=350, Y=350)
+        ctx.beginPath(); ctx.arc(350, 350, 26, 0, Math.PI * 2); ctx.stroke(); // Outer gear
+        ctx.beginPath(); ctx.arc(350, 350, 14, 0, Math.PI * 2); ctx.stroke(); // Inner disc
+        // Bicycle Chain
+        ctx.beginPath(); ctx.moveTo(200, 338); ctx.lineTo(350, 338); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(200, 362); ctx.lineTo(350, 362); ctx.stroke();
+        // Pedals & Cranks
+        ctx.beginPath(); ctx.moveTo(350, 350); ctx.lineTo(350, 395); ctx.stroke();
+        ctx.beginPath(); ctx.rect(335, 395, 30, 8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(350, 350); ctx.lineTo(350, 305); ctx.stroke();
+        ctx.beginPath(); ctx.rect(335, 297, 30, 8); ctx.stroke();
+
+        // 4. Diamond Bicycle Frame Geometry
+        // Chainstays (Rear Hub -> Bottom Bracket)
+        ctx.beginPath(); ctx.moveTo(200, 350); ctx.lineTo(350, 350); ctx.stroke();
+        // Seatstays (Rear Hub -> Seatpost Top)
+        ctx.beginPath(); ctx.moveTo(200, 350); ctx.lineTo(320, 210); ctx.stroke();
+        // Seat Post Tube (Bottom Bracket -> Seatpost Junction)
+        ctx.beginPath(); ctx.moveTo(350, 350); ctx.lineTo(320, 210); ctx.stroke();
+        // Down Tube (Bottom Bracket -> Head Tube Bottom)
+        ctx.beginPath(); ctx.moveTo(350, 350); ctx.lineTo(480, 245); ctx.stroke();
+        // Top Tube (Seatpost Junction -> Head Tube Top)
+        ctx.beginPath(); ctx.moveTo(320, 210); ctx.lineTo(490, 210); ctx.stroke();
+        // Head Tube (Steerer Sleeve)
+        ctx.beginPath(); ctx.moveTo(490, 195); ctx.lineTo(480, 250); ctx.stroke();
+
+        // 5. Front Fork (Connecting Head Tube to Front Wheel Hub 600, 350!)
+        ctx.beginPath(); ctx.moveTo(480, 250); ctx.lineTo(600, 350); ctx.stroke();
+
+        // 6. Handlebars & Stem
+        ctx.beginPath(); ctx.moveTo(490, 195); ctx.lineTo(495, 145); ctx.stroke(); // Stem
+        ctx.beginPath(); ctx.moveTo(450, 145); ctx.lineTo(540, 145); ctx.stroke(); // Handlebar
+        ctx.beginPath(); ctx.rect(440, 140, 15, 10); ctx.stroke(); // Grip Left
+        ctx.beginPath(); ctx.rect(535, 140, 15, 10); ctx.stroke(); // Grip Right
+        ctx.beginPath(); ctx.moveTo(480, 145); ctx.quadraticCurveTo(550, 230, 600, 350); ctx.stroke(); // Front brake cable
+
+        // 7. Saddle / Bicycle Seat
+        ctx.beginPath(); ctx.rect(316, 175, 8, 35); ctx.stroke(); // Seat post tube
+        ctx.beginPath();
+        ctx.moveTo(275, 175);
+        ctx.quadraticCurveTo(320, 162, 355, 175);
+        ctx.lineTo(350, 185);
+        ctx.quadraticCurveTo(315, 178, 280, 185);
+        ctx.closePath();
+        ctx.stroke();
+
+        // 8. Fenders / Mudguards
+        ctx.beginPath(); ctx.arc(200, 350, 92, Math.PI * 0.85, Math.PI * 1.85); ctx.stroke(); // Rear fender
+        ctx.beginPath(); ctx.arc(600, 350, 92, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); // Front fender
         break;
       }
       case 'pizza': {
