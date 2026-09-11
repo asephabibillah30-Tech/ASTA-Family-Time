@@ -417,21 +417,10 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     <div
       className={
         isForcedLandscapeMode
-          ? 'fixed inset-0 z-[9999] bg-slate-900 dark:bg-slate-950 overflow-y-auto p-2 sm:p-4 w-screen h-screen min-h-screen flex flex-col justify-start select-none font-body'
+          ? 'fixed inset-0 z-[9999] bg-slate-950 p-1.5 sm:p-2.5 w-screen h-screen flex flex-col justify-between overflow-hidden select-none font-body text-white'
           : 'w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 pb-32 sm:pb-16 space-y-3 font-body select-none'
       }
     >
-      {/* FLOATING EXIT LANDSCAPE BUTTON FOR FORCED LANDSCAPE MODE */}
-      {isForcedLandscapeMode && (
-        <button
-          onClick={handleRequestLandscape}
-          className="fixed top-3 right-3 z-[10000] px-3 py-1.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-display font-black text-xs flex items-center gap-1.5 shadow-2xl border-2 border-white animate-bounce"
-          title="Keluar dari Mode Fullscreen Landscape"
-        >
-          <span>❌ Keluar Landscape</span>
-        </button>
-      )}
-
       {/* 0. MODE SELECTION MODAL */}
       {showModeModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-pop-in">
@@ -600,343 +589,508 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         </div>
       )}
 
-      {/* 1. TOP TITLE & HEADER BAR WITH MODE SWITCHER */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-3 sm:p-4 border-3 border-indigo-200 dark:border-slate-800 shadow-bubbly-indigo flex items-center justify-between gap-3 flex-wrap">
-        
-        {/* Left: Back Button & Title */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <button
-            onClick={() => {
-              sound.playClick();
-              onBack();
-            }}
-            className="p-2 sm:p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition-all shadow-2xs shrink-0"
-            title="Kembali ke Hub Game"
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-          
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-display font-black text-base sm:text-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 bg-clip-text text-transparent">
-                ART FRENZY
-              </span>
+      {/* SPECIAL UNIFIED COMPACT LAYOUT WHEN IN FORCED LANDSCAPE MODE */}
+      {isForcedLandscapeMode ? (
+        <>
+          {/* 1. COMPACT UNIFIED TOP HEADER BAR */}
+          <div className="bg-slate-900/90 rounded-2xl px-2.5 py-1 border border-indigo-500/40 flex items-center justify-between gap-2 shrink-0 h-11">
+            {/* Left: Back + Drawer Badge */}
+            <div className="flex items-center gap-2 min-w-0">
               <button
                 onClick={() => {
                   sound.playClick();
-                  setShowModeModal(true);
+                  onBack();
                 }}
-                className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs active:scale-95 transition-all ${
-                  playMode === 'solo_bot'
-                    ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300'
-                    : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300'
-                }`}
+                className="p-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 active:scale-95 transition-all shrink-0"
+                title="Kembali ke Hub Game"
               >
-                <span>{playMode === 'solo_bot' ? '🤖 Main Sendiri (Bot AI)' : '🌐 Teman Online (ASTA-2026)'}</span>
-                <span className="underline">Ubah</span>
+                <ArrowLeft className="w-4 h-4" />
               </button>
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-lg shrink-0">{currentDrawer.avatar}</span>
+                <span className="font-black text-xs text-white truncate max-w-[110px]">
+                  {currentDrawer.name}
+                </span>
+                <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-900 font-black text-[9px] shrink-0">
+                  🎨 Pelukis
+                </span>
+              </div>
             </div>
-            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold hidden sm:block">
-              {playMode === 'solo_bot' ? 'Mode Solo vs AI Bot Keluarga' : 'Mode Multiplayer Teman Online (Kode: ASTA-2026)'}
-            </p>
-          </div>
-        </div>
 
-        {/* Center/Right: Round & Score Badges + Share Online */}
-        <div className="flex items-center gap-2">
-          {playMode === 'online_friends' && (
-            <div className="flex items-center gap-1">
+            {/* Center: Secret Word / Masked Hint & Timer */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="font-display font-black text-sm sm:text-base text-amber-300 tracking-wider">
+                {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
+              </div>
+              <div className="text-xs font-black text-amber-400 flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded-lg border border-amber-400/30">
+                <Clock className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                <span>{timeLeft}s</span>
+              </div>
+            </div>
+
+            {/* Right: Round + Power-Ups + Exit Landscape Button */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <div className="bg-indigo-600 px-2 py-0.5 rounded-lg text-[10px] font-black text-amber-300 hidden sm:block">
+                R{currentRound}/{maxRounds}
+              </div>
               <button
-                onClick={handleCopyCode}
-                className="px-2.5 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 text-[10px] font-black flex items-center gap-1"
-                title="Salin Kode Keluarga"
+                onClick={handleUseExtraLetters}
+                disabled={hasUsedExtraLetters}
+                className="px-1.5 py-0.5 rounded-lg bg-amber-400 text-slate-900 font-black text-[10px] disabled:opacity-40"
+                title="Buka +2 Huruf"
               >
-                {copiedCode ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                <span>ASTA-2026</span>
+                +2H
               </button>
               <button
-                onClick={handleShareWA}
-                className="p-1.5 rounded-xl bg-emerald-500 text-white text-[10px] font-black hover:bg-emerald-600"
-                title="Bagikan ke WhatsApp"
+                onClick={handleUseAddTime}
+                disabled={hasUsedAddTime}
+                className="px-1.5 py-0.5 rounded-lg bg-emerald-500 text-white font-black text-[10px] disabled:opacity-40"
+                title="Tambah +15s Waktu"
               >
-                <Share2 className="w-3.5 h-3.5" />
+                +15s
+              </button>
+              <button
+                onClick={handleRequestLandscape}
+                className="px-2 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] flex items-center gap-1 shadow-sm border border-rose-400 active:scale-95"
+                title="Keluar dari mode landscape"
+              >
+                <span>❌ Keluar</span>
               </button>
             </div>
-          )}
-
-          {/* Landscape Orientation Toggle Button */}
-          <button
-            onClick={handleRequestLandscape}
-            className={`px-2.5 py-1.5 rounded-2xl font-display font-black text-xs flex items-center gap-1 active:scale-95 transition-all shadow-xs border ${
-              isForcedLandscapeMode
-                ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-400'
-                : 'bg-amber-400 hover:bg-amber-500 text-slate-900 border-amber-300'
-            }`}
-            title="Putar ke Mode Layar Landscape Miring (Layar Lebar)"
-          >
-            <Maximize className="w-3.5 h-3.5" />
-            <span>{isForcedLandscapeMode ? '📱 KELUAR LANDSCAPE' : '📱 LANDSCAPE'}</span>
-          </button>
-
-          {/* Round Badge */}
-          <div className="bg-indigo-600 text-white px-3 py-1.5 rounded-2xl font-display font-black text-xs sm:text-sm shadow-sm flex items-center gap-1">
-            <span>ROUND</span>
-            <span className="text-amber-300">{currentRound}/{maxRounds}</span>
           </div>
-        </div>
 
-      </div>
-
-      {/* LANDSCAPE ORIENTATION RECOMMENDATION BANNER FOR MOBILE */}
-      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-900 p-2.5 rounded-2xl font-display font-black text-xs flex items-center justify-between gap-2 shadow-md sm:hidden border border-amber-300/60">
-        <div className="flex items-center gap-2">
-          <span className="text-lg animate-bounce">📱🔄</span>
-          <span>Game ini disarankan dalam posisi Landscape (Miring)!</span>
-        </div>
-        <button
-          onClick={handleRequestLandscape}
-          className="px-2.5 py-1 rounded-xl bg-slate-900 text-amber-300 text-[10px] font-black uppercase shrink-0 shadow-sm active:scale-95 flex items-center gap-1"
-        >
-          <Maximize className="w-3 h-3 text-amber-300" />
-          <span>{isForcedLandscapeMode ? 'Keluar Landscape' : 'Putar Layar'}</span>
-        </button>
-      </div>
-
-      {/* 2. GAME STATUS BAR (Drawer Name, Timer Countdown, Secret Word Display) */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 rounded-3xl p-3 sm:p-4 text-white border-2 border-indigo-500/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
-        
-        {/* Current Drawer Badge */}
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-rose-500 p-0.5 shadow-lg shrink-0">
-            <div className="w-full h-full rounded-2xl bg-slate-900 flex items-center justify-center text-2xl">
-              {currentDrawer.avatar}
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-display font-black text-sm sm:text-lg text-white">
-                {currentDrawer.name}
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 font-extrabold text-[10px] flex items-center gap-1">
-                <Pencil className="w-3 h-3" /> Pelukis
-              </span>
-            </div>
-            <div className="text-[11px] text-amber-300 font-bold flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-              <span>Sisa Waktu: 00:{String(timeLeft).padStart(2, '0')}s</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Center: Secret Word for Drawer or Hint for Guessers */}
-        <div className="bg-white/10 backdrop-blur-md px-4 sm:px-6 py-2 rounded-2xl border border-white/20 text-center w-full sm:w-auto space-y-1">
-          <div className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">
-            {currentDrawer.name.includes('Aris') ? 'Kata Rahasia Anda (Lukis Ini!)' : `Kategori: ${activeWordObj.category}`}
-          </div>
-          <div className="font-display font-black text-lg sm:text-2xl text-amber-300 tracking-wider">
-            {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
-          </div>
-          
-          {/* POWER-UP HINT BOOSTERS STRIP */}
-          <div className="flex items-center justify-center gap-1.5 pt-1">
-            <button
-              onClick={handleUseExtraLetters}
-              disabled={hasUsedExtraLetters}
-              className="px-2 py-1 rounded-xl bg-amber-400 hover:bg-amber-500 disabled:opacity-40 text-slate-900 font-black text-[10px] flex items-center gap-1 active:scale-95 transition-all shadow-xs"
-              title="Buka 2 Huruf Rahasia Extra"
-            >
-              <Lightbulb className="w-3 h-3 text-slate-900" />
-              <span>+2 Huruf</span>
-            </button>
-
-            <button
-              onClick={handleUseAddTime}
-              disabled={hasUsedAddTime}
-              className="px-2 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white font-black text-[10px] flex items-center gap-1 active:scale-95 transition-all shadow-xs"
-              title="Tambah Waktu 15 Detik"
-            >
-              <PlusCircle className="w-3 h-3" />
-              <span>+15s</span>
-            </button>
-
-            <button
-              onClick={handleUseColorClue}
-              className="px-2 py-1 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-black text-[10px] flex items-center gap-1 active:scale-95 transition-all shadow-xs"
-              title="Tampilkan Petunjuk Warna Objek"
-            >
-              <Zap className="w-3 h-3" />
-              <span>Petunjuk Warna</span>
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Mobile Tab Toggle Buttons (Canvas / Players / Chat) */}
-      <div className="flex sm:hidden items-center justify-center gap-2 p-1 bg-slate-200 dark:bg-slate-800 rounded-2xl">
-        <button
-          onClick={() => setActiveTabMobile('canvas')}
-          className={`flex-1 py-1.5 rounded-xl font-extrabold text-xs transition-all ${
-            activeTabMobile === 'canvas' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
-          }`}
-        >
-          🎨 Canvas
-        </button>
-        <button
-          onClick={() => setActiveTabMobile('players')}
-          className={`flex-1 py-1.5 rounded-xl font-extrabold text-xs transition-all ${
-            activeTabMobile === 'players' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
-          }`}
-        >
-          👥 Pemain ({players.length})
-        </button>
-        <button
-          onClick={() => setActiveTabMobile('chat')}
-          className={`flex-1 py-1.5 rounded-xl font-extrabold text-xs transition-all ${
-            activeTabMobile === 'chat' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
-          }`}
-        >
-          💬 Tebakan ({chatMessages.length})
-        </button>
-      </div>
-
-      {/* 3. MAIN GAMEPLAY BODY (Responsive 3-Column Layout on Desktop matching screenshot) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        
-        {/* Left/Center: DRAWING CANVAS AREA (Cols 1-8 on Desktop) */}
-        <div className={`lg:col-span-8 space-y-3 ${activeTabMobile !== 'canvas' ? 'hidden sm:block' : 'block'}`}>
-          {roundWinnerMsg && (
-            <div className="bg-emerald-500 text-white p-3 rounded-2xl font-display font-black text-sm text-center shadow-lg animate-bounce flex items-center justify-center gap-2">
-              <Sparkles className="w-5 h-5 text-yellow-300" />
-              <span>{roundWinnerMsg}</span>
-            </div>
-          )}
-
-          <DrawingCanvas
-            isReadOnly={false}
-            width={800}
-            height={520}
-            initialSketchId={
-              activeWordObj.word.includes('RUMAH') ? 'house' :
-              activeWordObj.word.includes('KUCING') ? 'cat' :
-              activeWordObj.word.includes('KUE') ? 'cake' :
-              activeWordObj.word.includes('SEPEDA') || activeWordObj.word.includes('PESAWAT') ? 'car' :
-              activeWordObj.word.includes('ES KRIM') ? 'ice_cream' :
-              activeWordObj.word.includes('BUNGA') ? 'flower' : null
-            }
-          />
-        </div>
-
-        {/* Right Sidebars: PLAYERS LEADERBOARD & CHAT STREAM (Cols 9-12 on Desktop) */}
-        <div className="lg:col-span-4 space-y-4">
-          
-          {/* A. PLAYERS LEADERBOARD PANEL (Matching right side top card in screenshot) */}
-          <div className={`bg-rose-50 dark:bg-slate-800 rounded-3xl p-4 border-3 border-rose-200 dark:border-slate-700 shadow-bubbly-coral space-y-3 ${activeTabMobile !== 'players' && activeTabMobile !== 'canvas' ? 'hidden sm:block' : 'block'}`}>
-            <div className="flex items-center justify-between border-b pb-2 border-rose-200 dark:border-slate-700">
-              <h3 className="font-display font-black text-slate-900 dark:text-white text-base flex items-center gap-2">
-                <Users className="w-5 h-5 text-rose-500" />
-                <span>PEMAIN ({players.length})</span>
-              </h3>
-              <span className="text-[10px] font-black bg-rose-200 dark:bg-rose-950 text-rose-800 dark:text-rose-300 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{playMode === 'solo_bot' ? 'VS BOT AI' : 'ONLINE'}</span>
-              </span>
+          {/* 2. MAIN SIDE-BY-SIDE GAMEPLAY BODY (Canvas Left 8 Cols, Players & Chat Right 4 Cols) */}
+          <div className="grid grid-cols-12 gap-2 flex-1 min-h-0 pt-1.5 overflow-hidden">
+            
+            {/* Left Column: Canvas Area (8 cols) */}
+            <div className="col-span-8 h-full flex flex-col min-h-0 overflow-hidden">
+              {roundWinnerMsg && (
+                <div className="bg-emerald-500 text-white p-1 rounded-xl font-display font-black text-xs text-center shadow-md animate-bounce mb-1">
+                  {roundWinnerMsg}
+                </div>
+              )}
+              <div className="flex-1 min-h-0 h-full overflow-hidden">
+                <DrawingCanvas
+                  isReadOnly={false}
+                  width={800}
+                  height={520}
+                  initialSketchId={
+                    activeWordObj.word.includes('RUMAH') ? 'house' :
+                    activeWordObj.word.includes('KUCING') ? 'cat' :
+                    activeWordObj.word.includes('KUE') ? 'cake' :
+                    activeWordObj.word.includes('SEPEDA') || activeWordObj.word.includes('PESAWAT') ? 'car' :
+                    activeWordObj.word.includes('ES KRIM') ? 'ice_cream' :
+                    activeWordObj.word.includes('BUNGA') ? 'flower' : null
+                  }
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              {players.map((p, idx) => {
-                const isCurrentDrawer = p.id === currentDrawer.id;
-                return (
-                  <div
-                    key={p.id}
-                    className={`p-2.5 rounded-2xl flex items-center justify-between border transition-all ${
-                      isCurrentDrawer
-                        ? 'bg-amber-100 dark:bg-amber-950/80 border-amber-400 font-extrabold shadow-sm scale-[1.02]'
-                        : 'bg-white dark:bg-slate-700/60 border-slate-200 dark:border-slate-600'
+            {/* Right Column: Leaderboard & Chat Box (4 cols) */}
+            <div className="col-span-4 h-full flex flex-col gap-1.5 min-h-0 overflow-hidden">
+              
+              {/* Top Half: Leaderboard (Compact height) */}
+              <div className="bg-slate-900/90 rounded-2xl p-2 border border-slate-700 space-y-1 flex flex-col max-h-[35%] overflow-y-auto shrink-0">
+                <div className="flex items-center justify-between border-b pb-1 border-slate-700">
+                  <span className="font-display font-black text-[11px] text-white flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5 text-rose-400" /> PEMAIN ({players.length})
+                  </span>
+                  <span className="text-[9px] font-black text-emerald-400">ONLINE</span>
+                </div>
+                <div className="space-y-1 overflow-y-auto pr-1">
+                  {players.map((p) => (
+                    <div key={p.id} className="p-1 rounded-xl bg-slate-800 flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span>{p.avatar}</span>
+                        <span className="font-bold truncate text-white">{p.name}</span>
+                      </div>
+                      <span className="font-black text-amber-300 shrink-0">{p.score}pts</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom Half: Chat Stream & Guess Box */}
+              <div className="bg-slate-900/90 rounded-2xl p-2 border border-slate-700 flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex items-center justify-between border-b pb-1 border-slate-700 shrink-0">
+                  <span className="font-display font-black text-[11px] text-white flex items-center gap-1">
+                    <MessageSquare className="w-3.5 h-3.5 text-amber-400" /> TEBAKAN
+                  </span>
+                </div>
+                <div className="flex-1 overflow-y-auto py-1 space-y-1 text-[10px] pr-1">
+                  {chatMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`p-1.5 rounded-xl leading-tight ${
+                        msg.isSystem ? 'bg-amber-900/60 text-amber-200 font-bold text-center' :
+                        msg.isCorrect ? 'bg-emerald-900/80 text-emerald-200 font-black' :
+                        'bg-slate-800 text-slate-200'
+                      }`}
+                    >
+                      {!msg.isSystem && <span className="font-bold text-amber-300 mr-1">{msg.senderName}:</span>}
+                      <span>{msg.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <form onSubmit={handleSendGuess} className="pt-1 flex items-center gap-1 shrink-0">
+                  <input
+                    type="text"
+                    value={guessInput}
+                    onChange={(e) => setGuessInput(e.target.value)}
+                    placeholder="Tebak kata..."
+                    className="flex-1 px-2 py-1 rounded-xl bg-slate-800 text-white font-bold text-[10px] border border-slate-700 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="px-2 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] shrink-0"
+                  >
+                    <Send className="w-3 h-3" />
+                  </button>
+                </form>
+              </div>
+
+            </div>
+
+          </div>
+        </>
+      ) : (
+        /* STANDARD PORTRAIT LAYOUT */
+        <>
+          {/* 1. TOP TITLE & HEADER BAR WITH MODE SWITCHER */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-3 sm:p-4 border-3 border-indigo-200 dark:border-slate-800 shadow-bubbly-indigo flex items-center justify-between gap-3 flex-wrap">
+            
+            {/* Left: Back Button & Title */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  onBack();
+                }}
+                className="p-2 sm:p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition-all shadow-2xs shrink-0"
+                title="Kembali ke Hub Game"
+              >
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-display font-black text-base sm:text-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 bg-clip-text text-transparent">
+                    ART FRENZY
+                  </span>
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      setShowModeModal(true);
+                    }}
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-2xs active:scale-95 transition-all ${
+                      playMode === 'solo_bot'
+                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300'
+                        : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-2xl shrink-0">{p.avatar}</span>
-                      <div className="min-w-0">
-                        <div className="font-black text-xs text-slate-900 dark:text-white truncate flex items-center gap-1">
-                          <span>{p.name}</span>
-                          {idx === 0 && <Crown className="w-3 h-3 text-amber-500 inline" />}
-                        </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-                          {p.score} pts
-                        </div>
-                      </div>
-                    </div>
-
-                    {isCurrentDrawer && (
-                      <span className="p-1.5 rounded-xl bg-amber-400 text-slate-900 text-xs font-black flex items-center gap-1 shadow-xs shrink-0">
-                        <Pencil className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Melukis</span>
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* B. CHAT & GUESS STREAM PANEL (Matching right side bottom card in screenshot) */}
-          <div className={`bg-amber-50 dark:bg-slate-800 rounded-3xl p-4 border-3 border-amber-200 dark:border-slate-700 shadow-bubbly-amber flex flex-col h-80 sm:h-96 ${activeTabMobile !== 'chat' && activeTabMobile !== 'canvas' ? 'hidden sm:flex' : 'flex'}`}>
-            
-            {/* Header */}
-            <div className="flex items-center justify-between border-b pb-2 border-amber-200 dark:border-slate-700 shrink-0">
-              <h3 className="font-display font-black text-slate-900 dark:text-white text-base flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-amber-500" />
-                <span>OBROLAN & TEBAKAN</span>
-              </h3>
-            </div>
-
-            {/* Chat Messages Stream */}
-            <div className="flex-1 overflow-y-auto py-2 space-y-2 pr-1 text-xs">
-              {chatMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`p-2 rounded-2xl text-[11px] leading-tight ${
-                    msg.isSystem
-                      ? 'bg-amber-200/80 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 font-black text-center border border-amber-300'
-                      : msg.isCorrect
-                      ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 font-black border border-emerald-300'
-                      : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium border border-slate-200 dark:border-slate-600'
-                  }`}
-                >
-                  {!msg.isSystem && (
-                    <span className="font-black text-amber-800 dark:text-amber-300 mr-1">
-                      {msg.senderName}:
-                    </span>
-                  )}
-                  <span>{msg.text}</span>
+                    <span>{playMode === 'solo_bot' ? '🤖 Main Sendiri (Bot AI)' : '🌐 Teman Online (ASTA-2026)'}</span>
+                    <span className="underline">Ubah</span>
+                  </button>
                 </div>
-              ))}
+                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold hidden sm:block">
+                  {playMode === 'solo_bot' ? 'Mode Solo vs AI Bot Keluarga' : 'Mode Multiplayer Teman Online (Kode: ASTA-2026)'}
+                </p>
+              </div>
             </div>
 
-            {/* Quick Guess Input Box (Matching bottom input in screenshot) */}
-            <form onSubmit={handleSendGuess} className="mt-2 pt-2 border-t border-amber-200 dark:border-slate-700 flex items-center gap-1.5 shrink-0">
-              <input
-                type="text"
-                value={guessInput}
-                onChange={(e) => setGuessInput(e.target.value)}
-                placeholder="Ketik tebakan di sini..."
-                className="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs border border-amber-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
+            {/* Center/Right: Round & Score Badges + Share Online */}
+            <div className="flex items-center gap-2">
+              {playMode === 'online_friends' && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleCopyCode}
+                    className="px-2.5 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 text-[10px] font-black flex items-center gap-1"
+                    title="Salin Kode Keluarga"
+                  >
+                    {copiedCode ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                    <span>ASTA-2026</span>
+                  </button>
+                  <button
+                    onClick={handleShareWA}
+                    className="p-1.5 rounded-xl bg-emerald-500 text-white text-[10px] font-black hover:bg-emerald-600"
+                    title="Bagikan ke WhatsApp"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Landscape Orientation Toggle Button */}
               <button
-                type="submit"
-                className="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-display font-black text-xs shadow-md flex items-center gap-1 active:scale-95 transition-all shrink-0"
+                onClick={handleRequestLandscape}
+                className="px-2.5 py-1.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-900 font-display font-black text-xs flex items-center gap-1 active:scale-95 transition-all shadow-xs border border-amber-300"
+                title="Putar ke Mode Layar Landscape Miring (Layar Lebar)"
               >
-                <span>KIRIM</span>
-                <Send className="w-3.5 h-3.5" />
+                <Maximize className="w-3.5 h-3.5" />
+                <span>📱 LANDSCAPE</span>
               </button>
-            </form>
+
+              {/* Round Badge */}
+              <div className="bg-indigo-600 text-white px-3 py-1.5 rounded-2xl font-display font-black text-xs sm:text-sm shadow-sm flex items-center gap-1">
+                <span>ROUND</span>
+                <span className="text-amber-300">{currentRound}/{maxRounds}</span>
+              </div>
+            </div>
 
           </div>
 
-        </div>
+          {/* LANDSCAPE ORIENTATION RECOMMENDATION BANNER FOR MOBILE */}
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-900 p-2.5 rounded-2xl font-display font-black text-xs flex items-center justify-between gap-2 shadow-md sm:hidden border border-amber-300/60">
+            <div className="flex items-center gap-2">
+              <span className="text-lg animate-bounce">📱🔄</span>
+              <span>Game ini disarankan dalam posisi Landscape (Miring)!</span>
+            </div>
+            <button
+              onClick={handleRequestLandscape}
+              className="px-2.5 py-1 rounded-xl bg-slate-900 text-amber-300 text-[10px] font-black uppercase shrink-0 shadow-sm active:scale-95 flex items-center gap-1"
+            >
+              <Maximize className="w-3 h-3 text-amber-300" />
+              <span>Putar Layar</span>
+            </button>
+          </div>
 
-      </div>
+          {/* 2. GAME STATUS BAR (Drawer Name, Timer Countdown, Secret Word Display) */}
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 rounded-3xl p-3 sm:p-4 text-white border-2 border-indigo-500/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+            
+            {/* Current Drawer Badge */}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-rose-500 p-0.5 shadow-lg shrink-0">
+                <div className="w-full h-full rounded-2xl bg-slate-900 flex items-center justify-center text-2xl">
+                  {currentDrawer.avatar}
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-display font-black text-sm sm:text-lg text-white">
+                    {currentDrawer.name}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 font-extrabold text-[10px] flex items-center gap-1">
+                    <Pencil className="w-3 h-3" /> Pelukis
+                  </span>
+                </div>
+                <div className="text-[11px] text-amber-300 font-bold flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                  <span>Sisa Waktu: 00:{String(timeLeft).padStart(2, '0')}s</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Center: Secret Word for Drawer or Hint for Guessers */}
+            <div className="bg-white/10 backdrop-blur-md px-4 sm:px-6 py-2 rounded-2xl border border-white/20 text-center w-full sm:w-auto space-y-1">
+              <div className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">
+                {currentDrawer.name.includes('Aris') ? 'Kata Rahasia Anda (Lukis Ini!)' : `Kategori: ${activeWordObj.category}`}
+              </div>
+              <div className="font-display font-black text-lg sm:text-2xl text-amber-300 tracking-wider">
+                {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
+              </div>
+              
+              {/* POWER-UP HINT BOOSTERS STRIP */}
+              <div className="flex items-center justify-center gap-1.5 pt-1">
+                <button
+                  onClick={handleUseExtraLetters}
+                  disabled={hasUsedExtraLetters}
+                  className="px-2 py-1 rounded-xl bg-amber-400 hover:bg-amber-500 disabled:opacity-40 text-slate-900 font-black text-[10px] flex items-center gap-1 active:scale-95 transition-all shadow-xs"
+                  title="Buka 2 Huruf Rahasia Extra"
+                >
+                  <Lightbulb className="w-3 h-3 text-slate-900" />
+                  <span>+2 Huruf</span>
+                </button>
+
+                <button
+                  onClick={handleUseAddTime}
+                  disabled={hasUsedAddTime}
+                  className="px-2 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white font-black text-[10px] flex items-center gap-1 active:scale-95 transition-all shadow-xs"
+                  title="Tambah Waktu 15 Detik"
+                >
+                  <PlusCircle className="w-3 h-3" />
+                  <span>+15s</span>
+                </button>
+
+                <button
+                  onClick={handleUseColorClue}
+                  className="px-2 py-1 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-black text-[10px] flex items-center gap-1 active:scale-95 transition-all shadow-xs"
+                  title="Tampilkan Petunjuk Warna Objek"
+                >
+                  <Zap className="w-3 h-3" />
+                  <span>Petunjuk Warna</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Mobile Tab Toggle Buttons (Canvas / Players / Chat) */}
+          <div className="flex sm:hidden items-center justify-center gap-2 p-1 bg-slate-200 dark:bg-slate-800 rounded-2xl">
+            <button
+              onClick={() => setActiveTabMobile('canvas')}
+              className={`flex-1 py-1.5 rounded-xl font-extrabold text-xs transition-all ${
+                activeTabMobile === 'canvas' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              🎨 Canvas
+            </button>
+            <button
+              onClick={() => setActiveTabMobile('players')}
+              className={`flex-1 py-1.5 rounded-xl font-extrabold text-xs transition-all ${
+                activeTabMobile === 'players' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              👥 Pemain ({players.length})
+            </button>
+            <button
+              onClick={() => setActiveTabMobile('chat')}
+              className={`flex-1 py-1.5 rounded-xl font-extrabold text-xs transition-all ${
+                activeTabMobile === 'chat' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              💬 Tebakan ({chatMessages.length})
+            </button>
+          </div>
+
+          {/* 3. MAIN GAMEPLAY BODY (Responsive 3-Column Layout on Desktop matching screenshot) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            
+            {/* Left/Center: DRAWING CANVAS AREA (Cols 1-8 on Desktop) */}
+            <div className={`lg:col-span-8 space-y-3 ${activeTabMobile !== 'canvas' ? 'hidden sm:block' : 'block'}`}>
+              {roundWinnerMsg && (
+                <div className="bg-emerald-500 text-white p-3 rounded-2xl font-display font-black text-sm text-center shadow-lg animate-bounce flex items-center justify-center gap-2">
+                  <Sparkles className="w-5 h-5 text-yellow-300" />
+                  <span>{roundWinnerMsg}</span>
+                </div>
+              )}
+
+              <DrawingCanvas
+                isReadOnly={false}
+                width={800}
+                height={520}
+                initialSketchId={
+                  activeWordObj.word.includes('RUMAH') ? 'house' :
+                  activeWordObj.word.includes('KUCING') ? 'cat' :
+                  activeWordObj.word.includes('KUE') ? 'cake' :
+                  activeWordObj.word.includes('SEPEDA') || activeWordObj.word.includes('PESAWAT') ? 'car' :
+                  activeWordObj.word.includes('ES KRIM') ? 'ice_cream' :
+                  activeWordObj.word.includes('BUNGA') ? 'flower' : null
+                }
+              />
+            </div>
+
+            {/* Right Sidebars: PLAYERS LEADERBOARD & CHAT STREAM (Cols 9-12 on Desktop) */}
+            <div className="lg:col-span-4 space-y-4">
+              
+              {/* A. PLAYERS LEADERBOARD PANEL (Matching right side top card in screenshot) */}
+              <div className={`bg-rose-50 dark:bg-slate-800 rounded-3xl p-4 border-3 border-rose-200 dark:border-slate-700 shadow-bubbly-coral space-y-3 ${activeTabMobile !== 'players' && activeTabMobile !== 'canvas' ? 'hidden sm:block' : 'block'}`}>
+                <div className="flex items-center justify-between border-b pb-2 border-rose-200 dark:border-slate-700">
+                  <h3 className="font-display font-black text-slate-900 dark:text-white text-base flex items-center gap-2">
+                    <Users className="w-5 h-5 text-rose-500" />
+                    <span>PEMAIN ({players.length})</span>
+                  </h3>
+                  <span className="text-[10px] font-black bg-rose-200 dark:bg-rose-950 text-rose-800 dark:text-rose-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>{playMode === 'solo_bot' ? 'VS BOT AI' : 'ONLINE'}</span>
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {players.map((p, idx) => {
+                    const isCurrentDrawer = p.id === currentDrawer.id;
+                    return (
+                      <div
+                        key={p.id}
+                        className={`p-2.5 rounded-2xl flex items-center justify-between border transition-all ${
+                          isCurrentDrawer
+                            ? 'bg-amber-100 dark:bg-amber-950/80 border-amber-400 font-extrabold shadow-sm scale-[1.02]'
+                            : 'bg-white dark:bg-slate-700/60 border-slate-200 dark:border-slate-600'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-2xl shrink-0">{p.avatar}</span>
+                          <div className="min-w-0">
+                            <div className="font-black text-xs text-slate-900 dark:text-white truncate flex items-center gap-1">
+                              <span>{p.name}</span>
+                              {idx === 0 && <Crown className="w-3 h-3 text-amber-500 inline" />}
+                            </div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
+                              {p.score} pts
+                            </div>
+                          </div>
+                        </div>
+
+                        {isCurrentDrawer && (
+                          <span className="p-1.5 rounded-xl bg-amber-400 text-slate-900 text-xs font-black flex items-center gap-1 shadow-xs shrink-0">
+                            <Pencil className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Melukis</span>
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* B. CHAT & GUESS STREAM PANEL (Matching right side bottom card in screenshot) */}
+              <div className={`bg-amber-50 dark:bg-slate-800 rounded-3xl p-4 border-3 border-amber-200 dark:border-slate-700 shadow-bubbly-amber flex flex-col h-80 sm:h-96 ${activeTabMobile !== 'chat' && activeTabMobile !== 'canvas' ? 'hidden sm:flex' : 'flex'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center justify-between border-b pb-2 border-amber-200 dark:border-slate-700 shrink-0">
+                  <h3 className="font-display font-black text-slate-900 dark:text-white text-base flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-amber-500" />
+                    <span>OBROLAN & TEBAKAN</span>
+                  </h3>
+                </div>
+
+                {/* Chat Messages Stream */}
+                <div className="flex-1 overflow-y-auto py-2 space-y-2 pr-1 text-xs">
+                  {chatMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`p-2 rounded-2xl text-[11px] leading-tight ${
+                        msg.isSystem
+                          ? 'bg-amber-200/80 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 font-black text-center border border-amber-300'
+                          : msg.isCorrect
+                          ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 font-black border border-emerald-300'
+                          : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium border border-slate-200 dark:border-slate-600'
+                      }`}
+                    >
+                      {!msg.isSystem && (
+                        <span className="font-black text-amber-800 dark:text-amber-300 mr-1">
+                          {msg.senderName}:
+                        </span>
+                      )}
+                      <span>{msg.text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Quick Guess Input Box (Matching bottom input in screenshot) */}
+                <form onSubmit={handleSendGuess} className="mt-2 pt-2 border-t border-amber-200 dark:border-slate-700 flex items-center gap-1.5 shrink-0">
+                  <input
+                    type="text"
+                    value={guessInput}
+                    onChange={(e) => setGuessInput(e.target.value)}
+                    placeholder="Ketik tebakan di sini..."
+                    className="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs border border-amber-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-display font-black text-xs shadow-md flex items-center gap-1 active:scale-95 transition-all shrink-0"
+                  >
+                    <span>KIRIM</span>
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </form>
+
+              </div>
+
+            </div>
+
+          </div>
+        </>
+      )}
 
     </div>
   );

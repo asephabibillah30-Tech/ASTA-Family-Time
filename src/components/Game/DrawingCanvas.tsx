@@ -619,14 +619,14 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       )}
 
       {/* Main Drawing Viewport */}
-      <div className="w-full flex flex-col md:flex-row items-stretch gap-4">
+      <div className="w-full flex flex-col sm:flex-row md:flex-row items-stretch gap-2 sm:gap-3 h-full min-h-0 overflow-hidden">
       
-      {/* 1. DRAWING TOOLBAR (Left side on Desktop, Scrollable Bar on Mobile) */}
+      {/* 1. DRAWING TOOLBAR (Left side on Landscape/Desktop, Scrollable Bar on Portrait Mobile) */}
       {!isReadOnly && (
-        <div className="w-full md:w-auto bg-amber-100/90 dark:bg-slate-800/90 p-2.5 sm:p-3 rounded-3xl border-3 border-amber-300 dark:border-slate-700 shadow-bubbly-amber flex flex-row md:flex-col items-center justify-between gap-2.5 sm:gap-3 shrink-0 overflow-x-auto max-w-full touch-pan-x">
+        <div className="w-full sm:w-auto md:w-auto bg-amber-100/90 dark:bg-slate-800/90 p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl border-2 sm:border-3 border-amber-300 dark:border-slate-700 shadow-bubbly-amber flex flex-row sm:flex-col md:flex-col items-center justify-between gap-2 shrink-0 overflow-x-auto sm:overflow-y-auto max-h-full touch-pan-x sm:touch-pan-y">
           
           {/* Main Drawing Tools */}
-          <div className="flex flex-row md:flex-col items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex flex-row sm:flex-col md:flex-col items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Pencil */}
             <button
               onClick={() => {
@@ -710,7 +710,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
           {/* Stamp Selector when active */}
           {activeTool === 'stamp' && (
-            <div className="flex flex-row md:flex-col gap-1 overflow-x-auto p-1 bg-white/80 dark:bg-slate-700 rounded-2xl border border-purple-300 shrink-0">
+            <div className="flex flex-row sm:flex-col md:flex-col gap-1 overflow-x-auto sm:overflow-y-auto p-1 bg-white/80 dark:bg-slate-700 rounded-2xl border border-purple-300 shrink-0 max-h-32 sm:max-h-40">
               {EMOJI_STAMPS.map(s => (
                 <button
                   key={s}
@@ -726,11 +726,11 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             </div>
           )}
 
-          <div className="h-px md:h-auto w-full md:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden md:block" />
+          <div className="h-px sm:h-auto w-full sm:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden sm:block" />
 
           {/* Line Width Slider */}
           <div className="flex flex-col items-center gap-1 shrink-0">
-            <span className="text-[10px] font-black text-amber-900 dark:text-amber-300 hidden md:block">
+            <span className="text-[10px] font-black text-amber-900 dark:text-amber-300 hidden sm:block">
               UKURAN
             </span>
             <input
@@ -743,15 +743,15 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               title={`Ukuran Kuas: ${lineWidth}px`}
             />
             <div
-              className="rounded-full bg-slate-800 dark:bg-white transition-all hidden md:block"
+              className="rounded-full bg-slate-800 dark:bg-white transition-all hidden sm:block"
               style={{ width: `${Math.max(4, lineWidth)}px`, height: `${Math.max(4, lineWidth)}px` }}
             />
           </div>
 
-          <div className="h-px md:h-auto w-full md:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden md:block" />
+          <div className="h-px sm:h-auto w-full sm:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden sm:block" />
 
           {/* Color Palette Grid */}
-          <div className="grid grid-flow-col grid-rows-2 md:grid-flow-row md:grid-cols-2 gap-1 sm:gap-1.5 shrink-0 max-w-full overflow-x-auto">
+          <div className="grid grid-flow-col grid-rows-2 sm:grid-flow-row sm:grid-cols-2 gap-1 sm:gap-1.5 shrink-0 max-w-full overflow-x-auto sm:overflow-y-auto max-h-36">
             {COLOR_PALETTE.map((c) => (
               <button
                 key={c}
@@ -771,10 +771,10 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             ))}
           </div>
 
-          <div className="h-px md:h-auto w-full md:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden md:block" />
+          <div className="h-px sm:h-auto w-full sm:w-px bg-amber-300 dark:bg-slate-700 my-1 hidden sm:block" />
 
           {/* Action Buttons: Undo & Clear */}
-          <div className="flex flex-row md:flex-col items-center gap-1.5 shrink-0">
+          <div className="flex flex-row sm:flex-col md:flex-col items-center gap-1.5 shrink-0">
             <button
               onClick={handleUndo}
               disabled={undoStack.length <= 1}
@@ -797,13 +797,13 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       )}
 
       {/* 2. TABLET FRAME CANVAS (Center Viewport) */}
-      <div className="flex-1 bg-slate-900 p-2 sm:p-4 rounded-3xl md:rounded-[36px] shadow-2xl border-4 border-slate-800 flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="flex-1 bg-slate-900 p-1.5 sm:p-3 rounded-2xl sm:rounded-3xl md:rounded-[36px] shadow-2xl border-4 border-slate-800 flex flex-col items-center justify-center relative overflow-hidden h-full min-h-0">
         
         {/* Tablet Front Camera Dot */}
         <div className="w-3 h-3 rounded-full bg-slate-800 border border-slate-700 absolute top-2 left-1/2 -translate-x-1/2 hidden sm:block" />
 
         {/* Canvas Surface */}
-        <div className="w-full bg-white rounded-2xl overflow-hidden shadow-inner flex items-center justify-center relative touch-none">
+        <div className="w-full h-full bg-white rounded-2xl overflow-hidden shadow-inner flex items-center justify-center relative touch-none">
           <canvas
             ref={canvasRef}
             width={width}
@@ -815,7 +815,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             onTouchStart={startDrawing}
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
-            className={`w-full h-auto aspect-[16/9] sm:aspect-[16/10] object-contain ${
+            className={`w-full h-full object-contain aspect-[16/9] sm:aspect-[16/10] ${
               isReadOnly ? 'cursor-default' : activeTool === 'bucket' ? 'cursor-cell' : 'cursor-crosshair'
             }`}
           />
