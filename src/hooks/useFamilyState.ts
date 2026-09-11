@@ -20,6 +20,7 @@ import {
   INITIAL_HABITS
 } from '../data/familyData';
 import { supabaseFamilyService } from '../services/db/supabaseFamilyService';
+import { postgresService } from '../services/db/postgresService';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti, fireSmallPop } from '../utils/confetti';
 
@@ -137,6 +138,29 @@ export function useFamilyState(familyId?: string | null) {
       const pruned = pruneNotifications(updated);
       if (familyId) {
         saveStorage('notifications', familyId, pruned);
+
+        // 1. Cross-Device Realtime Broadcast via Supabase WebSocket
+        try {
+          const supabase = postgresService.getClient();
+          if (supabase) {
+            const ch = supabase.channel(`family_notifications_${familyId}`);
+            ch.send({
+              type: 'broadcast',
+              event: 'new_notification',
+              payload: newNotif
+            }).catch(() => {});
+          }
+        } catch {}
+
+        // 2. Same-Device BroadcastChannel for other open tabs
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          try {
+            const bc = new BroadcastChannel(`asta_notifs_${familyId}`);
+            bc.postMessage({ type: 'NEW_NOTIF', notif: newNotif });
+            bc.close();
+          } catch {}
+        }
+
         try {
           if ('caches' in window) {
             caches.open('asta-pwa-notif-v1').then((cache) => {
@@ -245,6 +269,57 @@ export function useFamilyState(familyId?: string | null) {
   useEffect(() => { if (familyId) saveStorage('savings', familyId, savingsTargets); }, [savingsTargets, familyId]);
   useEffect(() => { if (familyId) saveStorage('chat_msgs', familyId, chatMessages); }, [chatMessages, familyId]);
   useEffect(() => { if (familyId) saveStorage('notifications', familyId, notifications); }, [notifications, familyId]);
+
+  // ── Real-Time Cross-Device Notification Listener (Supabase Realtime WebSocket) ──
+  useEffect(() => {
+    if (!familyId) return;
+
+    const supabase = postgresService.getClient();
+    if (!supabase) return;
+
+    const channel = supabase.channel(`family_notifications_${familyId}`);
+
+    channel
+      .on('broadcast', { event: 'new_notification' }, ({ payload }) => {
+        if (!payload || !payload.id) return;
+        setNotifications((prev) => {
+          if (prev.some(n => n.id === payload.id || (payload.dedupKey && n.dedupKey === payload.dedupKey))) {
+            return prev;
+          }
+          sound.playSuccess();
+          const updated = [payload, ...prev];
+          const pruned = pruneNotifications(updated);
+          saveStorage('notifications', familyId, pruned);
+          return pruned;
+        });
+      })
+      .subscribe();
+
+    // Same-device BroadcastChannel listener
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel(`asta_notifs_${familyId}`);
+      bc.onmessage = (e) => {
+        if (e.data?.type === 'NEW_NOTIF' && e.data?.notif) {
+          const payload = e.data.notif;
+          setNotifications((prev) => {
+            if (prev.some(n => n.id === payload.id || (payload.dedupKey && n.dedupKey === payload.dedupKey))) {
+              return prev;
+            }
+            const updated = [payload, ...prev];
+            const pruned = pruneNotifications(updated);
+            saveStorage('notifications', familyId, pruned);
+            return pruned;
+          });
+        }
+      };
+    }
+
+    return () => {
+      channel.unsubscribe();
+      if (bc) bc.close();
+    };
+  }, [familyId]);
 
   // Real-Time Auto-Sync: Pesan obrolan baru & status dibaca langsung muncul tanpa perlu refresh halaman
   useEffect(() => {
