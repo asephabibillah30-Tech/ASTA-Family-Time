@@ -3,6 +3,7 @@ import type { Player, MainTab } from '../../types/game';
 import type { DailyIdea, PlannerEvent, FamilyHabit } from '../../types/family';
 import { Play, Flame, Star, RefreshCw, Calendar, ArrowRight } from 'lucide-react';
 import { sound } from '../../utils/sound';
+import { formatIndonesianDate } from '../../utils/dateUtils';
 
 interface DashboardHomeProps {
   players: Player[];
@@ -307,7 +308,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                 <div>
                   <p className="font-bold text-slate-800 dark:text-slate-200">{ev.title}</p>
                   <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                    {ev.date} • {ev.time ? `${ev.time} WIB` : 'Sepanjang Hari'}
+                    {formatIndonesianDate(ev.date, ev.time)}
                   </p>
                 </div>
               </div>

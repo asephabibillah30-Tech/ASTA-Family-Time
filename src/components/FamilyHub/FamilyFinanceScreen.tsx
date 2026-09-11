@@ -4,6 +4,7 @@ import { ArrowLeft, Wallet, Plus, ArrowUpRight, ArrowDownRight } from 'lucide-re
 
 
 import { sanitizeInput } from '../../utils/security';
+import { formatIndonesianDate } from '../../utils/dateUtils';
 
 interface FamilyFinanceScreenProps {
   transactions: FinanceTransaction[];
@@ -172,7 +173,7 @@ export const FamilyFinanceScreen: React.FC<FamilyFinanceScreenProps> = ({
                   )}
                   <div>
                     <p className="font-bold text-slate-800 dark:text-slate-200">{t.note}</p>
-                    <p className="text-[10px] text-slate-400">{t.date}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">{formatIndonesianDate(t.date)}</p>
                   </div>
                 </div>
                 <span className={`font-black ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>

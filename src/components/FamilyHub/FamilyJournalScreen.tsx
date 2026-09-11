@@ -6,6 +6,7 @@ import { ArrowLeft, Send } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
 import { sanitizeInput } from '../../utils/security';
+import { formatIndonesianDate } from '../../utils/dateUtils';
 
 interface FamilyJournalScreenProps {
   players: Player[];
@@ -175,8 +176,8 @@ export const FamilyJournalScreen: React.FC<FamilyJournalScreenProps> = ({
                     <h4 className="font-display font-bold text-xs text-slate-900 dark:text-white">
                       {item.playerName}
                     </h4>
-                    <span className="text-[10px] text-slate-400">
-                      {item.date} • {item.createdAt}
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {formatIndonesianDate(item.createdAt || item.date)}
                     </span>
                   </div>
                 </div>

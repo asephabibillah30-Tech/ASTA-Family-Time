@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, CheckCircle2, Circle, Trash2, X } from 'lucide-react';
 import { sound } from '../../utils/sound';
 
 import { sanitizeInput } from '../../utils/security';
+import { formatIndonesianDate } from '../../utils/dateUtils';
 
 interface FamilyPlannerScreenProps {
   events: PlannerEvent[];
@@ -107,7 +108,7 @@ export const FamilyPlannerScreen: React.FC<FamilyPlannerScreenProps> = ({
                   {ev.title}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  {ev.date} {ev.time ? `• ${ev.time} WIB` : '• Sepanjang Hari'}
+                  {formatIndonesianDate(ev.date, ev.time)}
                 </p>
               </div>
             </div>

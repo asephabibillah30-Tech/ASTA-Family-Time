@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
     const updateClock = () => {
       const now = new Date();
       const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okto', 'Nov', 'Des'];
+      const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
       const dayName = days[now.getDay()];
       const dateNum = now.getDate();
       const monthName = months[now.getMonth()];
