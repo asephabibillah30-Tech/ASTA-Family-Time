@@ -76,12 +76,28 @@ interface AstaAdminPortalScreenProps {
 
 type AdminSidebarMenu = 'head_families' | 'cyber_security' | 'system_settings' | 'game_engine' | 'telemetry';
 
+const ADMIN_SESSION_KEY = 'asta_super_admin_session';
+
 export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
   currentFamily: _currentFamily,
   currentUser: _currentUser,
   onGoBackToApp,
 }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = sessionStorage.getItem(ADMIN_SESSION_KEY) || localStorage.getItem(ADMIN_SESSION_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          // Verify session validity within 24 hours
+          if (parsed && parsed.authenticated && (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000)) {
+            return true;
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    return false;
+  });
   const [activeMenu, setActiveMenu] = useState<AdminSidebarMenu>('head_families');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
@@ -244,6 +260,13 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
     if (isValidUser && isValidPass && isValidPin) {
       rateLimiter.resetAttempts('super_admin_login');
       sound.playVictory();
+      
+      const sessionPayload = JSON.stringify({ authenticated: true, timestamp: Date.now(), role: 'super_admin' });
+      try {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, sessionPayload);
+        localStorage.setItem(ADMIN_SESSION_KEY, sessionPayload);
+      } catch { /* ignore */ }
+
       setIsLoggedIn(true);
       notify('🔓 Selamat Datang Super Admin ASTA! Akses Portal Administrator Diberikan.');
     } else {
@@ -572,6 +595,10 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
           <button
             onClick={() => {
               sound.playClick();
+              try {
+                sessionStorage.removeItem(ADMIN_SESSION_KEY);
+                localStorage.removeItem(ADMIN_SESSION_KEY);
+              } catch { /* ignore */ }
               setIsLoggedIn(false);
             }}
             className="w-full px-3.5 py-2.5 rounded-2xl bg-rose-950/60 text-rose-300 hover:bg-rose-900 font-bold text-xs flex items-center gap-2 transition-colors"
