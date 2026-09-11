@@ -77,8 +77,16 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [undoStack, setUndoStack] = useState<ImageData[]>([]);
 
-  // Draw crisp vector sketch outlines
+  // Draw crisp 3D vector sketch outlines with realistic drop shadow & volume depth
   const drawSketchOutline = useCallback((ctx: CanvasRenderingContext2D, sketchId: string) => {
+    ctx.save();
+
+    // 3D Ambient Occlusion & Drop Shadow for realistic depth pop
+    ctx.shadowColor = 'rgba(15, 23, 42, 0.28)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 5;
+
     ctx.strokeStyle = '#1E293B';
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
@@ -86,34 +94,46 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
     switch (sketchId) {
       case 'house': {
-        // Sun
+        // Sun with 3D rays
         ctx.beginPath(); ctx.arc(700, 100, 45, 0, Math.PI * 2); ctx.stroke();
         for (let a = 0; a < 360; a += 45) {
           const rad = (a * Math.PI) / 180;
           ctx.beginPath();
           ctx.moveTo(700 + Math.cos(rad) * 55, 100 + Math.sin(rad) * 55);
-          ctx.lineTo(700 + Math.cos(rad) * 70, 100 + Math.sin(rad) * 70);
+          ctx.lineTo(700 + Math.cos(rad) * 72, 100 + Math.sin(rad) * 72);
           ctx.stroke();
         }
-        // Mountains
-        ctx.beginPath(); ctx.moveTo(50, 420); ctx.lineTo(250, 180); ctx.lineTo(450, 420); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(350, 420); ctx.lineTo(550, 220); ctx.lineTo(750, 420); ctx.stroke();
-        // Snow caps
-        ctx.beginPath(); ctx.moveTo(210, 228); ctx.lineTo(250, 260); ctx.lineTo(290, 228); ctx.stroke();
-        // House Body
-        ctx.beginPath(); ctx.rect(260, 260, 280, 180); ctx.stroke();
-        // Roof
-        ctx.beginPath(); ctx.moveTo(230, 260); ctx.lineTo(400, 140); ctx.lineTo(570, 260); ctx.closePath(); ctx.stroke();
-        // Door & knob
-        ctx.beginPath(); ctx.rect(370, 340, 60, 100); ctx.stroke();
-        ctx.beginPath(); ctx.arc(420, 390, 5, 0, Math.PI * 2); ctx.stroke();
-        // Windows
-        ctx.beginPath(); ctx.rect(290, 300, 55, 55); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(317.5, 300); ctx.lineTo(317.5, 355); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(290, 327.5); ctx.lineTo(345, 327.5); ctx.stroke();
-        ctx.beginPath(); ctx.rect(455, 300, 55, 55); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(482.5, 300); ctx.lineTo(482.5, 355); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(455, 327.5); ctx.lineTo(510, 327.5); ctx.stroke();
+        // 3D Mountains
+        ctx.beginPath(); ctx.moveTo(40, 430); ctx.lineTo(240, 180); ctx.lineTo(440, 430); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(340, 430); ctx.lineTo(540, 220); ctx.lineTo(740, 430); ctx.stroke();
+        // Snow caps & 3D ridge
+        ctx.beginPath(); ctx.moveTo(200, 230); ctx.lineTo(240, 260); ctx.lineTo(280, 230); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(240, 180); ctx.lineTo(240, 430); ctx.stroke();
+        // House Main Front Body
+        ctx.beginPath(); ctx.rect(260, 260, 270, 180); ctx.stroke();
+        // 3D Side Wall Perspective
+        ctx.beginPath(); ctx.moveTo(530, 260); ctx.lineTo(580, 220); ctx.lineTo(580, 390); ctx.lineTo(530, 440); ctx.stroke();
+        // 3D Roof
+        ctx.beginPath(); ctx.moveTo(230, 260); ctx.lineTo(395, 140); ctx.lineTo(560, 260); ctx.closePath(); ctx.stroke();
+        // 3D Side Roof Perspective
+        ctx.beginPath(); ctx.moveTo(395, 140); ctx.lineTo(445, 110); ctx.lineTo(605, 220); ctx.lineTo(560, 260); ctx.stroke();
+        // 3D Chimney
+        ctx.beginPath(); ctx.rect(460, 140, 35, 60); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(477.5, 140, 17.5, 6, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(495, 115, 10, 0, Math.PI * 2); ctx.stroke(); // Smoke ring
+        // Door & 3D overhang knob
+        ctx.beginPath(); ctx.rect(365, 335, 65, 105); ctx.stroke();
+        ctx.beginPath(); ctx.arc(418, 390, 6, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.rect(355, 328, 85, 8); ctx.stroke(); // 3D Door frame header
+        // Windows with 3D sill
+        ctx.beginPath(); ctx.rect(285, 295, 55, 55); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(312.5, 295); ctx.lineTo(312.5, 350); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(285, 322.5); ctx.lineTo(340, 322.5); ctx.stroke();
+        ctx.beginPath(); ctx.rect(280, 350, 65, 6); ctx.stroke(); // Sill
+        ctx.beginPath(); ctx.rect(445, 295, 55, 55); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(472.5, 295); ctx.lineTo(472.5, 350); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(445, 322.5); ctx.lineTo(500, 322.5); ctx.stroke();
+        ctx.beginPath(); ctx.rect(440, 350, 65, 6); ctx.stroke(); // Sill
         // Ground line
         ctx.beginPath(); ctx.moveTo(0, 440); ctx.lineTo(800, 440); ctx.stroke();
         break;
@@ -121,331 +141,508 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       case 'cat': {
         // Head
         ctx.beginPath(); ctx.arc(400, 200, 100, 0, Math.PI * 2); ctx.stroke();
-        // Ears
+        // 3D Ears with inner fold
         ctx.beginPath(); ctx.moveTo(325, 135); ctx.lineTo(280, 40); ctx.lineTo(365, 110); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(325, 125); ctx.lineTo(300, 65); ctx.lineTo(350, 110); ctx.stroke(); // Inner ear L
         ctx.beginPath(); ctx.moveTo(475, 135); ctx.lineTo(520, 40); ctx.lineTo(435, 110); ctx.stroke();
-        // Eyes
-        ctx.beginPath(); ctx.ellipse(360, 185, 14, 20, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(440, 185, 14, 20, 0, 0, Math.PI * 2); ctx.stroke();
-        // Nose & Mouth
-        ctx.beginPath(); ctx.moveTo(392, 215); ctx.lineTo(408, 215); ctx.lineTo(400, 226); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.arc(389, 232, 11, 0, Math.PI); ctx.stroke();
-        ctx.beginPath(); ctx.arc(411, 232, 11, 0, Math.PI); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(475, 125); ctx.lineTo(500, 65); ctx.lineTo(450, 110); ctx.stroke(); // Inner ear R
+        // 3D Eyes with pupil highlights
+        ctx.beginPath(); ctx.ellipse(360, 185, 15, 22, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(362, 185, 6, 12, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(440, 185, 15, 22, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(438, 185, 6, 12, 0, 0, Math.PI * 2); ctx.stroke();
+        // Nose & Muzzle
+        ctx.beginPath(); ctx.moveTo(390, 215); ctx.lineTo(410, 215); ctx.lineTo(400, 228); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(388, 235, 12, 0, Math.PI); ctx.stroke();
+        ctx.beginPath(); ctx.arc(412, 235, 12, 0, Math.PI); ctx.stroke();
         // Whiskers
-        ctx.beginPath(); ctx.moveTo(270, 205); ctx.lineTo(340, 212); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(260, 225); ctx.lineTo(340, 222); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(530, 205); ctx.lineTo(460, 212); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(540, 225); ctx.lineTo(460, 222); ctx.stroke();
-        // Body
-        ctx.beginPath(); ctx.ellipse(400, 370, 110, 85, 0, 0, Math.PI * 2); ctx.stroke();
-        // Paws
-        ctx.beginPath(); ctx.arc(350, 445, 24, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(450, 445, 24, 0, Math.PI * 2); ctx.stroke();
-        // Tail
-        ctx.beginPath(); ctx.moveTo(505, 395); ctx.quadraticCurveTo(610, 410, 590, 310); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(260, 205); ctx.lineTo(340, 215); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(250, 230); ctx.lineTo(340, 225); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(540, 205); ctx.lineTo(460, 215); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(550, 230); ctx.lineTo(460, 225); ctx.stroke();
+        // 3D Body & Collar with bell
+        ctx.beginPath(); ctx.ellipse(400, 370, 115, 90, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 290, 45, 0.2, Math.PI - 0.2); ctx.stroke(); // Collar
+        ctx.beginPath(); ctx.arc(400, 305, 12, 0, Math.PI * 2); ctx.stroke(); // Bell sphere
+        // 3D Paws
+        ctx.beginPath(); ctx.arc(345, 445, 25, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(455, 445, 25, 0, Math.PI * 2); ctx.stroke();
+        // 3D Tail
+        ctx.beginPath(); ctx.moveTo(505, 395); ctx.quadraticCurveTo(620, 420, 595, 300); ctx.quadraticCurveTo(580, 280, 570, 310); ctx.quadraticCurveTo(590, 400, 485, 420); ctx.stroke();
         break;
       }
       case 'cake': {
-        // Plate
-        ctx.beginPath(); ctx.ellipse(400, 440, 260, 30, 0, 0, Math.PI * 2); ctx.stroke();
-        // Bottom tier
-        ctx.beginPath(); ctx.rect(200, 300, 400, 130); ctx.stroke();
-        // Frosting drips bottom
+        // 3D Plate
+        ctx.beginPath(); ctx.ellipse(400, 450, 270, 35, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 455, 260, 25, 0, 0, Math.PI * 2); ctx.stroke();
+        // Bottom tier 3D Cylinder
+        ctx.beginPath(); ctx.ellipse(400, 310, 200, 25, 0, 0, Math.PI * 2); ctx.stroke(); // Top ellipse bottom tier
+        ctx.beginPath(); ctx.moveTo(200, 310); ctx.lineTo(200, 430); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(600, 310); ctx.lineTo(600, 430); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 430, 200, 25, 0, 0, Math.PI); ctx.stroke(); // Bottom curve
+        // Frosting drips bottom tier
         ctx.beginPath();
         for (let x = 200; x < 600; x += 40) {
-          ctx.arc(x + 20, 300, 20, 0, Math.PI);
+          ctx.arc(x + 20, 310, 20, 0, Math.PI);
         }
         ctx.stroke();
-        // Top tier
-        ctx.beginPath(); ctx.rect(270, 170, 260, 130); ctx.stroke();
-        // Frosting drips top
+        // Top tier 3D Cylinder
+        ctx.beginPath(); ctx.ellipse(400, 180, 130, 18, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(270, 180); ctx.lineTo(270, 305); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(530, 180); ctx.lineTo(530, 305); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 305, 130, 18, 0, 0, Math.PI); ctx.stroke();
+        // Frosting drips top tier
         ctx.beginPath();
         for (let x = 270; x < 530; x += 32.5) {
-          ctx.arc(x + 16.25, 170, 16.25, 0, Math.PI);
+          ctx.arc(x + 16.25, 180, 16.25, 0, Math.PI);
         }
         ctx.stroke();
-        // Candles
+        // 3D Candles
         [330, 400, 470].forEach((cx) => {
-          ctx.beginPath(); ctx.rect(cx - 10, 90, 20, 80); ctx.stroke();
-          // Flame
-          ctx.beginPath(); ctx.ellipse(cx, 70, 8, 15, 0, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.rect(cx - 10, 95, 20, 80); ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(cx, 95, 10, 4, 0, 0, Math.PI * 2); ctx.stroke(); // 3D top candle
+          ctx.beginPath(); ctx.ellipse(cx, 75, 9, 16, 0, 0, Math.PI * 2); ctx.stroke(); // Flame
         });
         break;
       }
       case 'car': {
-        // Body
+        // 3D Sports Car Body Contour
         ctx.beginPath();
-        ctx.moveTo(120, 340);
-        ctx.lineTo(150, 260);
-        ctx.lineTo(260, 260);
-        ctx.lineTo(340, 160);
-        ctx.lineTo(540, 160);
-        ctx.lineTo(620, 260);
-        ctx.lineTo(700, 270);
-        ctx.lineTo(720, 340);
+        ctx.moveTo(110, 340);
+        ctx.lineTo(140, 260);
+        ctx.lineTo(250, 250);
+        ctx.lineTo(330, 150);
+        ctx.lineTo(540, 150);
+        ctx.lineTo(630, 250);
+        ctx.lineTo(710, 260);
+        ctx.lineTo(730, 340);
         ctx.closePath();
         ctx.stroke();
-        // Wheels
-        ctx.beginPath(); ctx.arc(240, 350, 48, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(240, 350, 24, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(580, 350, 48, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(580, 350, 24, 0, Math.PI * 2); ctx.stroke();
-        // Windows
-        ctx.beginPath(); ctx.moveTo(355, 175); ctx.lineTo(430, 175); ctx.lineTo(430, 250); ctx.lineTo(285, 250); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(445, 175); ctx.lineTo(525, 175); ctx.lineTo(595, 250); ctx.lineTo(445, 250); ctx.closePath(); ctx.stroke();
-        // Headlight
-        ctx.beginPath(); ctx.arc(705, 300, 14, 0, Math.PI * 2); ctx.stroke();
+        // 3D Side Crease Contour Line
+        ctx.beginPath(); ctx.moveTo(140, 260); ctx.lineTo(710, 260); ctx.stroke();
+        // 3D Wheels with Rim Depth
+        ctx.beginPath(); ctx.arc(230, 350, 52, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(230, 350, 32, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(230, 350, 14, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(590, 350, 52, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(590, 350, 32, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(590, 350, 14, 0, Math.PI * 2); ctx.stroke();
+        // 3D Windows & Mirror
+        ctx.beginPath(); ctx.moveTo(345, 165); ctx.lineTo(430, 165); ctx.lineTo(430, 240); ctx.lineTo(275, 240); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(445, 165); ctx.lineTo(530, 165); ctx.lineTo(605, 240); ctx.lineTo(445, 240); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.rect(425, 230, 25, 15); ctx.stroke(); // 3D Side mirror
+        // Headlight & 3D Bumper
+        ctx.beginPath(); ctx.arc(715, 290, 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.rect(700, 330, 35, 15); ctx.stroke(); // Bumper
         break;
       }
       case 'ice_cream': {
-        // Cone
-        ctx.beginPath(); ctx.moveTo(300, 240); ctx.lineTo(400, 490); ctx.lineTo(500, 240); ctx.closePath(); ctx.stroke();
-        for (let i = 1; i <= 5; i++) {
-          ctx.beginPath(); ctx.moveTo(300 + i * 16, 240 + i * 40); ctx.lineTo(500 - i * 16, 240 + i * 40); ctx.stroke();
+        // 3D Cone with waffle depth grid
+        ctx.beginPath(); ctx.moveTo(290, 240); ctx.lineTo(400, 490); ctx.lineTo(510, 240); ctx.closePath(); ctx.stroke();
+        for (let i = 1; i <= 6; i++) {
+          ctx.beginPath(); ctx.moveTo(290 + i * 16, 240 + i * 36); ctx.lineTo(510 - i * 16, 240 + i * 36); ctx.stroke();
         }
-        // Scoops
-        ctx.beginPath(); ctx.arc(400, 220, 85, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 140, 75, 0, Math.PI * 2); ctx.stroke();
-        // Cherry
-        ctx.beginPath(); ctx.arc(400, 50, 20, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(400, 30); ctx.quadraticCurveTo(430, 10, 440, 25); ctx.stroke();
+        for (let i = 1; i <= 5; i++) {
+          ctx.beginPath(); ctx.moveTo(310 + i * 30, 240); ctx.lineTo(400 + i * 10, 490 - i * 45); ctx.stroke();
+        }
+        // 3D Overlapping Scoops
+        ctx.beginPath(); ctx.arc(400, 230, 90, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 145, 80, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 200, 85, 0.3, Math.PI - 0.3); ctx.stroke(); // Overlap depth arc
+        // 3D Cherry on top
+        ctx.beginPath(); ctx.arc(400, 50, 22, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(393, 44, 6, 0, Math.PI * 2); ctx.stroke(); // Highlight
+        ctx.beginPath(); ctx.moveTo(400, 28); ctx.quadraticCurveTo(435, 8, 445, 25); ctx.stroke();
         break;
       }
       case 'flower': {
-        // Center
-        ctx.beginPath(); ctx.arc(400, 190, 48, 0, Math.PI * 2); ctx.stroke();
-        for (let i = 0; i < 6; i++) {
-          const angle = (i * Math.PI) / 3;
-          const px = 400 + Math.cos(angle) * 105;
-          const py = 190 + Math.sin(angle) * 105;
-          ctx.beginPath(); ctx.arc(px, py, 52, 0, Math.PI * 2); ctx.stroke();
+        // 3D Center Stamen
+        ctx.beginPath(); ctx.arc(400, 190, 50, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 190, 35, 0, Math.PI * 2); ctx.stroke();
+        // 3D Overlapping Petals
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * Math.PI) / 4;
+          const px = 400 + Math.cos(angle) * 110;
+          const py = 190 + Math.sin(angle) * 110;
+          ctx.beginPath(); ctx.arc(px, py, 48, 0, Math.PI * 2); ctx.stroke();
         }
-        // Stem
+        // Stem & Leaves with 3D veins
         ctx.beginPath(); ctx.moveTo(400, 240); ctx.lineTo(400, 470); ctx.stroke();
-        // Leaf Left
-        ctx.beginPath(); ctx.moveTo(400, 350); ctx.quadraticCurveTo(300, 320, 320, 380); ctx.quadraticCurveTo(360, 390, 400, 350); ctx.stroke();
-        // Leaf Right
-        ctx.beginPath(); ctx.moveTo(400, 380); ctx.quadraticCurveTo(500, 350, 480, 410); ctx.quadraticCurveTo(440, 420, 400, 380); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(400, 350); ctx.quadraticCurveTo(290, 310, 310, 380); ctx.quadraticCurveTo(360, 395, 400, 350); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(310, 380); ctx.lineTo(365, 360); ctx.stroke(); // Leaf vein
+        ctx.beginPath(); ctx.moveTo(400, 380); ctx.quadraticCurveTo(510, 340, 490, 410); ctx.quadraticCurveTo(440, 425, 400, 380); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(490, 410); ctx.lineTo(435, 390); ctx.stroke(); // Leaf vein
         break;
       }
       case 'rocket': {
-        // Body
-        ctx.beginPath(); ctx.moveTo(400, 50); ctx.quadraticCurveTo(480, 150, 480, 350); ctx.lineTo(320, 350); ctx.quadraticCurveTo(320, 150, 400, 50); ctx.stroke();
-        // Window
-        ctx.beginPath(); ctx.arc(400, 200, 42, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 200, 28, 0, Math.PI * 2); ctx.stroke();
-        // Fins
-        ctx.beginPath(); ctx.moveTo(320, 290); ctx.lineTo(240, 390); ctx.lineTo(320, 370); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(480, 290); ctx.lineTo(560, 390); ctx.lineTo(480, 370); ctx.closePath(); ctx.stroke();
-        // Nozzle & Flame
-        ctx.beginPath(); ctx.rect(360, 350, 80, 25); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(360, 375); ctx.lineTo(400, 470); ctx.lineTo(440, 375); ctx.closePath(); ctx.stroke();
+        // 3D Cylindrical Body
+        ctx.beginPath(); ctx.moveTo(400, 45); ctx.quadraticCurveTo(485, 140, 485, 350); ctx.lineTo(315, 350); ctx.quadraticCurveTo(315, 140, 400, 45); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 150, 80, 15, 0, 0, Math.PI * 2); ctx.stroke(); // Curvature ring
+        ctx.beginPath(); ctx.ellipse(400, 270, 82, 15, 0, 0, Math.PI * 2); ctx.stroke();
+        // 3D Double Porthole Window
+        ctx.beginPath(); ctx.arc(400, 210, 44, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 210, 30, 0, Math.PI * 2); ctx.stroke();
+        // 3D Fins with thickness
+        ctx.beginPath(); ctx.moveTo(315, 290); ctx.lineTo(230, 390); ctx.lineTo(315, 370); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(485, 290); ctx.lineTo(570, 390); ctx.lineTo(485, 370); ctx.closePath(); ctx.stroke();
+        // 3D Engine Thruster & Flames
+        ctx.beginPath(); ctx.rect(355, 350, 90, 28); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(355, 378); ctx.lineTo(400, 480); ctx.lineTo(445, 378); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(375, 378); ctx.lineTo(400, 440); ctx.lineTo(425, 378); ctx.stroke(); // Inner flame
         break;
       }
       case 'boat': {
-        // Waves
+        // 3D Water Waves
         ctx.beginPath();
         for (let x = 0; x < 800; x += 80) {
           ctx.arc(x + 40, 420, 40, 0, Math.PI);
         }
         ctx.stroke();
-        // Hull
-        ctx.beginPath(); ctx.moveTo(180, 330); ctx.lineTo(240, 420); ctx.lineTo(580, 420); ctx.lineTo(660, 330); ctx.closePath(); ctx.stroke();
-        // Mast
-        ctx.beginPath(); ctx.moveTo(400, 330); ctx.lineTo(400, 70); ctx.stroke();
-        // Sails
-        ctx.beginPath(); ctx.moveTo(410, 85); ctx.lineTo(600, 310); ctx.lineTo(410, 310); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(390, 110); ctx.lineTo(240, 310); ctx.lineTo(390, 310); ctx.closePath(); ctx.stroke();
+        // 3D Hull
+        ctx.beginPath(); ctx.moveTo(170, 330); ctx.lineTo(230, 420); ctx.lineTo(590, 420); ctx.lineTo(670, 330); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(170, 330); ctx.lineTo(670, 330); ctx.stroke();
+        ctx.beginPath(); ctx.rect(340, 280, 120, 50); ctx.stroke(); // 3D Deck cabin
+        // Mast & 3D Billowed Sails
+        ctx.beginPath(); ctx.moveTo(400, 280); ctx.lineTo(400, 60); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(410, 75); ctx.quadraticCurveTo(530, 180, 610, 300); ctx.lineTo(410, 300); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(390, 100); ctx.quadraticCurveTo(280, 190, 230, 300); ctx.lineTo(390, 300); ctx.closePath(); ctx.stroke();
         break;
       }
       case 'butterfly': {
-        // Body
-        ctx.beginPath(); ctx.ellipse(400, 250, 16, 115, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 115, 20, 0, Math.PI * 2); ctx.stroke();
+        // 3D Body & Head
+        ctx.beginPath(); ctx.ellipse(400, 250, 18, 115, 0, 0, Math.PI * 2); ctx.stroke();
+        for (let y = 160; y <= 340; y += 30) {
+          ctx.beginPath(); ctx.ellipse(400, y, 17, 6, 0, 0, Math.PI * 2); ctx.stroke(); // 3D Body segments
+        }
+        ctx.beginPath(); ctx.arc(400, 115, 22, 0, Math.PI * 2); ctx.stroke();
         // Antennae
-        ctx.beginPath(); ctx.moveTo(390, 95); ctx.quadraticCurveTo(340, 35, 320, 55); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(410, 95); ctx.quadraticCurveTo(460, 35, 480, 55); ctx.stroke();
-        // Wings Left
-        ctx.beginPath(); ctx.moveTo(385, 175); ctx.quadraticCurveTo(160, 35, 180, 240); ctx.quadraticCurveTo(240, 310, 385, 260); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(385, 270); ctx.quadraticCurveTo(220, 320, 260, 430); ctx.quadraticCurveTo(350, 420, 385, 330); ctx.stroke();
-        // Wings Right
-        ctx.beginPath(); ctx.moveTo(415, 175); ctx.quadraticCurveTo(640, 35, 620, 240); ctx.quadraticCurveTo(560, 310, 415, 260); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(415, 270); ctx.quadraticCurveTo(580, 320, 540, 430); ctx.quadraticCurveTo(450, 420, 415, 330); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(390, 95); ctx.quadraticCurveTo(340, 30, 315, 55); ctx.stroke();
+        ctx.beginPath(); ctx.arc(315, 55, 6, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(410, 95); ctx.quadraticCurveTo(460, 30, 485, 55); ctx.stroke();
+        ctx.beginPath(); ctx.arc(485, 55, 6, 0, Math.PI * 2); ctx.stroke();
+        // 3D Wings Left & Veins
+        ctx.beginPath(); ctx.moveTo(385, 175); ctx.quadraticCurveTo(150, 30, 175, 240); ctx.quadraticCurveTo(240, 310, 385, 260); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(385, 270); ctx.quadraticCurveTo(210, 320, 250, 435); ctx.quadraticCurveTo(350, 425, 385, 330); ctx.stroke();
+        // 3D Wings Right & Veins
+        ctx.beginPath(); ctx.moveTo(415, 175); ctx.quadraticCurveTo(650, 30, 625, 240); ctx.quadraticCurveTo(560, 310, 415, 260); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(415, 270); ctx.quadraticCurveTo(590, 320, 550, 435); ctx.quadraticCurveTo(450, 425, 415, 330); ctx.stroke();
         break;
       }
       case 'fish': {
-        // Body
-        ctx.beginPath(); ctx.ellipse(380, 250, 175, 105, 0, 0, Math.PI * 2); ctx.stroke();
-        // Tail
-        ctx.beginPath(); ctx.moveTo(555, 250); ctx.lineTo(685, 150); ctx.lineTo(645, 250); ctx.lineTo(685, 350); ctx.closePath(); ctx.stroke();
-        // Eye
-        ctx.beginPath(); ctx.arc(270, 210, 17, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(270, 210, 7, 0, Math.PI * 2); ctx.stroke();
-        // Gills
-        ctx.beginPath(); ctx.arc(310, 250, 58, -Math.PI / 3, Math.PI / 3); ctx.stroke();
-        // Bubbles
-        ctx.beginPath(); ctx.arc(150, 170, 14, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(120, 110, 20, 0, Math.PI * 2); ctx.stroke();
+        // 3D Body & Tail
+        ctx.beginPath(); ctx.ellipse(380, 250, 180, 110, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(558, 250); ctx.lineTo(690, 140); ctx.lineTo(650, 250); ctx.lineTo(690, 360); ctx.closePath(); ctx.stroke();
+        // 3D Eye & Gill
+        ctx.beginPath(); ctx.arc(265, 210, 18, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(265, 210, 8, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(310, 250, 60, -Math.PI / 3, Math.PI / 3); ctx.stroke();
+        // 3D Scales Matrix
+        for (let x = 360; x <= 480; x += 40) {
+          for (let y = 180; y <= 300; y += 40) {
+            ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI); ctx.stroke();
+          }
+        }
+        // 3D Fins & Bubbles
+        ctx.beginPath(); ctx.moveTo(380, 140); ctx.quadraticCurveTo(420, 80, 460, 145); ctx.stroke(); // Dorsal fin
+        ctx.beginPath(); ctx.arc(140, 160, 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(110, 100, 22, 0, Math.PI * 2); ctx.stroke();
         break;
       }
       case 'giraffe': {
-        ctx.beginPath(); ctx.rect(360, 150, 45, 230); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(400, 140, 35, 22, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.rect(310, 360, 170, 85); ctx.stroke();
-        ctx.beginPath(); ctx.rect(330, 445, 18, 55); ctx.stroke();
-        ctx.beginPath(); ctx.rect(440, 445, 18, 55); ctx.stroke();
-        ctx.beginPath(); ctx.arc(382, 210, 12, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(382, 280, 14, 0, Math.PI * 2); ctx.stroke();
+        // Neck & Head
+        ctx.beginPath(); ctx.rect(355, 145, 50, 235); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(395, 135, 38, 24, 0, 0, Math.PI * 2); ctx.stroke();
+        // 3D Ossicones (Horns) & Ears
+        ctx.beginPath(); ctx.rect(365, 95, 8, 25); ctx.stroke();
+        ctx.beginPath(); ctx.arc(369, 90, 8, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.rect(395, 95, 8, 25); ctx.stroke();
+        ctx.beginPath(); ctx.arc(399, 90, 8, 0, Math.PI * 2); ctx.stroke();
+        // Body & Legs
+        ctx.beginPath(); ctx.rect(305, 360, 180, 90); ctx.stroke();
+        ctx.beginPath(); ctx.rect(325, 450, 20, 55); ctx.stroke();
+        ctx.beginPath(); ctx.rect(445, 450, 20, 55); ctx.stroke();
+        // 3D Body Spots
+        ctx.beginPath(); ctx.arc(380, 200, 14, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(378, 260, 16, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(382, 320, 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(350, 400, 18, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(430, 400, 20, 0, Math.PI * 2); ctx.stroke();
         break;
       }
       case 'elephant': {
-        ctx.beginPath(); ctx.ellipse(420, 300, 150, 105, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(250, 260, 75, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(290, 250, 45, 70, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(190, 280); ctx.quadraticCurveTo(110, 320, 140, 390); ctx.quadraticCurveTo(160, 400, 170, 370); ctx.stroke();
-        ctx.beginPath(); ctx.rect(340, 400, 38, 75); ctx.stroke();
-        ctx.beginPath(); ctx.rect(460, 400, 38, 75); ctx.stroke();
+        // Body & Head
+        ctx.beginPath(); ctx.ellipse(430, 300, 155, 110, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(250, 260, 80, 0, Math.PI * 2); ctx.stroke();
+        // 3D Ear with inner fold
+        ctx.beginPath(); ctx.ellipse(300, 250, 48, 75, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(300, 250, 32, 55, 0, 0, Math.PI * 2); ctx.stroke();
+        // 3D Curved Trunk with wrinkles
+        ctx.beginPath(); ctx.moveTo(190, 280); ctx.quadraticCurveTo(100, 320, 135, 400); ctx.quadraticCurveTo(160, 410, 175, 375); ctx.stroke();
+        for (let y = 300; y <= 370; y += 18) {
+          ctx.beginPath(); ctx.arc(170, y, 15, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+        }
+        // 3D Tusk
+        ctx.beginPath(); ctx.moveTo(210, 320); ctx.quadraticCurveTo(150, 350, 180, 370); ctx.stroke();
+        // Legs
+        ctx.beginPath(); ctx.rect(345, 400, 42, 80); ctx.stroke();
+        ctx.beginPath(); ctx.rect(475, 400, 42, 80); ctx.stroke();
         break;
       }
       case 'turtle': {
-        ctx.beginPath(); ctx.arc(400, 290, 140, Math.PI, 0); ctx.lineTo(260, 290); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(330, 290); ctx.lineTo(370, 190); ctx.lineTo(430, 190); ctx.lineTo(470, 290); ctx.stroke();
-        ctx.beginPath(); ctx.arc(200, 285, 40, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(185, 275, 5, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(300, 315, 28, 18, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(500, 315, 28, 18, 0, 0, Math.PI * 2); ctx.stroke();
+        // 3D Shell Dome
+        ctx.beginPath(); ctx.arc(400, 290, 145, Math.PI, 0); ctx.lineTo(255, 290); ctx.closePath(); ctx.stroke();
+        // 3D Hexagonal Scutes Pattern
+        ctx.beginPath(); ctx.moveTo(330, 290); ctx.lineTo(365, 185); ctx.lineTo(435, 185); ctx.lineTo(470, 290); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(365, 185); ctx.lineTo(400, 145); ctx.lineTo(435, 185); ctx.stroke();
+        // Head & Flippers
+        ctx.beginPath(); ctx.arc(195, 285, 42, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(180, 275, 6, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(290, 320, 32, 20, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(510, 320, 32, 20, 0, 0, Math.PI * 2); ctx.stroke();
         break;
       }
       case 'airplane': {
-        ctx.beginPath(); ctx.ellipse(400, 250, 230, 38, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(360, 215); ctx.lineTo(300, 85); ctx.lineTo(430, 85); ctx.lineTo(440, 215); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(600, 220); ctx.lineTo(650, 130); ctx.lineTo(680, 130); ctx.lineTo(630, 240); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.arc(210, 245, 18, 0, Math.PI * 2); ctx.stroke();
+        // 3D Fuselage Body Cylinder
+        ctx.beginPath(); ctx.ellipse(400, 250, 240, 40, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(200, 250, 12, 40, 0, 0, Math.PI * 2); ctx.stroke(); // Cockpit nose ring
+        // 3D Wings & Engines
+        ctx.beginPath(); ctx.moveTo(360, 215); ctx.lineTo(290, 75); ctx.lineTo(430, 75); ctx.lineTo(440, 215); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.rect(340, 130, 40, 20); ctx.stroke(); // Jet Engine L
+        ctx.beginPath(); ctx.moveTo(600, 220); ctx.lineTo(655, 120); ctx.lineTo(685, 120); ctx.lineTo(635, 240); ctx.closePath(); ctx.stroke();
+        // Cockpit Windscreen
+        ctx.beginPath(); ctx.arc(205, 240, 18, 0, Math.PI * 2); ctx.stroke();
         break;
       }
       case 'bicycle': {
-        ctx.beginPath(); ctx.arc(220, 350, 75, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(580, 350, 75, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(220, 350); ctx.lineTo(340, 350); ctx.lineTo(440, 220); ctx.lineTo(320, 220); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(440, 220); ctx.lineTo(450, 150); ctx.lineTo(480, 150); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(320, 220); ctx.lineTo(320, 180); ctx.lineTo(290, 180); ctx.lineTo(340, 180); ctx.stroke();
+        // 3D Wheels with Rim Depth & Spokes
+        ctx.beginPath(); ctx.arc(210, 350, 78, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(210, 350, 68, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(590, 350, 78, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(590, 350, 68, 0, Math.PI * 2); ctx.stroke();
+        for (let a = 0; a < 360; a += 60) {
+          const rad = (a * Math.PI) / 180;
+          ctx.beginPath(); ctx.moveTo(210, 350); ctx.lineTo(210 + Math.cos(rad) * 68, 350 + Math.sin(rad) * 68); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(590, 350); ctx.lineTo(590 + Math.cos(rad) * 68, 350 + Math.sin(rad) * 68); ctx.stroke();
+        }
+        // 3D Frame & Handlebars
+        ctx.beginPath(); ctx.moveTo(210, 350); ctx.lineTo(330, 350); ctx.lineTo(440, 220); ctx.lineTo(310, 220); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(440, 220); ctx.lineTo(455, 145); ctx.lineTo(490, 145); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(310, 220); ctx.lineTo(310, 175); ctx.lineTo(275, 175); ctx.lineTo(335, 175); ctx.stroke();
         break;
       }
       case 'pizza': {
-        ctx.beginPath(); ctx.moveTo(400, 80); ctx.lineTo(180, 420); ctx.lineTo(620, 420); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.quadraticCurveTo(400, 460, 180, 420); ctx.stroke();
-        ctx.beginPath(); ctx.arc(340, 250, 24, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(450, 290, 24, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(380, 360, 24, 0, Math.PI * 2); ctx.stroke();
+        // 3D Slice & Curved Thick Crust
+        ctx.beginPath(); ctx.moveTo(400, 70); ctx.lineTo(170, 420); ctx.lineTo(630, 420); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.quadraticCurveTo(400, 470, 170, 420); ctx.stroke();
+        ctx.beginPath(); ctx.quadraticCurveTo(400, 440, 170, 400); ctx.stroke(); // Crust border line
+        // 3D Pepperoni Slices
+        [ {x:340, y:240}, {x:450, y:280}, {x:370, y:350} ].forEach(p => {
+          ctx.beginPath(); ctx.arc(p.x, p.y, 26, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.arc(p.x - 3, p.y - 3, 20, 0, Math.PI * 2); ctx.stroke();
+        });
         break;
       }
       case 'donut': {
-        ctx.beginPath(); ctx.arc(400, 250, 150, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 250, 50, 0, Math.PI * 2); ctx.stroke();
-        [280, 350, 450, 510].forEach((x, i) => {
-          ctx.beginPath(); ctx.rect(x, 150 + i * 40, 16, 8); ctx.stroke();
+        // 3D Donut Torus & Inner Hole Depth
+        ctx.beginPath(); ctx.arc(400, 250, 155, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 250, 52, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(405, 255, 48, 0, Math.PI * 2); ctx.stroke(); // Inner rim 3D shadow
+        // 3D Wavy Icing Layer
+        ctx.beginPath();
+        for (let a = 0; a <= 360; a += 30) {
+          const rad = (a * Math.PI) / 180;
+          const r = 110 + Math.sin(a * 4) * 12;
+          const px = 400 + Math.cos(rad) * r;
+          const py = 250 + Math.sin(rad) * r;
+          if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.stroke();
+        // Sprinkles
+        [ {x:280, y:170}, {x:490, y:180}, {x:520, y:270}, {x:300, y:310} ].forEach(s => {
+          ctx.beginPath(); ctx.rect(s.x, s.y, 18, 8); ctx.stroke();
         });
         break;
       }
       case 'rainbow': {
-        [280, 240, 200, 160].forEach((r) => {
-          ctx.beginPath(); ctx.arc(400, 400, r, Math.PI, 0); ctx.stroke();
+        [300, 260, 220, 180, 140].forEach((r) => {
+          ctx.beginPath(); ctx.arc(400, 410, r, Math.PI, 0); ctx.stroke();
         });
-        ctx.beginPath(); ctx.arc(120, 390, 40, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(680, 390, 40, 0, Math.PI * 2); ctx.stroke();
+        // 3D Puffy Base Clouds
+        ctx.beginPath(); ctx.arc(100, 400, 45, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(145, 380, 55, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(700, 400, 45, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(655, 380, 55, 0, Math.PI * 2); ctx.stroke();
         break;
       }
       case 'sunflower': {
-        ctx.beginPath(); ctx.arc(400, 200, 65, 0, Math.PI * 2); ctx.stroke();
-        for (let i = 0; i < 12; i++) {
-          const a = (i * Math.PI) / 6;
-          ctx.beginPath(); ctx.arc(400 + Math.cos(a) * 95, 200 + Math.sin(a) * 95, 30, 0, Math.PI * 2); ctx.stroke();
+        // 3D Seed Matrix Center
+        ctx.beginPath(); ctx.arc(400, 195, 70, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 195, 45, 0, Math.PI * 2); ctx.stroke();
+        for (let i = 0; i < 14; i++) {
+          const a = (i * Math.PI) / 7;
+          ctx.beginPath(); ctx.arc(400 + Math.cos(a) * 102, 195 + Math.sin(a) * 102, 32, 0, Math.PI * 2); ctx.stroke();
         }
         ctx.beginPath(); ctx.moveTo(400, 265); ctx.lineTo(400, 480); ctx.stroke();
         break;
       }
       case 'sun_cloud': {
-        ctx.beginPath(); ctx.arc(240, 180, 55, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(460, 270, 55, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(540, 240, 65, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(620, 270, 50, 0, Math.PI * 2); ctx.stroke();
+        // 3D Sun
+        ctx.beginPath(); ctx.arc(250, 175, 60, 0, Math.PI * 2); ctx.stroke();
+        for (let a = 0; a < 360; a += 45) {
+          const rad = (a * Math.PI) / 180;
+          ctx.beginPath();
+          ctx.moveTo(250 + Math.cos(rad) * 70, 175 + Math.sin(rad) * 70);
+          ctx.lineTo(250 + Math.cos(rad) * 88, 175 + Math.sin(rad) * 88);
+          ctx.stroke();
+        }
+        // 3D Cloud Lobes
+        ctx.beginPath(); ctx.arc(440, 270, 55, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(525, 235, 70, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(610, 270, 52, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.rect(440, 275, 170, 50); ctx.stroke();
         break;
       }
       case 'dinosaur': {
-        ctx.beginPath(); ctx.moveTo(160, 160); ctx.quadraticCurveTo(240, 160, 250, 270); ctx.quadraticCurveTo(360, 250, 480, 270); ctx.lineTo(640, 370); ctx.quadraticCurveTo(460, 420, 280, 370); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.rect(300, 370, 35, 75); ctx.stroke();
-        ctx.beginPath(); ctx.rect(420, 370, 35, 75); ctx.stroke();
+        // 3D Dino Body Contour
+        ctx.beginPath(); ctx.moveTo(150, 150); ctx.quadraticCurveTo(240, 150, 250, 260); ctx.quadraticCurveTo(360, 240, 480, 260); ctx.lineTo(660, 365); ctx.quadraticCurveTo(460, 425, 270, 370); ctx.closePath(); ctx.stroke();
+        // 3D Dorsal Spikes / Plates
+        for (let x = 270; x <= 550; x += 45) {
+          ctx.beginPath(); ctx.moveTo(x, 240); ctx.lineTo(x + 20, 190); ctx.lineTo(x + 40, 245); ctx.closePath(); ctx.stroke();
+        }
+        // Legs & Claws
+        ctx.beginPath(); ctx.rect(295, 370, 38, 80); ctx.stroke();
+        ctx.beginPath(); ctx.rect(425, 370, 38, 80); ctx.stroke();
+        ctx.beginPath(); ctx.arc(185, 175, 8, 0, Math.PI * 2); ctx.stroke(); // Eye
         break;
       }
       case 'dragon': {
-        ctx.beginPath(); ctx.moveTo(350, 170); ctx.lineTo(220, 60); ctx.lineTo(280, 210); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(400, 280, 120, 80, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(400, 200); ctx.lineTo(550, 100); ctx.lineTo(500, 270); ctx.closePath(); ctx.stroke();
+        // 3D Horns & Head
+        ctx.beginPath(); ctx.moveTo(340, 160); ctx.lineTo(210, 50); ctx.lineTo(270, 200); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 280, 125, 85, 0, 0, Math.PI * 2); ctx.stroke();
+        // 3D Bat Wings with Bone Ribs
+        ctx.beginPath(); ctx.moveTo(400, 200); ctx.lineTo(570, 90); ctx.lineTo(510, 270); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(470, 140); ctx.lineTo(510, 270); ctx.stroke();
+        // 3D Fire Flame Breath
+        ctx.beginPath(); ctx.moveTo(270, 200); ctx.quadraticCurveTo(160, 170, 100, 240); ctx.quadraticCurveTo(180, 260, 270, 230); ctx.stroke();
         break;
       }
       case 'robot': {
-        ctx.beginPath(); ctx.rect(320, 80, 160, 120); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(400, 80); ctx.lineTo(400, 30); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 20, 10, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(360, 130, 18, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(440, 130, 18, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.rect(280, 230, 240, 180); ctx.stroke();
-        ctx.beginPath(); ctx.rect(200, 240, 50, 120); ctx.stroke();
-        ctx.beginPath(); ctx.rect(550, 240, 50, 120); ctx.stroke();
+        // 3D Head Box & Antenna Light
+        ctx.beginPath(); ctx.rect(315, 75, 170, 125); ctx.stroke();
+        ctx.beginPath(); ctx.rect(325, 85, 150, 105); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(400, 75); ctx.lineTo(400, 25); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 18, 12, 0, Math.PI * 2); ctx.stroke();
+        // Eyes & Visor
+        ctx.beginPath(); ctx.arc(355, 130, 20, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(445, 130, 20, 0, Math.PI * 2); ctx.stroke();
+        // 3D Chest Box & Joints
+        ctx.beginPath(); ctx.rect(275, 230, 250, 185); ctx.stroke();
+        ctx.beginPath(); ctx.rect(315, 260, 170, 120); ctx.stroke(); // Chest panel
+        ctx.beginPath(); ctx.rect(195, 240, 55, 125); ctx.stroke();
+        ctx.beginPath(); ctx.rect(550, 240, 55, 125); ctx.stroke();
         break;
       }
       case 'alien_ufo': {
-        ctx.beginPath(); ctx.arc(400, 210, 95, Math.PI, 0); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(400, 230, 230, 48, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 180, 25, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(250, 275); ctx.lineTo(140, 460); ctx.lineTo(660, 460); ctx.lineTo(550, 275); ctx.closePath(); ctx.stroke();
+        // 3D Glass Dome & Saucer Rim
+        ctx.beginPath(); ctx.arc(400, 210, 98, Math.PI, 0); ctx.stroke();
+        ctx.beginPath(); ctx.arc(370, 170, 25, 0, Math.PI * 2); ctx.stroke(); // Reflection arc
+        ctx.beginPath(); ctx.ellipse(400, 230, 240, 50, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 235, 220, 32, 0, 0, Math.PI * 2); ctx.stroke();
+        // Signal Orbs
+        [-160, -80, 0, 80, 160].forEach(dx => {
+          ctx.beginPath(); ctx.arc(400 + dx, 235, 12, 0, Math.PI * 2); ctx.stroke();
+        });
+        // 3D Beam Cone
+        ctx.beginPath(); ctx.moveTo(250, 275); ctx.lineTo(130, 465); ctx.lineTo(670, 465); ctx.lineTo(550, 275); ctx.closePath(); ctx.stroke();
         break;
       }
       case 'teddy_bear': {
-        ctx.beginPath(); ctx.arc(400, 180, 85, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(320, 115, 32, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(480, 115, 32, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(400, 350, 105, 90, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(275, 360, 32, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(525, 360, 32, 0, Math.PI * 2); ctx.stroke();
+        // Head & 3D Inner Ears
+        ctx.beginPath(); ctx.arc(400, 180, 88, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(315, 110, 35, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(315, 110, 20, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(485, 110, 35, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(485, 110, 20, 0, Math.PI * 2); ctx.stroke();
+        // Snout & Bowtie
+        ctx.beginPath(); ctx.ellipse(400, 205, 32, 22, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 195, 10, 0, Math.PI * 2); ctx.stroke(); // Nose
+        // 3D Body & Paws
+        ctx.beginPath(); ctx.ellipse(400, 355, 110, 92, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 355, 65, 55, 0, 0, Math.PI * 2); ctx.stroke(); // Belly patch
+        ctx.beginPath(); ctx.arc(270, 365, 34, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(530, 365, 34, 0, Math.PI * 2); ctx.stroke();
         break;
       }
       case 'crown': {
-        ctx.beginPath(); ctx.rect(220, 340, 360, 45); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(220, 340); ctx.lineTo(200, 150); ctx.lineTo(310, 260); ctx.lineTo(400, 110); ctx.lineTo(490, 260); ctx.lineTo(600, 150); ctx.lineTo(580, 340); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.arc(200, 135, 14, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 95, 16, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(600, 135, 14, 0, Math.PI * 2); ctx.stroke();
+        // 3D Base Cylinder Rim
+        ctx.beginPath(); ctx.rect(210, 340, 380, 48); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 340, 190, 14, 0, 0, Math.PI * 2); ctx.stroke();
+        // Crown Spikes & 3D Jewels
+        ctx.beginPath(); ctx.moveTo(210, 340); ctx.lineTo(190, 145); ctx.lineTo(305, 255); ctx.lineTo(400, 105); ctx.lineTo(495, 255); ctx.lineTo(610, 145); ctx.lineTo(590, 340); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(190, 130, 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 90, 18, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(610, 130, 15, 0, Math.PI * 2); ctx.stroke();
+        // Gems on headband
+        [-110, 0, 110].forEach(dx => {
+          ctx.beginPath(); ctx.rect(390 + dx, 352, 20, 24); ctx.stroke();
+        });
         break;
       }
       case 'glasses': {
-        ctx.beginPath(); ctx.rect(170, 200, 190, 130); ctx.stroke();
-        ctx.beginPath(); ctx.rect(440, 200, 190, 130); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 240, 35, Math.PI, 0); ctx.stroke();
+        // 3D Beveled Rims
+        ctx.beginPath(); ctx.rect(160, 195, 200, 140); ctx.stroke();
+        ctx.beginPath(); ctx.rect(172, 207, 176, 116); ctx.stroke(); // Inner rim
+        ctx.beginPath(); ctx.rect(440, 195, 200, 140); ctx.stroke();
+        ctx.beginPath(); ctx.rect(452, 207, 176, 116); ctx.stroke(); // Inner rim
+        // 3D Nose Bridge & Temples
+        ctx.beginPath(); ctx.arc(400, 240, 40, Math.PI, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(160, 220); ctx.lineTo(90, 180); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(640, 220); ctx.lineTo(710, 180); ctx.stroke();
         break;
       }
       case 'football': {
-        ctx.beginPath(); ctx.arc(400, 250, 155, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(400, 200); ctx.lineTo(440, 230); ctx.lineTo(425, 280); ctx.lineTo(375, 280); ctx.lineTo(360, 230); ctx.closePath(); ctx.stroke();
+        // 3D Sphere & Pentagons Grid
+        ctx.beginPath(); ctx.arc(400, 250, 160, 0, Math.PI * 2); ctx.stroke();
+        // Center Pentagon
+        ctx.beginPath(); ctx.moveTo(400, 195); ctx.lineTo(445, 228); ctx.lineTo(430, 282); ctx.lineTo(370, 282); ctx.lineTo(355, 228); ctx.closePath(); ctx.stroke();
+        // 3D Seam lines to outer rim
+        ctx.beginPath(); ctx.moveTo(400, 195); ctx.lineTo(400, 90); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(445, 228); ctx.lineTo(540, 190); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(430, 282); ctx.lineTo(520, 350); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(370, 282); ctx.lineTo(280, 350); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(355, 228); ctx.lineTo(260, 190); ctx.stroke();
         break;
       }
       case 'guitar': {
-        ctx.beginPath(); ctx.ellipse(400, 360, 105, 95, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(400, 230, 75, 65, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(400, 250, 28, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.rect(385, 30, 30, 170); ctx.stroke();
+        // 3D Body & Side Depth Contour
+        ctx.beginPath(); ctx.ellipse(400, 360, 110, 98, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(400, 225, 78, 68, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(415, 365, 110, 98, 0, 0, Math.PI * 2); ctx.stroke(); // 3D Side depth edge
+        // Soundhole & Neck
+        ctx.beginPath(); ctx.arc(400, 250, 30, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(400, 250, 35, 0, Math.PI * 2); ctx.stroke(); // Inner rim
+        ctx.beginPath(); ctx.rect(385, 25, 30, 175); ctx.stroke();
+        ctx.beginPath(); ctx.rect(375, 15, 50, 30); ctx.stroke(); // Headstock
         break;
       }
       case 'palm_tree': {
+        // Ground & 3D Segmented Trunk
         ctx.beginPath(); ctx.arc(400, 520, 300, Math.PI, 0); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(370, 430); ctx.quadraticCurveTo(390, 280, 350, 180); ctx.lineTo(390, 180); ctx.quadraticCurveTo(410, 280, 430, 430); ctx.closePath(); ctx.stroke();
-        ctx.beginPath(); ctx.arc(360, 190, 12, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(380, 195, 12, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(365, 430); ctx.quadraticCurveTo(390, 280, 350, 180); ctx.lineTo(390, 180); ctx.quadraticCurveTo(410, 280, 430, 430); ctx.closePath(); ctx.stroke();
+        for (let y = 200; y <= 410; y += 30) {
+          ctx.beginPath(); ctx.ellipse(390, y, 25, 8, 0, 0, Math.PI * 2); ctx.stroke(); // 3D Trunk rings
+        }
+        // Coconuts & 3D Fronds
+        ctx.beginPath(); ctx.arc(355, 190, 14, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(380, 195, 14, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(368, 208, 14, 0, Math.PI * 2); ctx.stroke();
         break;
       }
       default:
         break;
     }
+
+    ctx.restore();
   }, []);
 
   // Initialize canvas background & draw active sketch outline if any
