@@ -660,6 +660,52 @@ class DatabaseService {
       console.error('Error clearing session:', err);
     }
   }
+
+  // --- REAL-TIME USER PRESENCE (ONLINE STATUS) ---
+  public sendHeartbeat(familyId: string, userId: string): void {
+    if (!familyId || !userId) return;
+    try {
+      const key = `asta_presence_${familyId}`;
+      const raw = localStorage.getItem(key);
+      const map: Record<string, number> = raw ? JSON.parse(raw) : {};
+      map[userId] = Date.now();
+      localStorage.setItem(key, JSON.stringify(map));
+
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const ch = new BroadcastChannel(`asta_presence_${familyId}`);
+        ch.postMessage({ type: 'PRESENCE_HEARTBEAT', userId, timestamp: Date.now() });
+        ch.close();
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  public getOnlineUserIds(familyId: string, currentUserId?: string): string[] {
+    if (!familyId) return currentUserId ? [currentUserId] : [];
+    try {
+      const key = `asta_presence_${familyId}`;
+      const raw = localStorage.getItem(key);
+      const map: Record<string, number> = raw ? JSON.parse(raw) : {};
+      const now = Date.now();
+      const onlineIds: string[] = [];
+
+      Object.keys(map).forEach((uid) => {
+        // Mark online if heartbeat received within last 25 seconds
+        if (now - map[uid] < 25000) {
+          onlineIds.push(uid);
+        }
+      });
+
+      if (currentUserId && !onlineIds.includes(currentUserId)) {
+        onlineIds.push(currentUserId);
+      }
+
+      return onlineIds;
+    } catch {
+      return currentUserId ? [currentUserId] : [];
+    }
+  }
 }
 
 export const db = new DatabaseService();

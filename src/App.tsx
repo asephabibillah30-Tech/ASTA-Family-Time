@@ -55,19 +55,26 @@ export function App() {
   // Map family members from auth into Game Players
   const integratedPlayers: Player[] = useMemo(() => {
     if (auth.familyMembers && auth.familyMembers.length > 0) {
-      return auth.familyMembers.map((m) => ({
-        id: m.id,
-        name: m.fullName,
-        avatar: m.avatar,
-        rolePreset: m.roleTitle,
-        score: m.lovePoints || 0,
-        cardsCompleted: 0,
-        color: m.color || 'bg-blue-500',
-        isOnline: auth.currentUser?.id === m.id || m.isOnline === true
-      }));
+      return auth.familyMembers.map((m) => {
+        const isOnline = 
+          auth.currentUser?.id === m.id || 
+          (auth.onlineUserIds && auth.onlineUserIds.includes(m.id)) || 
+          m.isOnline === true;
+
+        return {
+          id: m.id,
+          name: m.fullName,
+          avatar: m.avatar,
+          rolePreset: m.roleTitle,
+          score: m.lovePoints || 0,
+          cardsCompleted: 0,
+          color: m.color || 'bg-blue-500',
+          isOnline
+        };
+      });
     }
     return game.players;
-  }, [auth.familyMembers, auth.currentUser, game.players]);
+  }, [auth.familyMembers, auth.currentUser, auth.onlineUserIds, game.players]);
 
   // Switch tabs
   const handleSelectTab = (tab: MainTab) => {

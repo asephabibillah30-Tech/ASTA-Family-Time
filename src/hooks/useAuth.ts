@@ -29,6 +29,12 @@ export function useAuth() {
     return db.getUsersByFamily(sess.family.id);
   });
 
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>(() => {
+    const sess = db.getSavedSession();
+    if (!sess?.family) return sess?.user ? [sess.user.id] : [];
+    return db.getOnlineUserIds(sess.family.id, sess.user?.id);
+  });
+
   // Refresh members & sync active family data whenever current family changes
   useEffect(() => {
     if (currentFamily?.id) {
@@ -36,6 +42,44 @@ export function useAuth() {
       db.syncActiveFamily(currentFamily.id).catch(() => {});
     }
   }, [currentFamily]);
+
+  // Heartbeat & Presence Listener (Multi-tab & Real-time Presence Sync)
+  useEffect(() => {
+    if (!currentFamily?.id || !currentUser?.id) return;
+
+    // Send immediate heartbeat for active user
+    db.sendHeartbeat(currentFamily.id, currentUser.id);
+    setOnlineUserIds(db.getOnlineUserIds(currentFamily.id, currentUser.id));
+
+    // Send heartbeat every 5 seconds
+    const interval = setInterval(() => {
+      db.sendHeartbeat(currentFamily.id, currentUser.id);
+      setOnlineUserIds(db.getOnlineUserIds(currentFamily.id, currentUser.id));
+    }, 5000);
+
+    // Listen to storage events and BroadcastChannel for real-time presence across tabs/devices
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === `asta_presence_${currentFamily.id}`) {
+        setOnlineUserIds(db.getOnlineUserIds(currentFamily.id, currentUser.id));
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+
+    let ch: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      ch = new BroadcastChannel(`asta_presence_${currentFamily.id}`);
+      ch.onmessage = () => {
+        setOnlineUserIds(db.getOnlineUserIds(currentFamily.id, currentUser.id));
+      };
+    }
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+      if (ch) ch.close();
+    };
+  }, [currentFamily?.id, currentUser?.id]);
 
   // Login as Head of Family
   const loginHead = async (usernameOrEmail: string, passwordOrPin: string) => {
@@ -134,6 +178,7 @@ export function useAuth() {
     currentUser,
     currentFamily,
     familyMembers,
+    onlineUserIds,
     isAuthenticated,
     isHead: currentUser?.isHead || false,
     loginHead,
