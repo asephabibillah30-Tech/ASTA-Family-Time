@@ -142,8 +142,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header 
-      className="sticky top-0 z-40 w-full flex flex-col bg-white dark:bg-slate-900 shadow-md select-none transition-colors"
-      style={{ paddingTop: 'max(1.75rem, env(safe-area-inset-top, 1.75rem))' }}
+      className="sticky top-0 z-50 w-full flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-md select-none transition-colors"
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       
       {/* 1. TOP ANNOUNCEMENT BAR (Visible on sm+ viewports to clear mobile top notch area) */}
