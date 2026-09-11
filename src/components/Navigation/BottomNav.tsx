@@ -10,12 +10,12 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab }) => {
   const navItems: { id: MainTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'home', label: 'Home', icon: <Home className="w-5 h-5" /> },
-    { id: 'chat', label: 'Obrolan', icon: <MessageCircleHeart className="w-5 h-5" /> },
-    { id: 'game', label: 'Game', icon: <Gamepad2 className="w-5 h-5" /> },
-    { id: 'quality_time', label: 'Aktivitas', icon: <Heart className="w-5 h-5" /> },
-    { id: 'memories', label: 'Kenangan', icon: <Camera className="w-5 h-5" /> },
-    { id: 'family_hub', label: 'Keluarga', icon: <Users className="w-5 h-5" /> },
+    { id: 'home', label: 'Home', icon: <Home className="w-5 h-5" strokeWidth={2.5} /> },
+    { id: 'chat', label: 'Obrolan', icon: <MessageCircleHeart className="w-5 h-5" strokeWidth={2.5} /> },
+    { id: 'game', label: 'Game', icon: <Gamepad2 className="w-5 h-5" strokeWidth={2.5} /> },
+    { id: 'quality_time', label: 'Aktivitas', icon: <Heart className="w-5 h-5" strokeWidth={2.5} /> },
+    { id: 'memories', label: 'Kenangan', icon: <Camera className="w-5 h-5" strokeWidth={2.5} /> },
+    { id: 'family_hub', label: 'Keluarga', icon: <Users className="w-5 h-5" strokeWidth={2.5} /> },
   ];
 
   return (
@@ -25,7 +25,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))',
       }}
     >
-      <div className="px-1 sm:px-4 py-1 flex items-center justify-around">
+      <div className="px-1.5 sm:px-4 py-1.5 flex items-center justify-around">
         {navItems.map((item) => {
           const isActive = currentTab === item.id;
 
@@ -36,24 +36,26 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
                 sound.playClick();
                 onSelectTab(item.id);
               }}
-              className={`flex flex-col items-center justify-center relative py-1 px-1 sm:px-3 rounded-2xl transition-all active:scale-90 ${
+              className={`flex flex-col items-center justify-center relative py-1 px-1.5 sm:px-3 rounded-2xl transition-all active:scale-95 ${
                 isActive
-                  ? 'text-family-coral dark:text-rose-400 font-extrabold -translate-y-0.5'
-                  : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 font-bold'
+                  ? 'bg-gradient-to-r from-rose-500 to-indigo-600 text-white font-black shadow-md -translate-y-0.5 scale-105'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 font-extrabold'
               }`}
             >
               <div
-                className={`p-1 sm:p-1.5 rounded-2xl transition-all ${
+                className={`p-1 sm:p-1.5 rounded-xl transition-all ${
                   isActive
-                    ? 'bg-rose-50 dark:bg-rose-950/60 shadow-xs'
+                    ? 'bg-white/20 backdrop-blur-md'
                     : 'bg-transparent'
                 }`}
               >
                 {item.icon}
               </div>
-              <span className="text-[9px] sm:text-[10px] tracking-tight mt-0.5 truncate max-w-[54px] sm:max-w-none">{item.label}</span>
+              <span className={`text-[9px] sm:text-[10px] tracking-tight mt-0.5 truncate max-w-[54px] sm:max-w-none ${isActive ? 'font-black text-white' : 'font-extrabold'}`}>
+                {item.label}
+              </span>
               {isActive && (
-                <span className="w-1.5 h-1.5 rounded-full bg-family-coral mt-0.5 animate-pulse-fast" />
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-300 mt-0.5 animate-pulse" />
               )}
             </button>
           );
