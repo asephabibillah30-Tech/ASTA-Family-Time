@@ -231,6 +231,7 @@ export function moderateChatMessage(text: string): ChatModerationResult {
   // Deobfuscation Engine:
   // 1. Converts leetspeak numbers/symbols to letters (0->o, 3->e, 1->i, 4->a, 5->s, 7->t, 8->b, @->a, $->s, !->i)
   // 2. Removes all spaces, dots, dashes, underscores, and special characters to detect obfuscated words like "n g e n t 0 t"
+  // 3. Replaces wildcard symbols (*, #, @, $, %, +, -, _, ., !, ?) with vowel placeholders
   const deobfuscatedText = lowerText
     .replace(/0/g, 'o')
     .replace(/1/g, 'i')
@@ -244,7 +245,40 @@ export function moderateChatMessage(text: string): ChatModerationResult {
     .replace(/!/g, 'i')
     .replace(/[^a-z0-9]/g, '');
 
-  const testPattern = (pattern: RegExp) => pattern.test(lowerText) || pattern.test(deobfuscatedText);
+  const wildcardSubstitutedText = lowerText
+    .replace(/[*#@$%+\-_.\?!]/g, 'o')
+    .replace(/[^a-z0-9]/g, '');
+
+  const testPattern = (pattern: RegExp) => 
+    pattern.test(lowerText) || pattern.test(deobfuscatedText) || pattern.test(wildcardSubstitutedText);
+
+  // Fuzzy Wildcard & Asterisk Stem Masking Engine (Catches symbol masking like "ngen**t*t", "k*nt*l", "b*k*p", "t*r*r", "b*n*h")
+  const wildcardMaskedPatterns = [
+    /n\s*g\s*[\w*#@$%+\-_.\?!]{1,6}\s*t\s*[\w*#@$%+\-_.\?!]{1,4}\s*t/i,
+    /k\s*[\w*#@$%+\-_.\?!]{1,3}\s*n\s*t\s*[\w*#@$%+\-_.\?!]{1,3}\s*l/i,
+    /m\s*[\w*#@$%+\-_.\?!]{1,3}\s*m\s*[\w*#@$%+\-_.\?!]{1,3}\s*k/i,
+    /p\s*[\w*#@$%+\-_.\?!]{1,3}\s*p\s*[\w*#@$%+\-_.\?!]{1,3}\s*k/i,
+    /b\s*[\w*#@$%+\-_.\?!]{1,3}\s*k\s*[\w*#@$%+\-_.\?!]{1,3}\s*p/i,
+    /p\s*[\w*#@$%+\-_.\?!]{1,3}\s*r\s*n\s*[\w*#@$%+\-_.\?!]{1,3}/i,
+    /s\s*[\w*#@$%+\-_.\?!]{1,3}\s*k\s*s/i,
+    /n\s*g\s*[\w*#@$%+\-_.\?!]{1,4}\s*w\s*[\w*#@$%+\-_.\?!]{1,2}/i,
+    /c\s*[\w*#@$%+\-_.\?!]{1,3}\s*b\s*[\w*#@$%+\-_.\?!]{1,3}\s*l/i,
+    /t\s*[\w*#@$%+\-_.\?!]{1,3}\s*r\s*[\w*#@$%+\-_.\?!]{1,3}\s*r/i,
+    /b\s*[\w*#@$%+\-_.\?!]{1,3}\s*n\s*[\w*#@$%+\-_.\?!]{1,3}\s*h/i,
+    /b\s*[*#@$%+\-_.\?!10oO]{1,3}\s*m/i,
+    /r\s*[\w*#@$%+\-_.\?!]{1,3}\s*c\s*[\w*#@$%+\-_.\?!]{1,3}\s*n/i,
+    /r\s*[\w*#@$%+\-_.\?!]{1,3}\s*m\s*p\s*[\w*#@$%+\-_.\?!]{1,3}\s*k/i,
+    /c\s*[\w*#@$%+\-_.\?!]{1,3}\s*l\s*[\w*#@$%+\-_.\?!]{1,3}\s*k/i
+  ];
+
+  for (const pattern of wildcardMaskedPatterns) {
+    if (pattern.test(lowerText)) {
+      return {
+        isValid: false,
+        errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+      };
+    }
+  }
 
   // 1. Check for Criminal, Terrorism, Violence, Harm, & Evil Planning Keywords (Anti-Obfuscation Mode)
   const dangerousPatterns = [
