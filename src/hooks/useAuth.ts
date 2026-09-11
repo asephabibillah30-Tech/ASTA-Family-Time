@@ -214,10 +214,15 @@ export function useAuth() {
   // Switch active profile within the same family
   const switchActiveMember = (memberId: string) => {
     if (!currentFamily) return;
+    // Mark previous user offline before switching
+    if (currentUser?.id) {
+      db.markUserOffline(currentFamily.id, currentUser.id);
+    }
     const member = familyMembers.find(m => m.id === memberId);
     if (member) {
       setCurrentUser(member);
       db.saveSession({ user: member, family: currentFamily });
+      db.sendHeartbeat(currentFamily.id, member.id);
       sound.playClick();
     }
   };

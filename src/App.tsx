@@ -58,8 +58,7 @@ export function App() {
       return auth.familyMembers.map((m) => {
         const isOnline = 
           auth.currentUser?.id === m.id || 
-          (auth.onlineUserIds && auth.onlineUserIds.includes(m.id)) || 
-          m.isOnline === true;
+          Boolean(auth.onlineUserIds && auth.onlineUserIds.includes(m.id));
 
         return {
           id: m.id,
