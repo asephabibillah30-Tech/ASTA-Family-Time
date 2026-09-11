@@ -113,6 +113,7 @@ export function App() {
         currentScreen={game.screen}
         currentUser={auth.currentUser ?? undefined}
         currentFamily={auth.currentFamily ?? undefined}
+        familyMembers={auth.familyMembers}
         notifications={family.notifications}
         unreadNotifCount={family.unreadNotifCount}
         onMarkAllNotifsRead={family.markAllNotifsAsRead}
@@ -128,6 +129,7 @@ export function App() {
         }}
         onOpenManageFamily={() => setIsManageFamilyOpen(true)}
         onOpenSecurityCenter={() => setIsSecurityCenterOpen(true)}
+        onSwitchMember={auth.switchActiveMember}
         onLogout={auth.logout}
         onRestartGame={game.restartSamePlayers}
       />

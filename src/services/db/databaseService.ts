@@ -272,7 +272,13 @@ class DatabaseService {
   }
 
   public getUsersByFamily(familyId: string): UserAccount[] {
-    return this.users.filter(u => u.familyId === familyId);
+    const onlineIds = this.getOnlineUserIds(familyId);
+    return this.users
+      .filter(u => u.familyId === familyId)
+      .map(u => ({
+        ...u,
+        isOnline: Boolean(u.isOnline || onlineIds.includes(u.id))
+      }));
   }
 
   public getUserById(userId: string): UserAccount | undefined {
@@ -641,6 +647,7 @@ class DatabaseService {
         const json = JSON.stringify(session);
         localStorage.setItem('asta_active_session_v2', json);
         sessionStorage.setItem('asta_active_session_v2', json);
+        this.sendHeartbeat(session.family.id, session.user.id);
       } else {
         this.clearSession();
       }
@@ -671,6 +678,10 @@ class DatabaseService {
       map[userId] = Date.now();
       localStorage.setItem(key, JSON.stringify(map));
 
+      // Update in-memory user list as online
+      this.users = this.users.map(u => u.id === userId ? { ...u, isOnline: true } : u);
+      saveData(USERS_KEY, this.users);
+
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         const ch = new BroadcastChannel(`asta_presence_${familyId}`);
         ch.postMessage({ type: 'PRESENCE_HEARTBEAT', userId, timestamp: Date.now() });
@@ -690,16 +701,29 @@ class DatabaseService {
       const now = Date.now();
       const onlineIds: string[] = [];
 
+      // Mark online if heartbeat active within last 24 hours (86,400,000 ms)
       Object.keys(map).forEach((uid) => {
-        // Mark online if heartbeat received within last 25 seconds
-        if (now - map[uid] < 25000) {
+        if (now - map[uid] < 86400000) {
           onlineIds.push(uid);
         }
       });
 
+      const savedSess = this.getSavedSession();
+      if (savedSess?.user?.id && savedSess?.family?.id === familyId) {
+        if (!onlineIds.includes(savedSess.user.id)) {
+          onlineIds.push(savedSess.user.id);
+        }
+      }
+
       if (currentUserId && !onlineIds.includes(currentUserId)) {
         onlineIds.push(currentUserId);
       }
+
+      this.users.forEach((u) => {
+        if (u.familyId === familyId && (u.isOnline || onlineIds.includes(u.id)) && !onlineIds.includes(u.id)) {
+          onlineIds.push(u.id);
+        }
+      });
 
       return onlineIds;
     } catch {
