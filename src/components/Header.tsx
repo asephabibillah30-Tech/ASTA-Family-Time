@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   currentScreen,
   currentUser,
   currentFamily,
-  familyMembers = [],
+  familyMembers: _familyMembers = [],
   notifications = [],
   unreadNotifCount: _unreadNotifCount = 0,
   onMarkAllNotifsRead,
@@ -49,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
   onGoHome,
   onOpenManageFamily,
   onOpenSecurityCenter,
-  onSwitchMember,
+  onSwitchMember: _onSwitchMember,
   onLogout,
   onRestartGame,
 }) => {
@@ -523,44 +523,6 @@ export const Header: React.FC<HeaderProps> = ({
                       </button>
                     )}
 
-                    {/* Quick Profile Switcher */}
-                    {familyMembers && familyMembers.length > 1 && onSwitchMember && (
-                      <div className="pt-2 border-t border-indigo-100 dark:border-slate-700 space-y-1">
-                        <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-300 block px-1">
-                          Beralih Sesi Anggota:
-                        </span>
-                        <div className="flex flex-col gap-1 max-h-36 overflow-y-auto">
-                          {familyMembers.map((m) => {
-                            const isCurrent = m.id === currentUser?.id;
-                            return (
-                              <button
-                                key={m.id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  sound.playClick();
-                                  onSwitchMember(m.id);
-                                  setShowProfileMenu(false);
-                                }}
-                                className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-bold flex items-center justify-between transition-all ${
-                                  isCurrent 
-                                    ? 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-700' 
-                                    : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
-                                }`}
-                              >
-                                <div className="flex items-center gap-1.5 truncate">
-                                  <span className="text-base">{m.avatar}</span>
-                                  <span className="truncate max-w-[90px]">{m.fullName}</span>
-                                  <span className="text-[9px] text-slate-400 font-normal">({m.roleTitle})</span>
-                                </div>
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-extrabold ${m.isOnline ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
-                                  {m.isOnline ? '🟢 Online' : '🔴 Offline'}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
 
                     {/* Sound / Dark Mode toggles inside profile dropdown for mobile convenience */}
                     <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-700/50 sm:hidden">
