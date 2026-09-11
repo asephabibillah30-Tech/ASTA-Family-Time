@@ -639,70 +639,59 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
       {/* SPECIAL UNIFIED COMPACT LAYOUT WHEN IN FORCED LANDSCAPE MODE */}
       {isForcedLandscapeMode ? (
-        <>
-          {/* 1. STICKY COMPACT UNIFIED TOP HEADER BAR */}
-          <div className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md rounded-2xl px-2 py-1 border border-indigo-500/40 flex items-center justify-between gap-1.5 shrink-0 h-10 shadow-lg text-white">
-            {/* Left: Back + Drawer Badge */}
-            <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+        <div className="flex flex-col h-screen w-screen bg-slate-950 p-1.5 sm:p-2 gap-1.5 overflow-hidden text-white font-body">
+          {/* 1. TOP HEADER BAR */}
+          <div className="bg-slate-900/90 rounded-2xl px-3 py-1 border border-indigo-500/30 flex items-center justify-between gap-2 shrink-0 h-10 shadow-md">
+            {/* Left: Logo & Back */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => {
                   sound.playClick();
                   onBack();
                 }}
-                className="p-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 active:scale-95 transition-all shrink-0"
+                className="p-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 active:scale-95 transition-all"
                 title="Kembali ke Hub Game"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-4 h-4" />
               </button>
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="text-base shrink-0">{currentDrawer.avatar}</span>
-                <span className="font-black text-[11px] text-white truncate max-w-[85px] sm:max-w-[120px]">
-                  {currentDrawer.name}
-                </span>
-                <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-900 font-black text-[8px] shrink-0">
-                  Pelukis
-                </span>
-              </div>
-            </div>
-
-            {/* Center-Left: Secret Word / Masked Hint */}
-            <div className="flex items-center gap-1 shrink-0 bg-slate-900 px-2 py-0.5 rounded-lg border border-amber-400/30">
-              <span className="text-[9px] text-slate-400 font-bold hidden sm:inline">RAHASIA:</span>
-              <span className="font-display font-black text-xs sm:text-sm text-amber-300 tracking-wider">
-                {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
+              <span className="font-display font-black text-sm sm:text-base bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-400 bg-clip-text text-transparent">
+                ART FRENZY 🎨
               </span>
             </div>
 
-            {/* Center-Right: Timer */}
-            <div className="text-[11px] font-black text-amber-400 flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded-lg border border-amber-400/30 shrink-0">
-              <Clock className="w-3 h-3 animate-spin text-amber-400" />
-              <span>{timeLeft}s</span>
-            </div>
-
-            {/* Right: Round + Power-Ups + Exit Landscape Button */}
-            <div className="flex items-center gap-1 shrink-0">
+            {/* Center: Power-Up Boosters */}
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={handleUseExtraLetters}
                 disabled={hasUsedExtraLetters}
-                className="px-1.5 py-0.5 rounded-lg bg-amber-400 text-slate-900 font-black text-[9px] disabled:opacity-40"
-                title="Buka +2 Huruf"
+                className="px-2 py-0.5 rounded-lg bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-black text-[10px] sm:text-xs shadow-xs disabled:opacity-40 flex items-center gap-1"
+                title="Buka +2 Huruf Petunjuk"
               >
-                +2H
+                <Lightbulb className="w-3.5 h-3.5" />
+                <span>+2H</span>
               </button>
               <button
                 onClick={handleUseAddTime}
                 disabled={hasUsedAddTime}
-                className="px-1.5 py-0.5 rounded-lg bg-emerald-500 text-white font-black text-[9px] disabled:opacity-40"
-                title="Tambah +15s Waktu"
+                className="px-2 py-0.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black text-[10px] sm:text-xs shadow-xs disabled:opacity-40 flex items-center gap-1"
+                title="Tambah +15 Waktu"
               >
-                +15s
+                <Zap className="w-3.5 h-3.5" />
+                <span>+15s</span>
               </button>
-              <div className="bg-indigo-600 px-1.5 py-0.5 rounded-lg text-[9px] font-black text-amber-300 hidden sm:block">
-                R{currentRound}/{maxRounds}
+            </div>
+
+            {/* Right: Round + Score + Exit Landscape */}
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-0.5 rounded-lg bg-purple-700/80 text-purple-200 text-[10px] font-black uppercase tracking-wide border border-purple-500/30">
+                ROUND {currentRound}/{maxRounds}
+              </div>
+              <div className="px-2 py-0.5 rounded-lg bg-indigo-900/80 text-amber-300 text-[10px] font-black uppercase tracking-wide border border-indigo-600/40">
+                SCORE: {players.find(p => p.id === '1')?.score || 1250}
               </div>
               <button
                 onClick={handleRequestLandscape}
-                className="px-2 py-0.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] flex items-center gap-1 shadow-sm border border-rose-400 active:scale-95 shrink-0"
+                className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] flex items-center gap-1 shadow-sm border border-rose-400 active:scale-95"
                 title="Keluar dari mode landscape"
               >
                 <span>❌ Keluar</span>
@@ -710,17 +699,53 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             </div>
           </div>
 
-          {/* 2. MAIN SCROLLABLE GAMEPLAY BODY (Canvas & Sidebars Grid) */}
-          <div className="grid grid-cols-12 gap-2 flex-1 min-h-0 pt-1 overflow-y-auto touch-pan-y pb-2">
+          {/* 2. MAIN 2-COLUMN LANDSCAPE CONTENT GRID */}
+          <div className="grid grid-cols-12 gap-2 flex-1 min-h-0 overflow-hidden">
             
-            {/* Left Column: Canvas Area (8 cols on Tablet/Landscape, 12 cols on narrow portrait) */}
-            <div className="col-span-12 sm:col-span-7 md:col-span-8 flex flex-col flex-1 min-h-[220px] sm:min-h-0 h-full">
+            {/* LEFT / CENTER REGION: 75% Width (Cols 1-9 on sm/md/lg) */}
+            <div className="col-span-9 flex flex-col flex-1 min-h-0 bg-slate-900/60 rounded-2xl p-1.5 border border-slate-800 shadow-inner overflow-hidden">
+              
+              {/* Tablet Frame Header */}
+              <div className="bg-slate-900 rounded-xl p-1.5 border border-slate-700/80 flex items-center justify-between gap-2 shrink-0 mb-1">
+                {/* Left: Drawer Avatar & Name & Timer */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-amber-600 p-0.5 shrink-0 shadow-sm">
+                    <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-sm font-bold">
+                      {currentDrawer.avatar}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-display font-black text-xs text-white truncate max-w-[100px] sm:max-w-[140px]">
+                      {currentDrawer.name}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black text-[9px] shrink-0">
+                      Pelukis
+                    </span>
+                  </div>
+                  <div className="px-2 py-0.5 rounded-md bg-rose-950/80 border border-rose-600/50 text-rose-300 text-xs font-black flex items-center gap-1 shrink-0">
+                    <Clock className="w-3 h-3 text-rose-400 animate-pulse" />
+                    <span>⏱️ 00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}s</span>
+                  </div>
+                </div>
+
+                {/* Right / Center: Secret Word Title */}
+                <div className="flex items-center gap-2 bg-slate-950 px-3 py-1 rounded-lg border border-sky-500/40 shrink-0">
+                  <span className="text-[10px] text-slate-400 font-extrabold uppercase">KATA RAHASIA:</span>
+                  <span className="font-display font-black text-sm sm:text-base text-sky-300 tracking-wider">
+                    {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Round winner banner if any */}
               {roundWinnerMsg && (
-                <div className="bg-emerald-500 text-white p-1 rounded-xl font-display font-black text-xs text-center shadow-md animate-bounce mb-1">
+                <div className="bg-emerald-500 text-white py-1 px-3 rounded-xl font-display font-black text-xs text-center shadow-md animate-bounce mb-1 shrink-0">
                   {roundWinnerMsg}
                 </div>
               )}
-              <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-center overflow-hidden">
+
+              {/* Canvas Canvas Area */}
+              <div className="flex-1 min-h-0 w-full relative overflow-hidden rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center">
                 <DrawingCanvas
                   isReadOnly={false}
                   width={800}
@@ -730,64 +755,99 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               </div>
             </div>
 
-            {/* Right Column: Leaderboard & Chat Box (4 cols on Tablet/Landscape, 12 cols on narrow portrait) */}
-            <div className="col-span-12 sm:col-span-5 md:col-span-4 flex flex-col gap-1.5 min-h-[300px] overflow-y-auto touch-pan-y">
+            {/* RIGHT REGION: 25% Width (Cols 10-12) */}
+            <div className="col-span-3 flex flex-col gap-1.5 flex-1 min-h-0 overflow-hidden">
               
-              {/* Top Half: Leaderboard (Compact height) */}
-              <div className="bg-slate-900/90 rounded-2xl p-2 border border-slate-700 space-y-1 flex flex-col max-h-[160px] overflow-y-auto shrink-0">
-                <div className="flex items-center justify-between border-b pb-1 border-slate-700">
-                  <span className="font-display font-black text-[11px] text-white flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5 text-rose-400" /> PEMAIN ({players.length})
+              {/* TOP CARD: PLAYERS PANEL */}
+              <div className="bg-slate-900/90 rounded-2xl border border-slate-700/80 flex flex-col flex-1 min-h-0 overflow-hidden shadow-sm">
+                {/* Coral Rounded Header */}
+                <div className="bg-gradient-to-r from-rose-500 to-amber-500 px-2.5 py-1 flex items-center justify-between shrink-0">
+                  <span className="font-display font-black text-xs text-white flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5" /> PEMAIN ({players.length})
                   </span>
-                  <span className="text-[9px] font-black text-emerald-400">ONLINE</span>
+                  <span className="text-[9px] font-black text-amber-100 bg-amber-900/40 px-1.5 py-0.2 rounded-full">
+                    LIVE
+                  </span>
                 </div>
-                <div className="space-y-1 overflow-y-auto pr-1">
-                  {players.map((p) => (
-                    <div key={p.id} className="p-1 rounded-xl bg-slate-800 flex items-center justify-between text-[10px]">
-                      <div className="flex items-center gap-1 min-w-0">
-                        <span>{p.avatar}</span>
-                        <span className="font-bold truncate text-white">{p.name}</span>
+
+                {/* Player List */}
+                <div className="p-1.5 space-y-1 overflow-y-auto flex-1 text-xs">
+                  {players.map((p) => {
+                    const isDrawer = p.id === currentDrawer.id;
+                    return (
+                      <div
+                        key={p.id}
+                        className={`p-1.5 rounded-xl flex items-center justify-between gap-1 transition-all ${
+                          isDrawer
+                            ? 'bg-amber-500/20 border border-amber-400/50 text-white font-black'
+                            : 'bg-slate-800/80 text-slate-200 font-bold'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-sm shrink-0">{p.avatar}</span>
+                          <span className="truncate text-[11px]">{p.name}</span>
+                          {isDrawer && (
+                            <Pencil className="w-3 h-3 text-amber-400 animate-bounce shrink-0" />
+                          )}
+                        </div>
+                        <span className="text-[10px] font-black text-amber-300 shrink-0">
+                          {p.score} pts
+                        </span>
                       </div>
-                      <span className="font-black text-amber-300 shrink-0">{p.score}pts</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Bottom Half: Chat Stream & Guess Box */}
-              <div className="bg-slate-900/90 rounded-2xl p-2 border border-slate-700 flex flex-col flex-1 min-h-[180px] overflow-hidden">
-                <div className="flex items-center justify-between border-b pb-1 border-slate-700 shrink-0">
-                  <span className="font-display font-black text-[11px] text-white flex items-center gap-1">
-                    <MessageSquare className="w-3.5 h-3.5 text-amber-400" /> TEBAKAN
+              {/* BOTTOM CARD: CHAT & GUESS PANEL */}
+              <div className="bg-slate-900/90 rounded-2xl border border-slate-700/80 flex flex-col flex-1 min-h-0 overflow-hidden shadow-sm">
+                {/* Orange/Indigo Rounded Header */}
+                <div className="bg-gradient-to-r from-amber-500 to-indigo-600 px-2.5 py-1 flex items-center justify-between shrink-0">
+                  <span className="font-display font-black text-xs text-white flex items-center gap-1">
+                    <MessageSquare className="w-3.5 h-3.5" /> CHAT & TEBAKAN
                   </span>
                 </div>
-                <div className="flex-1 overflow-y-auto py-1 space-y-1 text-[10px] pr-1 max-h-[220px]">
+
+                {/* Chat Log Stream */}
+                <div className="p-1.5 space-y-1 overflow-y-auto flex-1 text-[11px] pr-1">
                   {chatMessages.map((msg) => (
                     <div
                       key={msg.id}
                       className={`p-1.5 rounded-xl leading-tight ${
-                        msg.isSystem ? 'bg-amber-900/60 text-amber-200 font-bold text-center' :
-                        msg.isCorrect ? 'bg-emerald-900/80 text-emerald-200 font-black' :
-                        'bg-slate-800 text-slate-200'
+                        msg.isSystem
+                          ? 'bg-amber-950/70 text-amber-200 font-extrabold text-center border border-amber-700/40 text-[10px]'
+                          : msg.isCorrect
+                          ? 'bg-emerald-900/80 text-emerald-100 font-black border border-emerald-500/40'
+                          : 'bg-slate-800/90 text-slate-200'
                       }`}
                     >
-                      {!msg.isSystem && <span className="font-bold text-amber-300 mr-1">{msg.senderName}:</span>}
+                      {!msg.isSystem && (
+                        <span className="font-black text-amber-300 mr-1">
+                          {msg.senderName}:
+                        </span>
+                      )}
                       <span>{msg.text}</span>
                     </div>
                   ))}
                 </div>
-                <form onSubmit={handleSendGuess} className="pt-1 flex items-center gap-1 shrink-0">
+
+                {/* Chat Input & Submit Form */}
+                <form
+                  onSubmit={handleSendGuess}
+                  className="p-1.5 bg-slate-950 border-t border-slate-800 flex items-center gap-1 shrink-0"
+                >
                   <input
                     type="text"
                     value={guessInput}
                     onChange={(e) => setGuessInput(e.target.value)}
-                    placeholder="Tebak kata..."
-                    className="flex-1 px-2 py-1 rounded-xl bg-slate-800 text-white font-bold text-[10px] border border-slate-700 focus:outline-none"
+                    placeholder="Ketik tebakan..."
+                    className="flex-1 px-2.5 py-1.5 rounded-xl bg-slate-800 text-white font-bold text-[11px] border border-slate-700 focus:outline-none focus:border-amber-400 placeholder:text-slate-500"
                   />
                   <button
                     type="submit"
-                    className="px-2 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] shrink-0"
+                    className="px-2.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black text-[10px] flex items-center gap-1 shrink-0 shadow-sm"
                   >
+                    <span>TEBAK</span>
                     <Send className="w-3 h-3" />
                   </button>
                 </form>
@@ -796,7 +856,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             </div>
 
           </div>
-        </>
+        </div>
       ) : (
         /* STANDARD PORTRAIT LAYOUT */
         <>
