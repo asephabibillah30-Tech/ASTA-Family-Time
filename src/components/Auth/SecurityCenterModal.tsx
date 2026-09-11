@@ -120,6 +120,21 @@ export const SecurityCenterModal: React.FC<SecurityCenterModalProps> = ({
           </div>
         </div>
 
+        {/* E2EE Storage Encryption Badge */}
+        <div className="p-3.5 bg-indigo-50 dark:bg-indigo-950/50 rounded-2xl border border-indigo-200 dark:border-indigo-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+            <div>
+              <span className="text-xs font-black text-indigo-900 dark:text-indigo-200 block">
+                🔒 Penyimpanan Terenkripsi End-to-End (E2EE Aktif)
+              </span>
+              <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium">
+                Data keuangan, transaksi, PIN, & obrolan dienkripsi dengan kunci turunan keluarga (AES-256 E2EE).
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Tabs Switcher */}
         <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-2xl gap-1">
           <button

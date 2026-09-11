@@ -1,5 +1,5 @@
 import type { FamilyAccount, UserAccount, RegisterHeadDTO, AddMemberDTO, AuthSession } from '../../types/auth';
-import { fastHashSync, sanitizeInput } from '../../utils/security';
+import { fastHashSync, sanitizeInput, encryptStorageData, decryptStorageData } from '../../utils/security';
 import { postgresService } from './postgresService';
 
 // Storage Keys
@@ -22,7 +22,8 @@ function loadData<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
     if (raw) {
-      const parsed = JSON.parse(raw);
+      const decrypted = decryptStorageData<T>(raw, key);
+      const parsed = decrypted !== null ? decrypted : (typeof raw === 'string' ? JSON.parse(raw) : raw);
       if (Array.isArray(parsed)) {
         // Filter out legacy demo family and users
         const cleaned = parsed.filter((item: any) => 
@@ -35,7 +36,7 @@ function loadData<T>(key: string, fallback: T): T {
         );
         return cleaned as unknown as T;
       }
-      return parsed;
+      return parsed as T;
     }
   } catch (err) {
     console.error('Error loading DB key:', key, err);
@@ -45,7 +46,8 @@ function loadData<T>(key: string, fallback: T): T {
 
 function saveData<T>(key: string, data: T): void {
   try {
-    localStorage.setItem(key, JSON.stringify(data));
+    const encrypted = encryptStorageData(data, key);
+    localStorage.setItem(key, encrypted);
   } catch (err) {
     console.error('Error saving DB key:', key, err);
   }

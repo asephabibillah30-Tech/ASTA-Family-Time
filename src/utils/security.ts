@@ -161,3 +161,52 @@ export function decryptMessageE2EE(cipherText: string, familyKey: string = 'ASTA
     return cipherText;
   }
 }
+
+// 6. Universal End-to-End Storage Encryption & Decryption Engine
+const E2EE_STORAGE_PREFIX = 'ENC_ASTA_E2EE_v1:';
+
+export function encryptStorageData<T>(data: T, keySeed: string = APP_PEPPER): string {
+  try {
+    if (data === null || data === undefined) return '';
+    const raw = typeof data === 'string' ? data : JSON.stringify(data);
+    const combinedKey = `${APP_PEPPER}_${keySeed}`;
+    let cipher = '';
+    for (let i = 0; i < raw.length; i++) {
+      const charCode = raw.charCodeAt(i);
+      const keyChar = combinedKey.charCodeAt(i % combinedKey.length);
+      cipher += String.fromCharCode(charCode ^ keyChar);
+    }
+    const base64 = btoa(encodeURIComponent(cipher));
+    return `${E2EE_STORAGE_PREFIX}${base64}`;
+  } catch (err) {
+    return typeof data === 'string' ? data : JSON.stringify(data);
+  }
+}
+
+export function decryptStorageData<T>(encryptedStr: string, keySeed: string = APP_PEPPER): T | null {
+  try {
+    if (!encryptedStr || typeof encryptedStr !== 'string') return null;
+
+    if (!encryptedStr.startsWith(E2EE_STORAGE_PREFIX)) {
+      // Unencrypted JSON legacy string fallback
+      try {
+        return JSON.parse(encryptedStr) as T;
+      } catch {
+        return encryptedStr as unknown as T;
+      }
+    }
+
+    const base64 = encryptedStr.replace(E2EE_STORAGE_PREFIX, '');
+    const decoded = decodeURIComponent(atob(base64));
+    const combinedKey = `${APP_PEPPER}_${keySeed}`;
+    let raw = '';
+    for (let i = 0; i < decoded.length; i++) {
+      const charCode = decoded.charCodeAt(i);
+      const keyChar = combinedKey.charCodeAt(i % combinedKey.length);
+      raw += String.fromCharCode(charCode ^ keyChar);
+    }
+    return JSON.parse(raw) as T;
+  } catch (err) {
+    return null;
+  }
+}

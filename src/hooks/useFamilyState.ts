@@ -23,6 +23,7 @@ import { supabaseFamilyService } from '../services/db/supabaseFamilyService';
 import { postgresService } from '../services/db/postgresService';
 import { sound } from '../utils/sound';
 import { fireBurstConfetti, fireSmallPop } from '../utils/confetti';
+import { encryptStorageData, decryptStorageData } from '../utils/security';
 
 const MAX_NOTIF_BYTES = 5 * 1024 * 1024; // 5 MB PWA Cache Limit
 
@@ -64,9 +65,10 @@ function loadStorage<T>(key: string, familyId: string, defaultValue: T): T {
   try {
     const saved = localStorage.getItem('asta_family_' + familyId + '_' + key);
     if (saved) {
-      const parsed = JSON.parse(saved) as T;
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      if (!Array.isArray(parsed) && parsed !== null && parsed !== undefined) return parsed;
+      const decrypted = decryptStorageData<T>(saved, familyId);
+      const parsed = decrypted !== null ? decrypted : (typeof saved === 'string' ? JSON.parse(saved) : saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed as unknown as T;
+      if (!Array.isArray(parsed) && parsed !== null && parsed !== undefined) return parsed as T;
     }
   } catch (e) {
     console.error('Error loading storage for', key, e);
@@ -76,7 +78,8 @@ function loadStorage<T>(key: string, familyId: string, defaultValue: T): T {
 
 function saveStorage<T>(key: string, familyId: string, value: T) {
   try {
-    localStorage.setItem('asta_family_' + familyId + '_' + key, JSON.stringify(value));
+    const encrypted = encryptStorageData(value, familyId);
+    localStorage.setItem('asta_family_' + familyId + '_' + key, encrypted);
     if (typeof window !== 'undefined' && 'caches' in window) {
       caches.open('asta-pwa-storage-v1').then((cache) => {
         cache.put('/api/storage/' + familyId + '/' + key, new Response(JSON.stringify(value), {
