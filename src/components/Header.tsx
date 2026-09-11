@@ -262,78 +262,93 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </button>
 
-              {/* Notification Popup Dropdown */}
+              {/* Notification Popup Dropdown (100% Responsive for All Devices) */}
               {showNotifToast && (
-                <div 
-                  className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-white dark:bg-slate-800 rounded-3xl p-4 border-2 border-amber-200 dark:border-amber-900 shadow-bubbly-lg space-y-3 animate-pop-in text-xs max-h-[80vh] flex flex-col"
-                >
-                  <div className="flex items-center justify-between border-b pb-2.5 dark:border-slate-700 shrink-0">
-                    <span className="font-extrabold text-slate-800 dark:text-white flex items-center gap-1.5 text-sm">
-                      <Bell className="w-4 h-4 text-amber-500" /> Notifikasi Aktivitas
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {activeUnreadCount > 0 && (
-                        <span className="text-[10px] bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded-full font-black">
-                          {activeUnreadCount} Baru
-                        </span>
-                      )}
-                      {onClearNotifs && userNotifications.length > 0 && (
+                <>
+                  {/* Backdrop Overlay for Mobile to easily close on tap outside */}
+                  <div 
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 sm:hidden"
+                    onClick={() => setShowNotifToast(false)}
+                  />
+
+                  <div 
+                    className="fixed top-16 left-3 right-3 sm:absolute sm:top-12 sm:right-0 sm:left-auto sm:w-96 z-50 max-w-full bg-white dark:bg-slate-800 rounded-3xl p-4 border-2 border-amber-200 dark:border-amber-900 shadow-bubbly-lg space-y-3 animate-pop-in text-xs max-h-[80vh] flex flex-col"
+                  >
+                    <div className="flex items-center justify-between border-b pb-2.5 dark:border-slate-700 shrink-0">
+                      <span className="font-extrabold text-slate-800 dark:text-white flex items-center gap-1.5 text-sm">
+                        <Bell className="w-4 h-4 text-amber-500" /> Notifikasi Aktivitas
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {activeUnreadCount > 0 && (
+                          <span className="text-[10px] bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded-full font-black">
+                            {activeUnreadCount} Baru
+                          </span>
+                        )}
+                        {onClearNotifs && userNotifications.length > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onClearNotifs();
+                            }}
+                            className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                            title="Hapus Semua Notifikasi"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onClearNotifs();
-                          }}
-                          className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                          title="Hapus Semua Notifikasi"
+                          onClick={() => setShowNotifToast(false)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 sm:hidden"
+                          title="Tutup Notifikasi"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <X className="w-4 h-4" />
                         </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 overflow-y-auto max-h-64 pr-1 text-slate-600 dark:text-slate-300">
+                      {userNotifications.length === 0 ? (
+                        <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs font-medium">
+                          Belum ada notifikasi aktivitas baru untuk Anda.
+                        </div>
+                      ) : (
+                        userNotifications.map((n) => (
+                          <div
+                            key={n.id}
+                            className={`p-2.5 rounded-2xl border transition-all flex items-start gap-2.5 ${
+                              n.read
+                                ? 'bg-slate-50 dark:bg-slate-700/40 border-slate-100 dark:border-slate-700/60'
+                                : 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 font-medium'
+                            }`}
+                          >
+                            <span className="text-lg shrink-0 mt-0.5">{n.icon || '🔔'}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="font-extrabold text-[11px] text-slate-800 dark:text-slate-100 truncate">
+                                  {n.title || 'Aktivitas'}
+                                </span>
+                                <span className="text-[9px] text-slate-400 shrink-0 font-semibold">
+                                  {formatNotifTime(n.timestamp)}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug mt-0.5">
+                                {n.message}
+                              </p>
+                            </div>
+                          </div>
+                        ))
                       )}
                     </div>
-                  </div>
 
-                  <div className="space-y-2 overflow-y-auto max-h-64 pr-1 text-slate-600 dark:text-slate-300">
-                    {userNotifications.length === 0 ? (
-                      <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs font-medium">
-                        Belum ada notifikasi aktivitas baru untuk Anda.
-                      </div>
-                    ) : (
-                      userNotifications.map((n) => (
-                        <div
-                          key={n.id}
-                          className={`p-2.5 rounded-2xl border transition-all flex items-start gap-2.5 ${
-                            n.read
-                              ? 'bg-slate-50 dark:bg-slate-700/40 border-slate-100 dark:border-slate-700/60'
-                              : 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 font-medium'
-                          }`}
-                        >
-                          <span className="text-lg shrink-0 mt-0.5">{n.icon || '🔔'}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-extrabold text-[11px] text-slate-800 dark:text-slate-100 truncate">
-                                {n.title || 'Aktivitas'}
-                              </span>
-                              <span className="text-[9px] text-slate-400 shrink-0 font-semibold">
-                                {formatNotifTime(n.timestamp)}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug mt-0.5">
-                              {n.message}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
+                    {/* PWA Cache Info Footer */}
+                    <div className="border-t pt-2 dark:border-slate-700 flex items-center justify-between text-[10px] text-slate-400 font-bold shrink-0">
+                      <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                        ⚡ Cache PWA: {getCacheSizeText(userNotifications)}
+                      </span>
+                      <span className="text-slate-400">Auto-Evict Max 5 MB</span>
+                    </div>
                   </div>
-
-                  {/* PWA Cache Info Footer */}
-                  <div className="border-t pt-2 dark:border-slate-700 flex items-center justify-between text-[10px] text-slate-400 font-bold shrink-0">
-                    <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                      ⚡ Cache PWA: {getCacheSizeText(userNotifications)}
-                    </span>
-                    <span className="text-slate-400">Auto-Evict Max 5 MB</span>
-                  </div>
-                </div>
+                </>
               )}
             </div>
 
