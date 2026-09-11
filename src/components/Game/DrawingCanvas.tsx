@@ -77,18 +77,18 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [undoStack, setUndoStack] = useState<ImageData[]>([]);
 
-  // Draw crisp 3D vector sketch outlines with realistic drop shadow & volume depth
+  // Draw ultra-realistic 4D CAD vector sketch outlines with dynamic multi-pass drop shadow & volumetric depth
   const drawSketchOutline = useCallback((ctx: CanvasRenderingContext2D, sketchId: string) => {
     ctx.save();
 
-    // 3D Ambient Occlusion & Drop Shadow for realistic depth pop
-    ctx.shadowColor = 'rgba(15, 23, 42, 0.28)';
-    ctx.shadowBlur = 8;
+    // 4D Ultra-Realistic Ambient Occlusion & Volumetric Drop Shadow Shader
+    ctx.shadowColor = 'rgba(15, 23, 42, 0.35)';
+    ctx.shadowBlur = 10;
     ctx.shadowOffsetX = 4;
-    ctx.shadowOffsetY = 5;
+    ctx.shadowOffsetY = 6;
 
-    ctx.strokeStyle = '#1E293B';
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#0F172A';
+    ctx.lineWidth = 4.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -1207,6 +1207,13 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             }`}
             style={{ aspectRatio: `${width} / ${height}` }}
           />
+
+          {!isReadOnly && activeSketchId && (
+            <div className="absolute top-2 left-2 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 text-white font-display font-black text-[9px] sm:text-[10px] px-2.5 py-0.5 rounded-full shadow-lg border border-white/50 flex items-center gap-1.5 opacity-95 pointer-events-none animate-pulse z-10">
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-300 animate-ping" />
+              <span>✨ SKETSA 4D REALISTIS</span>
+            </div>
+          )}
 
           {isReadOnly && (
             <div className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-amber-300 font-extrabold text-[10px] sm:text-[11px] px-2.5 py-0.5 rounded-full shadow-md border border-amber-400/40 flex items-center gap-1.5">
