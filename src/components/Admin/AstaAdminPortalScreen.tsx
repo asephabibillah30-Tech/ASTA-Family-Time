@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { rateLimiter, sanitizeInput } from '../../utils/security';
+import { db } from '../../services/db/databaseService';
+import { postgresService } from '../../services/db/postgresService';
 import type { FamilyAccount, UserAccount } from '../../types/auth';
 
 interface RegisteredFamily {
@@ -115,11 +117,77 @@ export const AstaAdminPortalScreen: React.FC<AstaAdminPortalScreenProps> = ({
     { id: '3', timestamp: '14:30:22', type: 'Brute Force Attempts', source: 'Admin Portal Login', status: '🔒 AKUN DIKUNCI (60s)', detail: '5x Salah Password' },
   ]);
 
-  // Ensure window URL reflects /administrator_asta
+  // Ensure window URL reflects /administrator_asta and load live registered families from database
   useEffect(() => {
     if (typeof window !== 'undefined' && window.history) {
       window.history.pushState(null, '', '/administrator_asta');
     }
+
+    const loadRealFamiliesFromDatabase = async () => {
+      try {
+        const localFamilies = db.getFamilies();
+        const localUsers = db.getUsers();
+
+        const mappedLocal: RegisteredFamily[] = localFamilies.map(fam => {
+          const members = localUsers.filter(u => u.familyId === fam.id);
+          const headUser = members.find(u => u.isHead || u.id === fam.headUserId) || members[0];
+          return {
+            id: fam.id,
+            familyCode: fam.familyCode,
+            familyName: fam.familyName,
+            headName: headUser?.fullName || 'Kepala Keluarga',
+            headEmail: headUser?.usernameOrEmail || `${fam.familyCode.toLowerCase()}@asta.family`,
+            headAvatar: headUser?.avatar || '👨‍💼',
+            membersCount: members.length || 1,
+            totalLovePoints: fam.totalLovePoints || 100,
+            streakDays: fam.streakDays || 1,
+            createdAt: fam.createdAt ? fam.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+            status: 'active'
+          };
+        });
+
+        // Query Supabase for cloud-registered families
+        const supabase = postgresService.getClient();
+        let cloudMapped: RegisteredFamily[] = [];
+        if (supabase) {
+          const { data: cloudFamData } = await supabase.from('families').select('*');
+          const { data: cloudUserData } = await supabase.from('users').select('*');
+
+          if (cloudFamData && cloudFamData.length > 0) {
+            cloudMapped = cloudFamData.map(f => {
+              const members = (cloudUserData || []).filter(u => u.family_id === f.id);
+              const headUser = members.find(u => u.is_head || u.id === f.head_user_id) || members[0];
+              return {
+                id: f.id,
+                familyCode: f.family_code || 'ASTA-0000',
+                familyName: f.family_name || 'Keluarga ASTA',
+                headName: headUser?.full_name || 'Kepala Keluarga',
+                headEmail: headUser?.username || headUser?.email || `${f.family_code}@asta.family`,
+                headAvatar: headUser?.avatar || '👨‍💼',
+                membersCount: members.length || 1,
+                totalLovePoints: f.total_love_points || 100,
+                streakDays: f.streak_days || 1,
+                createdAt: f.created_at ? f.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                status: 'active'
+              };
+            });
+          }
+        }
+
+        const combined = [...cloudMapped, ...mappedLocal];
+        const uniqueFamiliesMap = new Map<string, RegisteredFamily>();
+
+        // Keep initial demo DB items first, then layer live database entries
+        INITIAL_FAMILIES_DB.forEach(fam => uniqueFamiliesMap.set(fam.id, fam));
+        combined.forEach(fam => uniqueFamiliesMap.set(fam.id, fam));
+
+        setFamilies(Array.from(uniqueFamiliesMap.values()));
+      } catch (err) {
+        console.warn('Gagal memuat data live keluarga untuk admin:', err);
+      }
+    };
+
+    loadRealFamiliesFromDatabase();
   }, []);
 
   const notify = (msg: string) => {
