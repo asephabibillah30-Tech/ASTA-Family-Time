@@ -308,5 +308,47 @@ export function moderateChatMessage(text: string): ChatModerationResult {
     }
   }
 
+  // 4. Cyber Attack & Exploit Payload Detection (Penyaring Serangan Cyber)
+  const cyberAttackPatterns = [
+    // SQL Injection (SQLi)
+    /(\b(select|union|insert|update|delete|drop|alter|truncate|exec|create)\b.+?\b(from|where|into|table|database|select)\b)/i,
+    /('|\"|\b)(or|and)\s+('|\"|\d+)\s*=\s*('|\"|\d+)/i,
+    /;\s*(drop|delete|exec|select|insert|update|alter)/i,
+    /pg_sleep\s*\(|sleep\s*\(|benchmark\s*\(/i,
+
+    // Cross-Site Scripting (XSS) & Script/HTML Injections
+    /<script[^>]*>[\s\S]*?<\/script>/i,
+    /javascript\s*:/i,
+    /\bon(error|load|click|mouseover|submit|focus|blur)\s*=/i,
+    /<(iframe|object|embed|svg|applet|meta|link)[^>]*>/i,
+    /document\.(cookie|location|referrer|domain)/i,
+    /eval\s*\(|String\.fromCharCode\s*\(/i,
+
+    // Command Injection & Remote Code Execution (RCE)
+    /;\s*(system|exec|passthru|shell_exec|popen|cmd|powershell|bash|sh|curl|wget)\b/i,
+    /\b(rm\s+-rf|cmd\.exe|powershell\.exe|\/bin\/bash|\/bin\/sh)\b/i,
+    /\|\s*(bash|sh|cmd|powershell)/i,
+
+    // Directory / Path Traversal (LFI / RFI)
+    /(\.\.\/|\.\.\\){2,}/,
+    /\/etc\/(passwd|shadow|group|hosts)/i,
+    /c:\\windows\\(system32|repair|win\.ini)/i,
+
+    // Malicious Executable Links & Phishing Payloads
+    /https?:\/\/[^\s]+\.(exe|bat|cmd|vbs|scr|sh|dll|msi|ps1|apk|jar)\b/i,
+
+    // Buffer Overflow & Repeat Crash Flood Attack
+    /(.)\1{120,}/ // 120+ repeated identical characters
+  ];
+
+  for (const pattern of cyberAttackPatterns) {
+    if (pattern.test(cleanText)) {
+      return {
+        isValid: false,
+        errorMessage: 'Gunakan obrolan yang sesuai tanpa ada kode tertentu dan tidak menyimpang'
+      };
+    }
+  }
+
   return { isValid: true };
 }

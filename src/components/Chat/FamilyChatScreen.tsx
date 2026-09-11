@@ -175,11 +175,11 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                🛡️ AI Safety Filter & E2EE
+                🛡️ Anti-Cyber Attack & E2EE AI Filter
               </span>
             </div>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-              {players.length} Anggota Online &bull; Disaring AI untuk Keharmonisan Keluarga ❤️
+              {players.length} Anggota Online &bull; Dilindungi AI & Cyber Security Engine ❤️
             </p>
           </div>
         </div>
