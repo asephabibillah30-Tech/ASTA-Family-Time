@@ -711,16 +711,16 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           </div>
 
           {/* 2. MAIN SCROLLABLE GAMEPLAY BODY (Canvas & Sidebars Grid) */}
-          <div className="grid grid-cols-12 gap-2 flex-1 min-h-0 pt-1.5 overflow-y-auto touch-pan-y pb-10">
+          <div className="grid grid-cols-12 gap-2 flex-1 min-h-0 pt-1 overflow-y-auto touch-pan-y pb-2">
             
             {/* Left Column: Canvas Area (8 cols on Tablet/Landscape, 12 cols on narrow portrait) */}
-            <div className="col-span-12 sm:col-span-7 md:col-span-8 flex flex-col min-h-[320px] max-h-[75vh]">
+            <div className="col-span-12 sm:col-span-7 md:col-span-8 flex flex-col flex-1 min-h-[220px] sm:min-h-0 h-full">
               {roundWinnerMsg && (
                 <div className="bg-emerald-500 text-white p-1 rounded-xl font-display font-black text-xs text-center shadow-md animate-bounce mb-1">
                   {roundWinnerMsg}
                 </div>
               )}
-              <div className="flex-1 min-h-0 h-full overflow-hidden">
+              <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-center overflow-hidden">
                 <DrawingCanvas
                   isReadOnly={false}
                   width={800}
