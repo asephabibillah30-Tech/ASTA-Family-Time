@@ -31,6 +31,7 @@ import { SecurityCenterModal } from './components/Auth/SecurityCenterModal';
 import { AuthGateScreen } from './components/Auth/AuthGateScreen';
 import { AdminLoginModal } from './components/Admin/AdminLoginModal';
 import { AdminDashboardScreen } from './components/Admin/AdminDashboardScreen';
+import { AstaAdminPortalScreen } from './components/Admin/AstaAdminPortalScreen';
 import type { MainTab, AppScreen, Player } from './types/game';
 
 export function App() {
@@ -39,9 +40,19 @@ export function App() {
   // Pass familyId sehingga data dimuat dari Supabase per keluarga
   const family = useFamilyState(auth.currentFamily?.id ?? null);
 
+  // Standalone Route Detection for https://asta-family-time.vercel.app/administrator_asta
+  const [isAdminRoute, setIsAdminRoute] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.pathname.toLowerCase().includes('/administrator_asta');
+    }
+    return false;
+  });
+
   useEffect(() => {
-    document.title = 'ASTA Family Time - Satu aplikasi, lebih banyak waktu bersama keluarga.';
-  }, []);
+    document.title = isAdminRoute
+      ? 'ASTA Administrator Portal - /administrator_asta'
+      : 'ASTA Family Time - Satu aplikasi, lebih banyak waktu bersama keluarga.';
+  }, [isAdminRoute]);
 
   const [currentTab, setCurrentTab] = useState<MainTab>('home');
   const [subScreen, setSubScreen] = useState<AppScreen | null>(null);
@@ -93,6 +104,22 @@ export function App() {
   const handleStartCardGame = () => {
     game.setScreen('players_setup');
   };
+
+  // Dedicated Route Gate: Super Administrator Portal (/administrator_asta)
+  if (isAdminRoute) {
+    return (
+      <AstaAdminPortalScreen
+        currentFamily={auth.currentFamily}
+        currentUser={auth.currentUser}
+        onGoBackToApp={() => {
+          if (typeof window !== 'undefined') {
+            window.history.pushState({}, '', '/');
+          }
+          setIsAdminRoute(false);
+        }}
+      />
+    );
+  }
 
   // Mandatory Authentication Gate: Must login or register first
   if (!auth.isAuthenticated || !auth.currentUser || !auth.currentFamily) {
