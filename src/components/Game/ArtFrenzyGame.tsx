@@ -130,13 +130,25 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   const getOnlinePlayers = useCallback((): Player[] => {
     if (initialPlayers.length > 0) {
-      return initialPlayers.map((p, idx) => ({
-        ...p,
-        name: idx === 0 ? (p.name.includes('(Anda)') ? p.name : `${p.name} (Anda)`) : p.name,
-        score: 0,
-        cardsCompleted: 0,
-        isOnline: true,
-      }));
+      const activeId = currentUser?.id || '';
+      const activeName = (currentUser?.fullName || '').toLowerCase();
+      
+      const loggedInIndex = initialPlayers.findIndex(
+        (p) => (activeId && p.id === activeId) || (activeName && p.name.toLowerCase().includes(activeName))
+      );
+      const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
+
+      return initialPlayers.map((p, idx) => {
+        const isMe = idx === activeIdx;
+        const cleanName = p.name.replace(/\s*\(Anda\)/gi, '');
+        return {
+          ...p,
+          name: isMe ? `${cleanName} (Anda)` : cleanName,
+          score: 0,
+          cardsCompleted: 0,
+          isOnline: true,
+        };
+      });
     }
     return [
       { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
@@ -144,9 +156,17 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       { id: '3', name: 'Papa Asep', avatar: '👨‍💼', score: 0, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
       { id: '4', name: 'Mamah Ita', avatar: '👩‍💼', score: 0, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
     ];
-  }, [initialPlayers, userDisplayName, userAvatar]);
+  }, [initialPlayers, currentUser, userDisplayName, userAvatar]);
 
   const [players, setPlayers] = useState<Player[]>(getSoloPlayers());
+
+  const getActiveUserPlayer = useCallback((playerList: Player[]): Player => {
+    if (playerList.length === 0) return { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true };
+    return (
+      playerList.find((p) => (currentUser?.id && p.id === currentUser.id) || p.name.includes('(Anda)')) ||
+      playerList[0]
+    );
+  }, [currentUser, userDisplayName, userAvatar]);
 
   const [currentRound, setCurrentRound] = useState(1);
   const maxRounds = 10;
@@ -338,12 +358,13 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
         // AI Bot Automated Chat & Smart Guessing Logic when in Solo Mode
         if (playMode === 'solo_bot' && prev % 8 === 0 && prev > 5 && roundActiveRef.current) {
-          const nonDrawerBots = players.filter((p) => p.id !== currentDrawer.id && p.id !== '1');
+          const userPlayer = getActiveUserPlayer(players);
+          const nonDrawerBots = players.filter((p) => p.id !== currentDrawer.id && p.id !== userPlayer.id);
           if (nonDrawerBots.length > 0) {
             const randomBot = nonDrawerBots[Math.floor(Math.random() * nonDrawerBots.length)];
 
-            // Increased chance to guess correctly when user ('1') is drawing as time elapses
-            const shouldGuessCorrectly = currentDrawer.id === '1' && prev <= 30 && Math.random() < 0.40;
+            // Increased chance to guess correctly when user is drawing as time elapses
+            const shouldGuessCorrectly = currentDrawer.id === userPlayer.id && prev <= 30 && Math.random() < 0.40;
 
             if (shouldGuessCorrectly && roundActiveRef.current) {
               roundActiveRef.current = false;
@@ -413,7 +434,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRoundActive, isGameOver, activeWordObj, revealedHints, advanceTurn, playMode, players, currentDrawer.id]);
+  }, [isRoundActive, isGameOver, activeWordObj, revealedHints, advanceTurn, playMode, players, currentDrawer.id, getActiveUserPlayer]);
 
   // Power-Up 1: Extra Letters Hint (+2 Huruf)
   const handleUseExtraLetters = () => {
@@ -477,7 +498,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       sound.playSuccess();
       fireBurstConfetti();
 
-      const userPlayer = players.find((p) => p.id === '1') || players[0];
+      const userPlayer = getActiveUserPlayer(players);
       const guesserId = userPlayer.id;
       const guesserName = userPlayer.name;
       const bonusGuesser = 100;
@@ -534,7 +555,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       }, 3000);
     } else {
       // Incorrect guess
-      const userPlayer = players.find((p) => p.id === '1') || players[0];
+      const userPlayer = getActiveUserPlayer(players);
       setChatMessages((prev) => [
         ...prev,
         {
