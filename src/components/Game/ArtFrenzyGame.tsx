@@ -263,15 +263,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     sound.playClick();
 
     if (mode === 'online_friends') {
-      const activeId = currentUser?.id || '';
-      const activeName = (currentUser?.fullName || '').toLowerCase();
-      
-      const trulyOnlineMembers = initialPlayers.filter((p) => {
-        const isMe = (activeId && p.id === activeId) || p.name.toLowerCase().includes(activeName);
-        return isMe || Boolean(p.isOnline);
-      }).filter((p) => Boolean(p.isOnline));
+      const onlineMembers = getOnlinePlayers();
 
-      if (trulyOnlineMembers.length < 2) {
+      if (onlineMembers.length < 2) {
         sound.playSkip();
         setShowOnlineErrorModal(true);
         return;
@@ -644,7 +638,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                 Minimal 2 Pemain Online & Login!
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed mt-1">
-                Permainan <span className="font-bold text-rose-500">Teman Online</span> tidak dapat dimulai karena saat ini hanya <span className="font-black text-slate-900 dark:text-white">{initialPlayers.filter(p => p.isOnline).length} pemain</span> yang sedang online.
+                Permainan <span className="font-bold text-rose-500">Teman Online</span> tidak dapat dimulai karena saat ini hanya <span className="font-black text-slate-900 dark:text-white">{getOnlinePlayers().length} pemain</span> yang sedang online.
               </p>
             </div>
 
