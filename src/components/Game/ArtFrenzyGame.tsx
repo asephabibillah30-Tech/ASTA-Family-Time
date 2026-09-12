@@ -1421,6 +1421,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               {/* Canvas Canvas Area */}
               <div className="flex-1 min-h-0 w-full relative overflow-hidden rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center">
                 <DrawingCanvas
+                  key={`${activeWordObj.word}-${currentRound}`}
                   isReadOnly={false}
                   width={800}
                   height={520}
@@ -1566,12 +1567,12 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                         : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300'
                     }`}
                   >
-                    <span>{playMode === 'solo_bot' ? '🤖 Main Sendiri (Bot AI)' : '🌐 Teman Online (ASTA-2026)'}</span>
+                    <span>{playMode === 'solo_bot' ? '🤖 Main Sendiri (Bot AI)' : `🌐 Teman Online (${activeFamilyCode})`}</span>
                     <span className="underline">Ubah</span>
                   </button>
                 </div>
                 <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold hidden sm:block">
-                  {playMode === 'solo_bot' ? 'Mode Solo vs AI Bot Keluarga' : 'Mode Multiplayer Teman Online (Kode: ASTA-2026)'}
+                  {playMode === 'solo_bot' ? 'Mode Solo vs AI Bot Keluarga' : `Mode Multiplayer Teman Online (Kode: ${activeFamilyCode})`}
                 </p>
               </div>
             </div>
@@ -1586,7 +1587,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                     title="Salin Kode Keluarga"
                   >
                     {copiedCode ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                    <span>ASTA-2026</span>
+                    <span>{activeFamilyCode}</span>
                   </button>
                   <button
                     onClick={handleShareWA}
@@ -1743,6 +1744,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               )}
 
               <DrawingCanvas
+                key={`${activeWordObj.word}-${currentRound}`}
                 isReadOnly={false}
                 width={800}
                 height={520}

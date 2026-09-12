@@ -800,6 +800,10 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   }, [activeSketchId, drawSketchOutline]);
 
   useEffect(() => {
+    setActiveSketchId(initialSketchId);
+  }, [initialSketchId]);
+
+  useEffect(() => {
     initCanvas();
   }, [initCanvas]);
 
