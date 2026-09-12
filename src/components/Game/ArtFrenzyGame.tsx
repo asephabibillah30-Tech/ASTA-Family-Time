@@ -318,7 +318,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       attempts++;
     }
 
-    if (playMode !== 'solo_bot' && nextRound > maxRounds) {
+    if (nextRound > maxRounds) {
       setIsRoundActive(false);
       roundActiveRef.current = false;
       setIsGameOver(true);
@@ -740,7 +740,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   // Round Timer Countdown Loop & AI Bot Auto-Guessing in Solo Mode
   useEffect(() => {
-    if (!isRoundActive || isGameOver || playMode === 'solo_bot') return;
+    if (!isRoundActive || isGameOver) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -855,8 +855,13 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       const guesserName = userPlayer.name;
 
       if (playMode === 'solo_bot') {
-        const winnerText = `🎉 Hebat! Tebakan Anda cocok: ${activeWordObj.word}! (Melukis Bebas)`;
+        const winnerText = `🎉 Hebat! Tebakan Anda cocok: ${activeWordObj.word}! (+100 PTS)`;
         setRoundWinnerMsg(winnerText);
+
+        setPlayers((prev) =>
+          prev.map((p) => (p.id === userPlayer.id ? { ...p, score: p.score + 100, cardsCompleted: (p.cardsCompleted || 0) + 1 } : p))
+        );
+
         const guessMsg: ChatMessage = {
           id: Date.now().toString(),
           senderName: guesserName,
@@ -873,6 +878,10 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         };
         setChatMessages((prev) => [...prev, guessMsg, sysMsg]);
         setGuessInput('');
+
+        setTimeout(() => {
+          advanceTurn();
+        }, 3000);
         return;
       }
 
