@@ -135,9 +135,6 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   const getSoloPlayers = useCallback((): Player[] => [
     { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
-    { id: '2', name: 'Bot Bella 🤖', avatar: '👧', score: 0, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
-    { id: '3', name: 'Bot Papa 🤖', avatar: '👨‍💼', score: 0, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
-    { id: '4', name: 'Bot Mamah 🤖', avatar: '👩‍💼', score: 0, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
   ], [userDisplayName, userAvatar]);
 
   const getOnlinePlayers = useCallback((): Player[] => {
@@ -297,7 +294,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     const nextRound = syncedRound ?? (currentRound + 1);
     const nextDrawerIdx = syncedDrawerIdx ?? (drawerIndex + 1);
 
-    if (nextRound > maxRounds) {
+    if (playMode !== 'solo_bot' && nextRound > maxRounds) {
       setIsRoundActive(false);
       roundActiveRef.current = false;
       setIsGameOver(true);
@@ -535,7 +532,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     if (mode === 'solo_bot') {
       setPlayers(getSoloPlayers());
       setChatMessages([
-        { id: '1', senderName: 'Sistem', text: '🤖 Mode Bermain Sendiri (vs AI Bot) dimulai! Nikmati permainan solo!', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
+        { id: '1', senderName: 'Sistem', text: '🎨 Mode Kanvas Bebas Solo Aktif! Nikmati melukis secara bebas tanpa bot, tanpa perlombaan, dan tanpa batasan waktu!', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
       ]);
     }
 
@@ -600,7 +597,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   // Round Timer Countdown Loop & AI Bot Auto-Guessing in Solo Mode
   useEffect(() => {
-    if (!isRoundActive || isGameOver) return;
+    if (!isRoundActive || isGameOver || playMode === 'solo_bot') return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -638,79 +635,6 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           if (unrevealedIdxs.length > 0) {
             const randomIdx = unrevealedIdxs[Math.floor(Math.random() * unrevealedIdxs.length)];
             setRevealedHints((h) => [...h, randomIdx]);
-          }
-        }
-
-        // AI Bot Automated Chat & Smart Guessing Logic when in Solo Mode
-        if (playMode === 'solo_bot' && prev % 8 === 0 && prev > 5 && roundActiveRef.current) {
-          const userPlayer = getActiveUserPlayer(players);
-          const nonDrawerBots = players.filter((p) => p.id !== currentDrawer.id && p.id !== userPlayer.id);
-          if (nonDrawerBots.length > 0) {
-            const randomBot = nonDrawerBots[Math.floor(Math.random() * nonDrawerBots.length)];
-
-            // Increased chance to guess correctly when user is drawing as time elapses
-            const shouldGuessCorrectly = currentDrawer.id === userPlayer.id && prev <= 30 && Math.random() < 0.40;
-
-            if (shouldGuessCorrectly && roundActiveRef.current) {
-              roundActiveRef.current = false;
-              setIsRoundActive(false);
-              sound.playSuccess();
-              fireBurstConfetti();
-
-              const bonusGuesser = 100;
-              const bonusDrawer = 50;
-
-              // Give Bot +100 PTS (Guesser), User +50 PTS (Drawer)
-              setPlayers((prevPlayers) =>
-                prevPlayers.map((p) => {
-                  if (p.id === randomBot.id) return { ...p, score: p.score + bonusGuesser, cardsCompleted: (p.cardsCompleted || 0) + 1 };
-                  if (p.id === currentDrawer.id) return { ...p, score: p.score + bonusDrawer };
-                  return p;
-                })
-              );
-
-              const winnerText = `🎉 BENAR! ${randomBot.name} menebak lukisan Anda: ${activeWordObj.word}! (+100 PTS)`;
-              setRoundWinnerMsg(winnerText);
-
-              setChatMessages((msg) => [
-                ...msg,
-                {
-                  id: Date.now().toString(),
-                  senderName: randomBot.name,
-                  text: activeWordObj.word,
-                  isCorrect: true,
-                  timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                },
-                {
-                  id: (Date.now() + 1).toString(),
-                  senderName: 'Sistem',
-                  text: winnerText,
-                  isSystem: true,
-                  timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                },
-              ]);
-
-              setTimeout(() => {
-                advanceTurn();
-              }, 3000);
-            } else {
-              // Incorrect attempt or hint question
-              const wrongGuesses = [
-                'Kucing?', 'Mobil?', 'Rumah?', 'Kue?', 'Matahari?', 'Gajah?', 'Pelangi?', 'Bunga?',
-                'Donat?', 'Bintang?', 'Awan?', 'Sepeda?', 'Pohon?'
-              ];
-              const randomWrong = wrongGuesses[Math.floor(Math.random() * wrongGuesses.length)];
-
-              setChatMessages((msg) => [
-                ...msg,
-                {
-                  id: Date.now().toString(),
-                  senderName: randomBot.name,
-                  text: randomWrong,
-                  timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                },
-              ]);
-            }
           }
         }
 
@@ -786,6 +710,29 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       const userPlayer = getActiveUserPlayer(players);
       const guesserId = userPlayer.id;
       const guesserName = userPlayer.name;
+
+      if (playMode === 'solo_bot') {
+        const winnerText = `🎉 Hebat! Tebakan Anda cocok: ${activeWordObj.word}! (Melukis Bebas)`;
+        setRoundWinnerMsg(winnerText);
+        const guessMsg: ChatMessage = {
+          id: Date.now().toString(),
+          senderName: guesserName,
+          text: guessInput,
+          isCorrect: true,
+          timestamp: nowTime,
+        };
+        const sysMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          senderName: 'Sistem',
+          text: winnerText,
+          isSystem: true,
+          timestamp: nowTime,
+        };
+        setChatMessages((prev) => [...prev, guessMsg, sysMsg]);
+        setGuessInput('');
+        return;
+      }
+
       const bonusGuesser = 100;
       const bonusDrawer = 50;
 
@@ -1174,7 +1121,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             {/* Mode Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2">
               
-              {/* Option 1: Bermain Sendiri (vs AI Bot) */}
+              {/* Option 1: Bermain Sendiri (Kanvas Bebas Solo) */}
               <button
                 onClick={() => handleSelectMode('solo_bot')}
                 className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-700 dark:to-slate-700/80 border-3 border-amber-300 dark:border-amber-600 hover:scale-[1.02] active:scale-95 transition-all text-left space-y-2 flex flex-col justify-between group shadow-md"
@@ -1182,23 +1129,23 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="p-2.5 rounded-2xl bg-amber-400 text-slate-900 text-xl font-black shadow-xs">
-                      🤖
+                      🎨
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-950 text-amber-900 dark:text-amber-300 text-[9px] font-black uppercase">
-                      MAIN SENDIRI
+                      KANVAS BEBAS
                     </span>
                   </div>
                   <h3 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white mt-3">
-                    Bermain Sendiri (vs AI Bot)
+                    Bermain Sendiri (Kanvas Bebas)
                   </h3>
                   <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-snug">
-                    Latihan melukis & menebak gambar secara solo melawan AI Bot Keluarga (Bot Bella, Bot Papa, Bot Mamah).
+                    Studio melukis & kreasi gambar bebas tanpa bot, tanpa batasan waktu, dan tanpa perlombaan poin.
                   </p>
                 </div>
 
                 <div className="w-full py-2.5 rounded-xl bg-amber-500 group-hover:bg-amber-600 text-white font-display font-black text-xs text-center shadow-xs flex items-center justify-center gap-1.5">
                   <Play className="w-4 h-4 fill-white" />
-                  <span>MULAI MAIN SENDIRI</span>
+                  <span>MULAI KANVAS BEBAS</span>
                 </div>
               </button>
 
@@ -1578,18 +1525,29 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                         : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300'
                     }`}
                   >
-                    <span>{playMode === 'solo_bot' ? '🤖 Main Sendiri (Bot AI)' : `🌐 Teman Online (${activeFamilyCode})`}</span>
+                    <span>{playMode === 'solo_bot' ? '🎨 Main Solo (Kanvas Bebas)' : `🌐 Teman Online (${activeFamilyCode})`}</span>
                     <span className="underline">Ubah</span>
                   </button>
                 </div>
                 <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold hidden sm:block">
-                  {playMode === 'solo_bot' ? 'Mode Solo vs AI Bot Keluarga' : `Mode Multiplayer Teman Online (Kode: ${activeFamilyCode})`}
+                  {playMode === 'solo_bot' ? 'Studio Melukis Solo Bebas (Tanpa Bot & Poin)' : `Mode Multiplayer Teman Online (Kode: ${activeFamilyCode})`}
                 </p>
               </div>
             </div>
 
             {/* Center/Right: Round & Score Badges + Share Online */}
             <div className="flex items-center gap-2">
+              {playMode === 'solo_bot' && (
+                <button
+                  onClick={() => pickNewWord()}
+                  className="px-3 py-1.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-display font-black text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                  title="Ambil Kata / Ide Lukisan Baru"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>🎲 Ganti Topik</span>
+                </button>
+              )}
+
               {playMode === 'online_friends' && (
                 <div className="flex items-center gap-1">
                   <button
@@ -1622,8 +1580,8 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
               {/* Round Badge */}
               <div className="bg-indigo-600 text-white px-3 py-1.5 rounded-2xl font-display font-black text-xs sm:text-sm shadow-sm flex items-center gap-1">
-                <span>ROUND</span>
-                <span className="text-amber-300">{currentRound}/{maxRounds}</span>
+                <span>{playMode === 'solo_bot' ? 'KANVAS BEBAS' : 'ROUND'}</span>
+                {playMode !== 'solo_bot' && <span className="text-amber-300">{currentRound}/{maxRounds}</span>}
               </div>
             </div>
 
@@ -1664,8 +1622,8 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                   </span>
                 </div>
                 <div className="text-[11px] text-amber-300 font-bold flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                  <span>Sisa Waktu: 00:{String(timeLeft).padStart(2, '0')}s</span>
+                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{playMode === 'solo_bot' ? 'Waktu Bebas (Tanpa Batas)' : `Sisa Waktu: 00:${String(timeLeft).padStart(2, '0')}s`}</span>
                 </div>
               </div>
             </div>
