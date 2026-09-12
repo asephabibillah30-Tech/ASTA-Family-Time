@@ -143,18 +143,22 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const getOnlinePlayers = useCallback((): Player[] => {
     if (initialPlayers.length > 0) {
       const activeId = currentUser?.id || '';
-      const activeName = (currentUser?.fullName || '').toLowerCase();
+      const activeName = (currentUser?.fullName || '').toLowerCase().trim();
       
       const loggedInIndex = initialPlayers.findIndex(
-        (p) => (activeId && p.id === activeId) || (activeName && p.name.toLowerCase().includes(activeName))
+        (p) => (activeId && p.id === activeId) || (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName))
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
       // Filter ONLY family members who are actually logged in and online
       const trulyOnlineMembers = initialPlayers.filter((p, idx) => Boolean(p.isOnline) || idx === activeIdx);
 
-      return trulyOnlineMembers.map((p) => {
-        const isMe = (activeId && p.id === activeId) || p.name.toLowerCase().includes(activeName);
+      return trulyOnlineMembers.map((p, idx) => {
+        const isMe = Boolean(
+          (activeId && p.id === activeId) ||
+          (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
+          (idx === activeIdx && Boolean(activeId || activeName))
+        );
         const cleanName = p.name.replace(/\s*\(Anda\)/gi, '');
         return {
           ...p,
@@ -177,10 +181,17 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   const getActiveUserPlayer = useCallback((playerList: Player[]): Player => {
     if (playerList.length === 0) return { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true };
-    return (
-      playerList.find((p) => (currentUser?.id && p.id === currentUser.id) || p.name.includes('(Anda)')) ||
-      playerList[0]
-    );
+    const activeId = currentUser?.id || '';
+    const activeName = (currentUser?.fullName || '').toLowerCase().trim();
+
+    const matched = playerList.find((p) => {
+      if (activeId && p.id === activeId) return true;
+      if (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) return true;
+      if (p.name.includes('(Anda)')) return true;
+      return false;
+    });
+
+    return matched || playerList[0];
   }, [currentUser, userDisplayName, userAvatar]);
 
   const [currentRound, setCurrentRound] = useState(1);
