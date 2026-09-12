@@ -538,9 +538,16 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
             handleIncomingEvent(event, payload);
           })
           .on('presence', { event: 'leave' }, ({ key }: any) => {
-            if (key) {
-              handlePlayerLeftGame(key);
-            }
+            if (!key) return;
+            setTimeout(() => {
+              try {
+                const presenceState = supabaseChannel?.presenceState() || {};
+                const currentKeys = Object.keys(presenceState);
+                if (!currentKeys.includes(key)) {
+                  handlePlayerLeftGame(key);
+                }
+              } catch {}
+            }, 2500);
           })
           .subscribe((status: string) => {
             if (status === 'SUBSCRIBED' && activeUser?.id) {
