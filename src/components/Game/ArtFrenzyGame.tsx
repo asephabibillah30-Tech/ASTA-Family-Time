@@ -11,6 +11,7 @@ import { fireBurstConfetti } from '../../utils/confetti';
 
 import type { UserAccount } from '../../types/auth';
 import { db } from '../../services/db/databaseService';
+import { postgresService } from '../../services/db/postgresService';
 
 interface ArtFrenzyGameProps {
   players: Player[];
@@ -207,6 +208,34 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     roundActiveRef.current = isRoundActive;
   }, [isRoundActive]);
 
+  // Broadcast Realtime Game Event across devices (Supabase) & tabs (BroadcastChannel)
+  const broadcastGameEvent = useCallback((event: string, payload: any) => {
+    if (!activeFamilyCode) return;
+    const roomCode = activeFamilyCode.toUpperCase();
+
+    // 1. Cross-Device WebSocket Broadcast via Supabase
+    try {
+      const supabase = postgresService.getClient();
+      if (supabase) {
+        const channel = supabase.channel(`art_frenzy_${roomCode}`);
+        channel.send({
+          type: 'broadcast',
+          event,
+          payload,
+        }).catch(() => {});
+      }
+    } catch {}
+
+    // 2. Same-Device BroadcastChannel
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel(`asta_art_frenzy_${roomCode}`);
+        bc.postMessage({ event, payload });
+        bc.close();
+      } catch {}
+    }
+  }, [activeFamilyCode]);
+
   // Pick a new word for a new round
   const pickNewWord = useCallback(() => {
     const randomIdx = Math.floor(Math.random() * SECRET_WORDS_DB.length);
@@ -245,6 +274,151 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       }
     }, 1000);
   }, [pickNewWord]);
+
+  // Handle Turn Rotation
+  const advanceTurn = useCallback((syncedRound?: number, syncedDrawerIdx?: number, syncedWordIdx?: number) => {
+    sound.playCardShuffle();
+    
+    const nextRound = syncedRound ?? (currentRound + 1);
+    const nextDrawerIdx = syncedDrawerIdx ?? (drawerIndex + 1);
+
+    if (nextRound > maxRounds) {
+      setIsRoundActive(false);
+      roundActiveRef.current = false;
+      setIsGameOver(true);
+      sound.playVictory();
+      fireBurstConfetti();
+      try {
+        const currentLovePoints = Number(localStorage.getItem('asta_family_love_points') || 100);
+        localStorage.setItem('asta_family_love_points', String(currentLovePoints + 200));
+        localStorage.setItem('asta_art_frenzy_last_match_complete', new Date().toISOString());
+      } catch {}
+      return;
+    }
+
+    const nextWordIdx = syncedWordIdx ?? Math.floor(Math.random() * SECRET_WORDS_DB.length);
+
+    setCurrentRound(nextRound);
+    setDrawerIndex(nextDrawerIdx);
+    setActiveWordObj(SECRET_WORDS_DB[nextWordIdx]);
+    setRevealedHints([]);
+    setHasUsedExtraLetters(false);
+    setHasUsedAddTime(false);
+    setTimeLeft(60);
+    setIsRoundActive(true);
+    roundActiveRef.current = true;
+    setRoundWinnerMsg(null);
+
+    const nextDrawer = players[nextDrawerIdx % players.length];
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        senderName: 'Sistem',
+        text: `🎨 Giliran menggambar selanjutnya: ${nextDrawer?.name || 'Pemain'}!`,
+        isSystem: true,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+
+    // Broadcast advance turn if generated locally (not from incoming sync)
+    if (syncedRound === undefined) {
+      broadcastGameEvent('ADVANCE_TURN', {
+        nextRound,
+        nextDrawerIdx,
+        nextWordIdx,
+      });
+    }
+  }, [currentRound, drawerIndex, maxRounds, players, broadcastGameEvent]);
+
+  // Real-time Event Listener for Cross-Device Supabase WebSocket & Same-Device BroadcastChannel
+  useEffect(() => {
+    if (!activeFamilyCode) return;
+
+    const roomCode = activeFamilyCode.toUpperCase();
+    const channelName = `art_frenzy_${roomCode}`;
+    let supabaseChannel: any = null;
+    let localBc: BroadcastChannel | null = null;
+
+    const handleIncomingEvent = (event: string, payload: any) => {
+      if (event === 'GAME_START_COUNTDOWN') {
+        setIsWaitingLobby(false);
+        setShowModeModal(false);
+        startCountdownSequence();
+      } else if (event === 'READY_STATUS_CHANGE') {
+        if (Array.isArray(payload?.readyPlayerIds)) {
+          setReadyPlayerIds(payload.readyPlayerIds);
+        }
+      } else if (event === 'CORRECT_GUESS') {
+        if (!roundActiveRef.current) return;
+        roundActiveRef.current = false;
+        setIsRoundActive(false);
+        sound.playSuccess();
+        fireBurstConfetti();
+
+        if (Array.isArray(payload?.updatedPlayers)) {
+          setPlayers(payload.updatedPlayers);
+        }
+        if (payload?.winnerText) {
+          setRoundWinnerMsg(payload.winnerText);
+        }
+        if (Array.isArray(payload?.chatMessages)) {
+          setChatMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const newMsgs = payload.chatMessages.filter((m: ChatMessage) => !existingIds.has(m.id));
+            return [...prev, ...newMsgs];
+          });
+        }
+
+        setTimeout(() => {
+          advanceTurn(payload?.nextRound, payload?.nextDrawerIdx, payload?.nextWordIdx);
+        }, 3000);
+      } else if (event === 'ADVANCE_TURN') {
+        advanceTurn(payload?.nextRound, payload?.nextDrawerIdx, payload?.nextWordIdx);
+      } else if (event === 'NEW_CHAT_MESSAGE') {
+        if (payload?.msg) {
+          setChatMessages((prev) => {
+            if (prev.some((m) => m.id === payload.msg.id)) return prev;
+            return [...prev, payload.msg];
+          });
+        }
+      }
+    };
+
+    // 1. Supabase Realtime Listener
+    try {
+      const supabase = postgresService.getClient();
+      if (supabase) {
+        supabaseChannel = supabase
+          .channel(channelName)
+          .on('broadcast', { event: '*' }, ({ event, payload }: any) => {
+            handleIncomingEvent(event, payload);
+          })
+          .subscribe();
+      }
+    } catch {}
+
+    // 2. BroadcastChannel Listener (same-device)
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        localBc = new BroadcastChannel(`asta_art_frenzy_${roomCode}`);
+        localBc.onmessage = (evt) => {
+          if (evt.data?.event) {
+            handleIncomingEvent(evt.data.event, evt.data.payload);
+          }
+        };
+      } catch {}
+    }
+
+    return () => {
+      if (supabaseChannel && postgresService.getClient()) {
+        postgresService.getClient()?.removeChannel(supabaseChannel);
+      }
+      if (localBc) {
+        localBc.close();
+      }
+    };
+  }, [activeFamilyCode, startCountdownSequence, advanceTurn]);
 
   // Force & Request Landscape Screen Orientation on Mobile/Tablet
   const handleRequestLandscape = useCallback(() => {
@@ -343,11 +517,11 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const handleToggleReady = (playerId: string) => {
     sound.playClick();
     setReadyPlayerIds((prev) => {
-      if (prev.includes(playerId)) {
-        return prev.filter((id) => id !== playerId);
-      } else {
-        return [...prev, playerId];
-      }
+      const updated = prev.includes(playerId)
+        ? prev.filter((id) => id !== playerId)
+        : [...prev, playerId];
+      broadcastGameEvent('READY_STATUS_CHANGE', { readyPlayerIds: updated });
+      return updated;
     });
   };
 
@@ -356,48 +530,14 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     const allOnlineIds = players.map((p) => p.id);
     setReadyPlayerIds(allOnlineIds);
 
+    broadcastGameEvent('GAME_START_COUNTDOWN', { readyPlayerIds: allOnlineIds });
+
     setChatMessages([
       { id: '1', senderName: 'Sistem', text: `🌐 Mode Teman Online Aktif! Kode Keluarga: ${activeFamilyCode}. Permainan dimulai serempak!`, isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
     ]);
 
     startCountdownSequence();
   };
-
-  // Handle Turn Rotation
-  const advanceTurn = useCallback(() => {
-    sound.playCardShuffle();
-    if (currentRound >= maxRounds) {
-      setIsRoundActive(false);
-      roundActiveRef.current = false;
-      setIsGameOver(true);
-      sound.playVictory();
-      fireBurstConfetti();
-
-      // Persist final match bonus (+200 Love Points)
-      try {
-        const currentLovePoints = Number(localStorage.getItem('asta_family_love_points') || 100);
-        localStorage.setItem('asta_family_love_points', String(currentLovePoints + 200));
-        localStorage.setItem('asta_art_frenzy_last_match_complete', new Date().toISOString());
-      } catch {}
-      return;
-    }
-
-    setCurrentRound((prev) => prev + 1);
-    setDrawerIndex((prev) => prev + 1);
-    pickNewWord();
-
-    const nextDrawer = players[(drawerIndex + 1) % players.length];
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        senderName: 'Sistem',
-        text: `🎨 Giliran menggambar selanjutnya: ${nextDrawer.name}!`,
-        isSystem: true,
-        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
-  }, [currentRound, drawerIndex, maxRounds, pickNewWord, players]);
 
   // Round Timer Countdown Loop & AI Bot Auto-Guessing in Solo Mode
   useEffect(() => {
@@ -591,20 +731,20 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       const bonusDrawer = 50;
 
       // Update Scores strictly for Guesser and Drawer ONLY
-      setPlayers((prev) =>
-        prev.map((p) => {
-          if (p.id === guesserId && p.id === currentDrawer.id) {
-            return { ...p, score: p.score + bonusGuesser + bonusDrawer, cardsCompleted: (p.cardsCompleted || 0) + 1 };
-          }
-          if (p.id === guesserId) {
-            return { ...p, score: p.score + bonusGuesser, cardsCompleted: (p.cardsCompleted || 0) + 1 };
-          }
-          if (p.id === currentDrawer.id) {
-            return { ...p, score: p.score + bonusDrawer };
-          }
-          return p;
-        })
-      );
+      const newPlayers = players.map((p) => {
+        if (p.id === guesserId && p.id === currentDrawer.id) {
+          return { ...p, score: p.score + bonusGuesser + bonusDrawer, cardsCompleted: (p.cardsCompleted || 0) + 1 };
+        }
+        if (p.id === guesserId) {
+          return { ...p, score: p.score + bonusGuesser, cardsCompleted: (p.cardsCompleted || 0) + 1 };
+        }
+        if (p.id === currentDrawer.id) {
+          return { ...p, score: p.score + bonusDrawer };
+        }
+        return p;
+      });
+
+      setPlayers(newPlayers);
 
       const winnerText = `🎉 BENAR! ${guesserName} menebak kata rahasia: ${activeWordObj.word}! (+100 PTS)`;
       setRoundWinnerMsg(winnerText);
@@ -615,43 +755,57 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         localStorage.setItem('asta_family_love_points', String(currentLovePoints + bonusGuesser));
       } catch {}
 
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          senderName: guesserName,
-          text: guessInput,
-          isCorrect: true,
-          timestamp: nowTime,
-        },
-        {
-          id: (Date.now() + 1).toString(),
-          senderName: 'Sistem',
-          text: winnerText,
-          isSystem: true,
-          timestamp: nowTime,
-        },
-      ]);
+      const guessMsg: ChatMessage = {
+        id: Date.now().toString(),
+        senderName: guesserName,
+        text: guessInput,
+        isCorrect: true,
+        timestamp: nowTime,
+      };
+      const sysMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        senderName: 'Sistem',
+        text: winnerText,
+        isSystem: true,
+        timestamp: nowTime,
+      };
 
+      setChatMessages((prev) => [...prev, guessMsg, sysMsg]);
       setGuessInput('');
+
+      const nextRound = currentRound + 1;
+      const nextDrawerIdx = drawerIndex + 1;
+      const nextWordIdx = Math.floor(Math.random() * SECRET_WORDS_DB.length);
+
+      // Broadcast CORRECT_GUESS with updated scores so ALL devices update score & turn serempak!
+      broadcastGameEvent('CORRECT_GUESS', {
+        guesserId,
+        guesserName,
+        winnerText,
+        updatedPlayers: newPlayers,
+        chatMessages: [guessMsg, sysMsg],
+        nextRound,
+        nextDrawerIdx,
+        nextWordIdx,
+      });
 
       // Move to next turn after 3s
       setTimeout(() => {
-        advanceTurn();
+        advanceTurn(nextRound, nextDrawerIdx, nextWordIdx);
       }, 3000);
     } else {
       // Incorrect guess
       const userPlayer = getActiveUserPlayer(players);
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          senderName: userPlayer.name,
-          text: guessInput,
-          timestamp: nowTime,
-        },
-      ]);
+      const incorrectMsg: ChatMessage = {
+        id: Date.now().toString(),
+        senderName: userPlayer.name,
+        text: guessInput,
+        timestamp: nowTime,
+      };
+      setChatMessages((prev) => [...prev, incorrectMsg]);
       setGuessInput('');
+
+      broadcastGameEvent('NEW_CHAT_MESSAGE', { msg: incorrectMsg });
     }
   };
 
