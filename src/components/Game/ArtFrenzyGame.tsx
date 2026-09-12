@@ -138,15 +138,18 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      return initialPlayers.map((p, idx) => {
-        const isMe = idx === activeIdx;
+      // Filter ONLY family members who are actually logged in and online
+      const trulyOnlineMembers = initialPlayers.filter((p, idx) => Boolean(p.isOnline) || idx === activeIdx);
+
+      return trulyOnlineMembers.map((p) => {
+        const isMe = (activeId && p.id === activeId) || p.name.toLowerCase().includes(activeName);
         const cleanName = p.name.replace(/\s*\(Anda\)/gi, '');
         return {
           ...p,
           name: isMe ? `${cleanName} (Anda)` : cleanName,
           score: 0,
           cardsCompleted: 0,
-          isOnline: true,
+          isOnline: isMe ? true : Boolean(p.isOnline),
         };
       });
     }
@@ -260,8 +263,15 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     sound.playClick();
 
     if (mode === 'online_friends') {
-      const onlineCount = initialPlayers.filter((p) => p.isOnline).length;
-      if (onlineCount < 2) {
+      const activeId = currentUser?.id || '';
+      const activeName = (currentUser?.fullName || '').toLowerCase();
+      
+      const trulyOnlineMembers = initialPlayers.filter((p) => {
+        const isMe = (activeId && p.id === activeId) || p.name.toLowerCase().includes(activeName);
+        return isMe || Boolean(p.isOnline);
+      }).filter((p) => Boolean(p.isOnline));
+
+      if (trulyOnlineMembers.length < 2) {
         sound.playSkip();
         setShowOnlineErrorModal(true);
         return;
