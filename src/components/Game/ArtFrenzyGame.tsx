@@ -119,6 +119,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const [isWaitingLobby, setIsWaitingLobby] = useState(false);
   const [readyPlayerIds, setReadyPlayerIds] = useState<string[]>([]);
   const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
+  const [lobbyNoticeMsg, setLobbyNoticeMsg] = useState<string | null>(null);
 
   // Dynamically resolve active family code from props, DB session, or fallback
   const activeFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA-2026';
@@ -527,6 +528,8 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   const handleToggleReady = (playerId: string) => {
     sound.playClick();
+    setLobbyNoticeMsg(null);
+
     setReadyPlayerIds((prev) => {
       const updated = prev.includes(playerId)
         ? prev.filter((id) => id !== playerId)
@@ -534,9 +537,11 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       
       broadcastGameEvent('READY_STATUS_CHANGE', { readyPlayerIds: updated });
 
+      // Auto-trigger 3-2-1 countdown if all online players are now ready!
       if (updated.length >= players.length && players.length >= 2) {
         setTimeout(() => {
-          handleStartSynchronousGame();
+          broadcastGameEvent('GAME_START_COUNTDOWN', { readyPlayerIds: updated });
+          startCountdownSequence();
         }, 500);
       }
       return updated;
@@ -545,10 +550,30 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   const handleStartSynchronousGame = () => {
     sound.playClick();
-    const allOnlineIds = players.map((p) => p.id);
-    setReadyPlayerIds(allOnlineIds);
 
-    broadcastGameEvent('GAME_START_COUNTDOWN', { readyPlayerIds: allOnlineIds });
+    const activeUser = getActiveUserPlayer(players);
+    let currentReady = [...readyPlayerIds];
+
+    // Ensure active user is marked ready
+    if (!currentReady.includes(activeUser.id)) {
+      currentReady = [...currentReady, activeUser.id];
+      setReadyPlayerIds(currentReady);
+      broadcastGameEvent('READY_STATUS_CHANGE', { readyPlayerIds: currentReady });
+    }
+
+    const unreadyMembers = players.filter((p) => !currentReady.includes(p.id));
+
+    // If not all online players have clicked ready yet:
+    if (unreadyMembers.length > 0) {
+      sound.playTimerWarning();
+      const names = unreadyMembers.map((p) => p.name).join(', ');
+      setLobbyNoticeMsg(`⏳ Menunggu ${names} mengklik tombol SIAP terlebih dahulu agar dapat mulai serempak! (${currentReady.length}/${players.length} Siap)`);
+      return;
+    }
+
+    // ALL online players ARE READY! Broadcast start countdown to ALL connected devices!
+    setLobbyNoticeMsg(null);
+    broadcastGameEvent('GAME_START_COUNTDOWN', { readyPlayerIds: currentReady });
 
     setChatMessages([
       { id: '1', senderName: 'Sistem', text: `🌐 Mode Teman Online Aktif! Kode Keluarga: ${activeFamilyCode}. Permainan dimulai serempak!`, isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
@@ -907,6 +932,14 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                 </button>
               </div>
             </div>
+
+            {/* Warning / Notice Banner if waiting for unready players */}
+            {lobbyNoticeMsg && (
+              <div className="bg-amber-100 dark:bg-amber-950/80 border-2 border-amber-400 dark:border-amber-600 p-3.5 rounded-2xl text-amber-900 dark:text-amber-200 font-bold text-xs flex items-center gap-2.5 animate-bounce-short text-left shadow-sm">
+                <div className="text-2xl shrink-0">⏳</div>
+                <div className="leading-snug">{lobbyNoticeMsg}</div>
+              </div>
+            )}
 
             {/* List Pemain Online & Status Ready */}
             <div className="space-y-2 text-left">
