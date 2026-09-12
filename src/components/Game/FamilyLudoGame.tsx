@@ -1527,16 +1527,20 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                     }
                   }}
                   disabled={isRolling || (hasRolled && movableTokens.length === 0) || Boolean(winner) || (playMode === 'online_friends' && activePlayer.id !== activeUserPlayer.id)}
-                  className={`px-4 py-2.5 rounded-2xl font-display font-black text-xs shadow-md transition-all flex items-center gap-2 active:scale-95 ${
-                    hasRolled && movableTokens.length > 0
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white animate-pulse'
-                      : 'bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-95 text-white'
+                  className={`px-4 py-2.5 rounded-2xl font-display font-black text-xs transition-all flex items-center gap-2 active:scale-95 ${
+                    playMode === 'online_friends' && activePlayer.id !== activeUserPlayer.id
+                      ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-75 border border-slate-300 dark:border-slate-600 shadow-none'
+                      : hasRolled && movableTokens.length > 0
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white animate-pulse shadow-md'
+                      : 'bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-95 text-white shadow-md'
                   }`}
                 >
                   <Dices className={`w-4 h-4 ${isRolling ? 'animate-spin' : ''}`} />
                   <span>
                     {isRolling
                       ? 'MENGOKOK...'
+                      : playMode === 'online_friends' && activePlayer.id !== activeUserPlayer.id
+                      ? `MENUNGGU ${activePlayer.name.toUpperCase()}...`
                       : hasRolled && movableTokens.length > 0
                       ? 'JALANKAN PION ➔'
                       : 'KOCOK DADU 🎲'}
