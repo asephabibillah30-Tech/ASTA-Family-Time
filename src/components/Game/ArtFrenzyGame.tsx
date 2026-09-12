@@ -9,8 +9,11 @@ import {
 import { sound } from '../../utils/sound';
 import { fireBurstConfetti } from '../../utils/confetti';
 
+import type { UserAccount } from '../../types/auth';
+
 interface ArtFrenzyGameProps {
   players: Player[];
+  currentUser?: UserAccount;
   onBack: () => void;
 }
 
@@ -93,7 +96,7 @@ const getSketchIdForWord = (word: string): string | null => {
   return null;
 };
 
-export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPlayers, onBack }) => {
+export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPlayers, currentUser, onBack }) => {
   const [playMode, setPlayMode] = useState<PlayMode>('solo_bot');
   const [showModeModal, setShowModeModal] = useState<boolean>(true);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -104,16 +107,37 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const [hasUsedExtraLetters, setHasUsedExtraLetters] = useState(false);
   const [hasUsedAddTime, setHasUsedAddTime] = useState(false);
 
-  const [players, setPlayers] = useState<Player[]>(
-    initialPlayers.length > 0
-      ? initialPlayers
-      : [
-          { id: '1', name: 'Aris (Anda)', avatar: '👦', score: 1250, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
-          { id: '2', name: 'Bot Bella 🤖', avatar: '👧', score: 980, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
-          { id: '3', name: 'Bot Papa 🤖', avatar: '👨‍💼', score: 760, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
-          { id: '4', name: 'Bot Mamah 🤖', avatar: '👩‍💼', score: 550, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
-        ]
-  );
+  // Dynamically resolve logged in user name and avatar
+  const userFullName = currentUser?.fullName || (initialPlayers.length > 0 ? initialPlayers[0].name : 'Papa Asep');
+  const userAvatar = currentUser?.avatar || (initialPlayers.length > 0 ? initialPlayers[0].avatar : '👨‍💼');
+  const userDisplayName = userFullName.includes('(Anda)') ? userFullName : `${userFullName} (Anda)`;
+
+  const getSoloPlayers = useCallback((): Player[] => [
+    { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
+    { id: '2', name: 'Bot Bella 🤖', avatar: '👧', score: 0, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
+    { id: '3', name: 'Bot Papa 🤖', avatar: '👨‍💼', score: 0, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
+    { id: '4', name: 'Bot Mamah 🤖', avatar: '👩‍💼', score: 0, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
+  ], [userDisplayName, userAvatar]);
+
+  const getOnlinePlayers = useCallback((): Player[] => {
+    if (initialPlayers.length > 0) {
+      return initialPlayers.map((p, idx) => ({
+        ...p,
+        name: idx === 0 ? (p.name.includes('(Anda)') ? p.name : `${p.name} (Anda)`) : p.name,
+        score: 0,
+        cardsCompleted: 0,
+        isOnline: true,
+      }));
+    }
+    return [
+      { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
+      { id: '2', name: 'Bella', avatar: '👧', score: 0, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
+      { id: '3', name: 'Papa Asep', avatar: '👨‍💼', score: 0, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
+      { id: '4', name: 'Mamah Ita', avatar: '👩‍💼', score: 0, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
+    ];
+  }, [initialPlayers, userDisplayName, userAvatar]);
+
+  const [players, setPlayers] = useState<Player[]>(getSoloPlayers());
 
   const [currentRound, setCurrentRound] = useState(1);
   const maxRounds = 10;
@@ -203,26 +227,12 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     setDrawerIndex(0);
 
     if (mode === 'solo_bot') {
-      setPlayers([
-        { id: '1', name: 'Aris (Anda)', avatar: '👦', score: 1250, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
-        { id: '2', name: 'Bot Bella 🤖', avatar: '👧', score: 980, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
-        { id: '3', name: 'Bot Papa 🤖', avatar: '👨‍💼', score: 760, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
-        { id: '4', name: 'Bot Mamah 🤖', avatar: '👩‍💼', score: 550, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
-      ]);
+      setPlayers(getSoloPlayers());
       setChatMessages([
         { id: '1', senderName: 'Sistem', text: '🤖 Mode Bermain Sendiri (vs AI Bot) dimulai! Nikmati permainan solo!', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
       ]);
     } else {
-      setPlayers(
-        initialPlayers.length > 0
-          ? initialPlayers.map(p => ({ ...p, isOnline: true }))
-          : [
-              { id: '1', name: 'Aris', avatar: '👦', score: 1250, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
-              { id: '2', name: 'Bella', avatar: '👧', score: 980, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
-              { id: '3', name: 'Papa Asep', avatar: '👨‍💼', score: 760, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
-              { id: '4', name: 'Mamah Ita', avatar: '👩‍💼', score: 550, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
-            ]
-      );
+      setPlayers(getOnlinePlayers());
       setChatMessages([
         { id: '1', senderName: 'Sistem', text: '🌐 Mode Teman Online Aktif! Kode Keluarga: ASTA-2026', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
       ]);
@@ -497,11 +507,12 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       }, 3000);
     } else {
       // Incorrect guess
+      const userPlayer = players.find((p) => p.id === '1') || players[0];
       setChatMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
-          senderName: 'Aris (Anda)',
+          senderName: userPlayer.name,
           text: guessInput,
           timestamp: nowTime,
         },
@@ -809,7 +820,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                 <div className="flex items-center gap-2 bg-slate-950 px-3 py-1 rounded-lg border border-sky-500/40 shrink-0">
                   <span className="text-[10px] text-slate-400 font-extrabold uppercase">KATA RAHASIA:</span>
                   <span className="font-display font-black text-sm sm:text-base text-sky-300 tracking-wider">
-                    {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
+                    {currentDrawer.id === '1' ? activeWordObj.word : renderMaskedWord()}
                   </span>
                 </div>
               </div>
@@ -1064,10 +1075,10 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             {/* Center: Secret Word for Drawer or Hint for Guessers */}
             <div className="bg-white/10 backdrop-blur-md px-4 sm:px-6 py-2 rounded-2xl border border-white/20 text-center w-full sm:w-auto space-y-1">
               <div className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">
-                {currentDrawer.name.includes('Aris') ? 'Kata Rahasia Anda (Lukis Ini!)' : `Kategori: ${activeWordObj.category}`}
+                {currentDrawer.id === '1' ? 'Kata Rahasia Anda (Lukis Ini!)' : `Kategori: ${activeWordObj.category}`}
               </div>
               <div className="font-display font-black text-lg sm:text-2xl text-amber-300 tracking-wider">
-                {currentDrawer.name.includes('Aris') ? activeWordObj.word : renderMaskedWord()}
+                {currentDrawer.id === '1' ? activeWordObj.word : renderMaskedWord()}
               </div>
               
               {/* POWER-UP HINT BOOSTERS STRIP */}

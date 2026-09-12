@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Player } from '../../types/game';
+import type { UserAccount } from '../../types/auth';
 import { ArtFrenzyGame } from './ArtFrenzyGame';
 import { SnakeLaddersGame } from './SnakeLaddersGame';
 import { FamilyMonopolyGame } from './FamilyMonopolyGame';
@@ -17,15 +18,16 @@ import { sound } from '../../utils/sound';
 
 interface GameHubProps {
   players: Player[];
+  currentUser?: UserAccount;
   onStartCardGame: () => void;
 }
 
-export const GameHub: React.FC<GameHubProps> = ({ players, onStartCardGame }) => {
+export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, onStartCardGame }) => {
   const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'art_frenzy' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet' | 'hijaiyah' | 'vegetable' | 'animal' | 'vehicle' | 'story'>('hub');
   const [searchQuery, setSearchQuery] = useState('');
 
   if (activeGame === 'art_frenzy') {
-    return <ArtFrenzyGame players={players} onBack={() => setActiveGame('hub')} />;
+    return <ArtFrenzyGame players={players} currentUser={currentUser} onBack={() => setActiveGame('hub')} />;
   }
 
   if (activeGame === 'story') {

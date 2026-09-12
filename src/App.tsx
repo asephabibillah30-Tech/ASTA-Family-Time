@@ -348,6 +348,7 @@ export function App() {
             {!subScreen && currentTab === 'game' && (
               <GameHub
                 players={integratedPlayers}
+                currentUser={auth.currentUser ?? undefined}
                 onStartCardGame={handleStartCardGame}
               />
             )}
