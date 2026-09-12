@@ -232,6 +232,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   };
 
   // Handle Turn Rotation
+  // Handle Turn Rotation
   const advanceTurn = useCallback(() => {
     sound.playCardShuffle();
     if (currentRound >= maxRounds) {
@@ -239,6 +240,13 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       setIsGameOver(true);
       sound.playVictory();
       fireBurstConfetti();
+
+      // Persist final match bonus (+200 Love Points)
+      try {
+        const currentLovePoints = Number(localStorage.getItem('asta_family_love_points') || 100);
+        localStorage.setItem('asta_family_love_points', String(currentLovePoints + 200));
+        localStorage.setItem('asta_art_frenzy_last_match_complete', new Date().toISOString());
+      } catch {}
       return;
     }
 
@@ -297,22 +305,75 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           }
         }
 
-        // AI Bot Automated Chat & Guess Logic when in Solo Mode
-        if (playMode === 'solo_bot' && prev % 12 === 0 && prev > 10) {
-          const botNames = ['Bot Bella 🤖', 'Bot Papa 🤖', 'Bot Mamah 🤖'];
-          const randomBot = botNames[Math.floor(Math.random() * botNames.length)];
-          const wrongGuesses = ['Kucing?', 'Mobil?', 'Rumah?', 'Kue?', 'Matahari?', 'Gajah?'];
-          const randomWrong = wrongGuesses[Math.floor(Math.random() * wrongGuesses.length)];
-          
-          setChatMessages((msg) => [
-            ...msg,
-            {
-              id: Date.now().toString(),
-              senderName: randomBot,
-              text: randomWrong,
-              timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-            },
-          ]);
+        // AI Bot Automated Chat & Smart Guessing Logic when in Solo Mode
+        if (playMode === 'solo_bot' && prev % 8 === 0 && prev > 5) {
+          const nonDrawerBots = players.filter((p) => p.id !== currentDrawer.id && p.id !== '1');
+          if (nonDrawerBots.length > 0) {
+            const randomBot = nonDrawerBots[Math.floor(Math.random() * nonDrawerBots.length)];
+
+            // Increased chance to guess correctly when Aris is drawing as time elapses
+            const shouldGuessCorrectly = currentDrawer.id === '1' && prev <= 30 && Math.random() < 0.45;
+
+            if (shouldGuessCorrectly) {
+              sound.playSuccess();
+              fireBurstConfetti();
+              setIsRoundActive(false);
+
+              const bonusGuesser = 100;
+              const bonusDrawer = 50;
+
+              // Give Bot +100 PTS (Guesser), Aris +50 PTS (Drawer)
+              setPlayers((prevPlayers) =>
+                prevPlayers.map((p) => {
+                  if (p.id === randomBot.id) return { ...p, score: p.score + bonusGuesser, cardsCompleted: (p.cardsCompleted || 0) + 1 };
+                  if (p.id === currentDrawer.id) return { ...p, score: p.score + bonusDrawer };
+                  return p;
+                })
+              );
+
+              const winnerText = `🎉 BENAR! ${randomBot.name} menebak lukisan Anda: ${activeWordObj.word}! (+100 PTS)`;
+              setRoundWinnerMsg(winnerText);
+
+              setChatMessages((msg) => [
+                ...msg,
+                {
+                  id: Date.now().toString(),
+                  senderName: randomBot.name,
+                  text: activeWordObj.word,
+                  isCorrect: true,
+                  timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                },
+                {
+                  id: (Date.now() + 1).toString(),
+                  senderName: 'Sistem',
+                  text: winnerText,
+                  isSystem: true,
+                  timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                },
+              ]);
+
+              setTimeout(() => {
+                advanceTurn();
+              }, 3000);
+            } else {
+              // Incorrect attempt or hint question
+              const wrongGuesses = [
+                'Kucing?', 'Mobil?', 'Rumah?', 'Kue?', 'Matahari?', 'Gajah?', 'Pelangi?', 'Bunga?',
+                'Donat?', 'Bintang?', 'Awan?', 'Sepeda?', 'Pohon?'
+              ];
+              const randomWrong = wrongGuesses[Math.floor(Math.random() * wrongGuesses.length)];
+
+              setChatMessages((msg) => [
+                ...msg,
+                {
+                  id: Date.now().toString(),
+                  senderName: randomBot.name,
+                  text: randomWrong,
+                  timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                },
+              ]);
+            }
+          }
         }
 
         return prev - 1;
@@ -320,7 +381,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRoundActive, isGameOver, activeWordObj, revealedHints, advanceTurn, playMode]);
+  }, [isRoundActive, isGameOver, activeWordObj, revealedHints, advanceTurn, playMode, players, currentDrawer.id]);
 
   // Power-Up 1: Extra Letters Hint (+2 Huruf)
   const handleUseExtraLetters = () => {
@@ -379,20 +440,36 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       fireBurstConfetti();
       setIsRoundActive(false);
 
-      const guesserName = 'Aris (Anda)';
+      const userPlayer = players.find((p) => p.id === '1') || players[0];
+      const guesserId = userPlayer.id;
+      const guesserName = userPlayer.name;
       const bonusGuesser = 100;
       const bonusDrawer = 50;
 
-      // Update Scores
+      // Update Scores strictly for Guesser and Drawer ONLY
       setPlayers((prev) =>
         prev.map((p) => {
-          if (p.id === currentDrawer.id) return { ...p, score: p.score + bonusDrawer };
-          return { ...p, score: p.score + bonusGuesser };
+          if (p.id === guesserId && p.id === currentDrawer.id) {
+            return { ...p, score: p.score + bonusGuesser + bonusDrawer, cardsCompleted: (p.cardsCompleted || 0) + 1 };
+          }
+          if (p.id === guesserId) {
+            return { ...p, score: p.score + bonusGuesser, cardsCompleted: (p.cardsCompleted || 0) + 1 };
+          }
+          if (p.id === currentDrawer.id) {
+            return { ...p, score: p.score + bonusDrawer };
+          }
+          return p;
         })
       );
 
-      const winnerText = `🎉 BENAR! Kata rahasianya: ${activeWordObj.word}! (+100 PTS)`;
+      const winnerText = `🎉 BENAR! ${guesserName} menebak kata rahasia: ${activeWordObj.word}! (+100 PTS)`;
       setRoundWinnerMsg(winnerText);
+
+      // Persist love points locally
+      try {
+        const currentLovePoints = Number(localStorage.getItem('asta_family_love_points') || 100);
+        localStorage.setItem('asta_family_love_points', String(currentLovePoints + bonusGuesser));
+      } catch {}
 
       setChatMessages((prev) => [
         ...prev,
