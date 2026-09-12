@@ -349,6 +349,7 @@ export function App() {
               <GameHub
                 players={integratedPlayers}
                 currentUser={auth.currentUser ?? undefined}
+                familyCode={auth.currentFamily?.familyCode}
                 onStartCardGame={handleStartCardGame}
               />
             )}

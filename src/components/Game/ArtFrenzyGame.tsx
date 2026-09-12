@@ -10,10 +10,12 @@ import { sound } from '../../utils/sound';
 import { fireBurstConfetti } from '../../utils/confetti';
 
 import type { UserAccount } from '../../types/auth';
+import { db } from '../../services/db/databaseService';
 
 interface ArtFrenzyGameProps {
   players: Player[];
   currentUser?: UserAccount;
+  familyCode?: string;
   onBack: () => void;
 }
 
@@ -105,12 +107,20 @@ const getSketchIdForWord = (word: string): string | null => {
   return null;
 };
 
-export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPlayers, currentUser, onBack }) => {
+export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPlayers, currentUser, familyCode, onBack }) => {
   const [playMode, setPlayMode] = useState<PlayMode>('solo_bot');
   const [showModeModal, setShowModeModal] = useState<boolean>(true);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [isForcedLandscapeMode, setIsForcedLandscapeMode] = useState(false);
+
+  // Ready Room & 3-2-1 Synchronous Start States
+  const [isWaitingLobby, setIsWaitingLobby] = useState(false);
+  const [readyPlayerIds, setReadyPlayerIds] = useState<string[]>([]);
+  const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
+
+  // Dynamically resolve active family code from props, DB session, or fallback
+  const activeFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA-2026';
 
   // Power-Up Boosters usage state per round
   const [hasUsedExtraLetters, setHasUsedExtraLetters] = useState(false);
@@ -210,6 +220,32 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     setRoundWinnerMsg(null);
   }, []);
 
+  // 3-2-1 Synchronous Start Countdown Sequence
+  const startCountdownSequence = useCallback(() => {
+    setIsWaitingLobby(false);
+    setShowModeModal(false);
+    setIsRoundActive(false);
+    roundActiveRef.current = false;
+    setCountdownNumber(3);
+    sound.playTimerTick();
+
+    let count = 3;
+    const interval = setInterval(() => {
+      count -= 1;
+      if (count > 0) {
+        setCountdownNumber(count);
+        sound.playTimerTick();
+      } else if (count === 0) {
+        setCountdownNumber(0);
+        sound.playSuccess();
+      } else {
+        clearInterval(interval);
+        setCountdownNumber(null);
+        pickNewWord();
+      }
+    }, 1000);
+  }, [pickNewWord]);
+
   // Force & Request Landscape Screen Orientation on Mobile/Tablet
   const handleRequestLandscape = useCallback(() => {
     sound.playClick();
@@ -270,6 +306,21 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         setShowOnlineErrorModal(true);
         return;
       }
+
+      setPlayMode('online_friends');
+      setShowModeModal(false);
+      setShowOnlineErrorModal(false);
+      setIsGameOver(false);
+      setCurrentRound(1);
+      setDrawerIndex(0);
+
+      const onlineList = getOnlinePlayers();
+      setPlayers(onlineList);
+
+      const activeUser = getActiveUserPlayer(onlineList);
+      setReadyPlayerIds([activeUser.id]);
+      setIsWaitingLobby(true);
+      return;
     }
 
     setPlayMode(mode);
@@ -284,14 +335,32 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       setChatMessages([
         { id: '1', senderName: 'Sistem', text: '🤖 Mode Bermain Sendiri (vs AI Bot) dimulai! Nikmati permainan solo!', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
       ]);
-    } else {
-      setPlayers(getOnlinePlayers());
-      setChatMessages([
-        { id: '1', senderName: 'Sistem', text: '🌐 Mode Teman Online Aktif! Kode Keluarga: ASTA-2026', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
-      ]);
     }
 
     pickNewWord();
+  };
+
+  const handleToggleReady = (playerId: string) => {
+    sound.playClick();
+    setReadyPlayerIds((prev) => {
+      if (prev.includes(playerId)) {
+        return prev.filter((id) => id !== playerId);
+      } else {
+        return [...prev, playerId];
+      }
+    });
+  };
+
+  const handleStartSynchronousGame = () => {
+    sound.playClick();
+    const allOnlineIds = players.map((p) => p.id);
+    setReadyPlayerIds(allOnlineIds);
+
+    setChatMessages([
+      { id: '1', senderName: 'Sistem', text: `🌐 Mode Teman Online Aktif! Kode Keluarga: ${activeFamilyCode}. Permainan dimulai serempak!`, isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
+    ]);
+
+    startCountdownSequence();
   };
 
   // Handle Turn Rotation
@@ -588,7 +657,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   const handleCopyCode = () => {
     sound.playClick();
-    navigator.clipboard.writeText('ASTA-2026');
+    navigator.clipboard.writeText(activeFamilyCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   };
@@ -597,7 +666,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     sound.playClick();
     const message = `🎨 *Main ASTA Art Frenzy (Tebak Gambar) Bersama!*\n` +
       `Yuk bergabung melukis & menebak gambar bareng keluarga sekarang di ASTA Family Time!\n\n` +
-      `🔑 *Kode Ruang Keluarga:* ASTA-2026\n` +
+      `🔑 *Kode Ruang Keluarga:* ${activeFamilyCode}\n` +
       `👉 https://asta-family-time.vercel.app/`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
@@ -622,7 +691,149 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           : 'w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 pb-32 sm:pb-16 space-y-3 font-body select-none'
       }
     >
-      {/* 0. MULTIPLAYER ONLINE REQUIREMENT WARNING MODAL */}
+      {/* 0. A. RUANG TUNGGU MULTIPLAYER ONLINE (READY LOBBY) */}
+      {isWaitingLobby && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-pop-in select-none">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-7 max-w-lg w-full border-4 border-indigo-400 dark:border-indigo-600 shadow-2xl space-y-5 text-center">
+            
+            {/* Header */}
+            <div>
+              <div className="w-16 h-16 rounded-2xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-3xl mx-auto shadow-md border-2 border-indigo-300 mb-2">
+                🎮
+              </div>
+              <span className="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 font-black text-[10px] uppercase tracking-wider">
+                RUANG TUNGGU MULTIPLAYER ONLINE
+              </span>
+              <h3 className="font-display font-black text-2xl text-slate-900 dark:text-white mt-1.5">
+                Persiapan Main Serempak
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed mt-1">
+                Semua pemain online mengklik tombol <span className="font-bold text-indigo-600 dark:text-indigo-400">SIAP BERMAIN</span> agar permainan dimulai serempak!
+              </p>
+            </div>
+
+            {/* Kode Ruang Keluarga dari DB */}
+            <div className="bg-indigo-50 dark:bg-slate-900/80 p-3.5 rounded-2xl border-2 border-indigo-200 dark:border-indigo-800 flex items-center justify-between gap-2">
+              <div className="text-left min-w-0">
+                <div className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">Kode Ruang Keluarga (Database):</div>
+                <div className="font-mono font-black text-base sm:text-lg text-indigo-700 dark:text-indigo-300 truncate">{activeFamilyCode}</div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={handleCopyCode}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition-all"
+                >
+                  {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedCode ? 'Tersalin' : 'Salin'}</span>
+                </button>
+                <button
+                  onClick={handleShareWA}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition-all"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>WA</span>
+                </button>
+              </div>
+            </div>
+
+            {/* List Pemain Online & Status Ready */}
+            <div className="space-y-2 text-left">
+              <div className="flex justify-between items-center text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                <span>Status Pemain Online ({players.length}):</span>
+                <span className="text-indigo-600 dark:text-indigo-400 font-bold">{readyPlayerIds.length}/{players.length} Siap</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                {players.map((p) => {
+                  const isReady = readyPlayerIds.includes(p.id);
+                  const isUser = getActiveUserPlayer(players).id === p.id;
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => handleToggleReady(p.id)}
+                      className={`p-3 rounded-2xl border-2 flex items-center justify-between gap-2 cursor-pointer transition-all ${
+                        isReady
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-600 shadow-xs'
+                          : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 opacity-80 hover:opacity-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-base shrink-0">
+                          {p.avatar}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-black text-xs text-slate-900 dark:text-white truncate">
+                            {p.name}
+                          </div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                            {isUser ? '(Anda)' : '🟢 Online'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 shrink-0 ${
+                          isReady
+                            ? 'bg-emerald-500 text-white shadow-xs'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        {isReady ? '✅ SIAP' : '⏳ BELUM'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Tombol Mulai Serempak */}
+            <div className="pt-2 space-y-2">
+              <button
+                onClick={handleStartSynchronousGame}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-display font-black text-base shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 active:scale-98 transition-all"
+              >
+                <Play className="w-5 h-5 fill-current" />
+                <span>MULAI PERMAINAN SEREMPAK! 🚀</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  setIsWaitingLobby(false);
+                  setShowModeModal(true);
+                }}
+                className="w-full py-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              >
+                ← Kembali Pilihan Mode
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* 0. B. 3-2-1 COUNTDOWN OVERLAY BEFORE GAME START */}
+      {countdownNumber !== null && (
+        <div className="fixed inset-0 z-[120] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4 select-none animate-fade-in">
+          <div className="text-center space-y-4">
+            <div className="inline-block px-4 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/40 text-xs font-black uppercase tracking-widest">
+              🎨 SIAP-SIAP MAIN SEREMPAK!
+            </div>
+            
+            <div className="relative">
+              <div className="text-8xl sm:text-9xl font-display font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-300 via-orange-400 to-rose-500 drop-shadow-[0_10px_25px_rgba(249,115,22,0.6)] transform scale-110 transition-all duration-300">
+                {countdownNumber > 0 ? countdownNumber : 'MULAI! 🎨'}
+              </div>
+            </div>
+
+            <p className="text-sm font-bold text-slate-300 max-w-xs mx-auto">
+              {countdownNumber > 0 ? 'Semua pemain bersiap di kanvas melukis...' : 'Selamat bermain bersama keluarga!'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 0. C. MULTIPLAYER ONLINE REQUIREMENT WARNING MODAL */}
       {showOnlineErrorModal && (
         <div className="fixed inset-0 z-[100] bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-pop-in">
           <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-7 max-w-md w-full border-4 border-rose-400 dark:border-rose-600 shadow-2xl space-y-4 text-center">

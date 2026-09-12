@@ -19,15 +19,16 @@ import { sound } from '../../utils/sound';
 interface GameHubProps {
   players: Player[];
   currentUser?: UserAccount;
+  familyCode?: string;
   onStartCardGame: () => void;
 }
 
-export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, onStartCardGame }) => {
+export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCode, onStartCardGame }) => {
   const [activeGame, setActiveGame] = useState<'hub' | 'card' | 'art_frenzy' | 'ludo' | 'uno' | 'snake' | 'monopoly' | 'counting' | 'alphabet' | 'hijaiyah' | 'vegetable' | 'animal' | 'vehicle' | 'story'>('hub');
   const [searchQuery, setSearchQuery] = useState('');
 
   if (activeGame === 'art_frenzy') {
-    return <ArtFrenzyGame players={players} currentUser={currentUser} onBack={() => setActiveGame('hub')} />;
+    return <ArtFrenzyGame players={players} currentUser={currentUser} familyCode={familyCode} onBack={() => setActiveGame('hub')} />;
   }
 
   if (activeGame === 'story') {
