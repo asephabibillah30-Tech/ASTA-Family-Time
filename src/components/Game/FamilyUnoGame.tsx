@@ -218,6 +218,21 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
     return matched || playerList[0];
   }, [currentUser, userDisplayName, userAvatar]);
 
+  const getActiveUserUnoPlayer = useCallback((playerList: UnoPlayer[]): UnoPlayer => {
+    if (playerList.length === 0) return { id: '1', name: userDisplayName, avatar: userAvatar, hand: [], hasSaidUno: false };
+    const activeId = currentUser?.id || '';
+    const activeName = (currentUser?.fullName || '').toLowerCase().trim();
+
+    const matched = playerList.find((p) => {
+      if (activeId && p.id === activeId) return true;
+      if (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) return true;
+      if (p.name.includes('(Anda)')) return true;
+      return false;
+    });
+
+    return matched || playerList[0];
+  }, [currentUser, userDisplayName, userAvatar]);
+
   // Game configuration
   const [cardsPerHand, setCardsPerHand] = useState<5 | 7>(7);
   const [isGameStarted, setIsGameStarted] = useState(false);
@@ -564,8 +579,10 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
     startCountdownSequence();
   };
 
-  // Turn helpers
+  // Turn & User helpers
   const activePlayer = unoPlayers[currentTurnIdx % (unoPlayers.length || 1)] || unoPlayers[0];
+  const activeUserUnoPlayer = getActiveUserUnoPlayer(unoPlayers);
+  const activeUserPlayer = activeUserUnoPlayer;
   const topDiscard = discardPile[discardPile.length - 1];
 
   const isCardPlayable = (card: UnoCard): boolean => {
@@ -576,18 +593,20 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
     return false;
   };
 
+  const hasAnyPlayableCard = activeUserUnoPlayer ? activeUserUnoPlayer.hand.some(c => isCardPlayable(c)) : false;
+
   const sortHandByColor = () => {
-    if (!activePlayer) return;
+    if (!activeUserUnoPlayer) return;
     sound.playClick();
     const colorOrder: Record<UnoColor, number> = { red: 1, blue: 2, green: 3, yellow: 4, wild: 5 };
-    const sorted = [...activePlayer.hand].sort((a, b) => {
+    const sorted = [...activeUserUnoPlayer.hand].sort((a, b) => {
       if (colorOrder[a.color] !== colorOrder[b.color]) {
         return colorOrder[a.color] - colorOrder[b.color];
       }
       return a.value.localeCompare(b.value);
     });
 
-    const updatedPlayers = unoPlayers.map(p => p.id === activePlayer.id ? { ...p, hand: sorted } : p);
+    const updatedPlayers = unoPlayers.map(p => p.id === activeUserUnoPlayer.id ? { ...p, hand: sorted } : p);
     setUnoPlayers(updatedPlayers);
     broadcastGameState({ unoPlayers: updatedPlayers });
   };
@@ -596,8 +615,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
     if (!activePlayer || !topDiscard || winner) return;
 
     // Check if it's the current user's turn in multiplayer
-    const activeUser = getActiveUserPlayer(players);
-    if (playMode === 'online_friends' && activePlayer.id !== activeUser.id) {
+    if (playMode === 'online_friends' && activePlayer.id !== activeUserUnoPlayer.id) {
       sound.playClick();
       setMessage(`⏳ Masih giliran ${activePlayer.name}! Harap tunggu giliran Anda.`);
       return;
@@ -798,8 +816,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
   const handlePlayerDrawCard = () => {
     if (!activePlayer || winner) return;
 
-    const activeUser = getActiveUserPlayer(players);
-    if (playMode === 'online_friends' && activePlayer.id !== activeUser.id) {
+    if (playMode === 'online_friends' && activePlayer.id !== activeUserUnoPlayer.id) {
       sound.playClick();
       setMessage(`⏳ Masih giliran ${activePlayer.name}! Harap tunggu giliran Anda.`);
       return;
@@ -940,9 +957,6 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
       broadcastGameEvent('NEW_CHAT_MESSAGE', { msg: newMsg });
     }
   };
-
-  const hasAnyPlayableCard = activePlayer?.hand?.some(c => isCardPlayable(c));
-  const activeUserPlayer = getActiveUserPlayer(players);
 
   return (
     <div className="max-w-5xl mx-auto px-2 sm:px-4 py-2 space-y-2.5 sm:space-y-3 animate-pop-in select-none">
@@ -1475,15 +1489,15 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
               </div>
             </div>
 
-            {/* Active Player Hand Area (Interactive Hand for Logged-In User) */}
+            {/* Active User Player Hand Area (Interactive Hand for Logged-In User ONLY) */}
             <div className="bg-white dark:bg-slate-800 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-1.5">
               
               {/* Hand Header */}
               <div className="flex items-center justify-between gap-1 pb-1 border-b border-slate-100 dark:border-slate-700/60">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-base">{activePlayer.avatar}</span>
+                  <span className="text-base">{activeUserUnoPlayer.avatar}</span>
                   <span className="font-display font-black text-xs text-slate-900 dark:text-white">
-                    Tangan {activePlayer.name} ({activePlayer.hand.length} Kartu)
+                    Tangan {activeUserUnoPlayer.name} ({activeUserUnoPlayer.hand.length} Kartu)
                   </span>
                 </div>
 
@@ -1506,7 +1520,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
                     <span>Urutkan</span>
                   </button>
 
-                  {!hasAnyPlayableCard && activePlayer.id === activeUserPlayer.id && (
+                  {!hasAnyPlayableCard && activePlayer.id === activeUserUnoPlayer.id && (
                     <button
                       onClick={handlePlayerDrawCard}
                       className="px-2 py-0.5 rounded-lg bg-amber-500 text-white text-[10px] font-black shadow-xs active:scale-95 transition-all animate-pulse"
@@ -1525,8 +1539,9 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
                     : 'gap-1.5 overflow-x-auto custom-scrollbar'
                 }`}
               >
-                {activePlayer.hand.map((card, idx) => {
-                  const playable = isCardPlayable(card) && (playMode === 'solo_bot' || activePlayer.id === activeUserPlayer.id);
+                {activeUserUnoPlayer.hand.map((card, idx) => {
+                  const isMyTurn = activePlayer.id === activeUserUnoPlayer.id;
+                  const playable = isMyTurn && isCardPlayable(card) && !winner;
 
                   return (
                     <button
@@ -1536,7 +1551,9 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
                       className={`w-15 h-23 sm:w-20 sm:h-29 rounded-xl bg-gradient-to-br ${COLOR_MAP[card.color].gradient} p-1 text-white flex flex-col justify-between items-center shrink-0 transition-all border-2 border-white/95 shadow-md active:scale-95 relative ${
                         playable
                           ? '-translate-y-2 hover:-translate-y-3.5 ring-3 ring-amber-400 cursor-pointer scale-105 shadow-xl'
-                          : 'opacity-55 grayscale-20 cursor-not-allowed hover:opacity-80'
+                          : isMyTurn
+                          ? 'opacity-55 grayscale-20 cursor-not-allowed hover:opacity-80'
+                          : 'opacity-70 grayscale-10 cursor-not-allowed hover:opacity-90'
                       }`}
                     >
                       {/* Top corner label */}
