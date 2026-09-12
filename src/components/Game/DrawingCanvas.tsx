@@ -47,6 +47,7 @@ export const SKETCH_TEMPLATES: SketchTemplate[] = [
 interface DrawingCanvasProps {
   isReadOnly?: boolean;
   onCanvasChange?: (dataUrl: string) => void;
+  externalCanvasDataUrl?: string | null;
   width?: number;
   height?: number;
   initialSketchId?: string | null;
@@ -64,6 +65,7 @@ const EMOJI_STAMPS = ['⭐', '❤️', '🌸', '👑', '😃', '🚗', '🍦', '
 export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   isReadOnly = false,
   onCanvasChange,
+  externalCanvasDataUrl = null,
   width = 800,
   height = 550,
   initialSketchId = null,
@@ -76,6 +78,22 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const [lineWidth, setLineWidth] = useState<number>(8);
   const [isDrawing, setIsDrawing] = useState(false);
   const [undoStack, setUndoStack] = useState<ImageData[]>([]);
+
+  // Render incoming real-time drawing dataUrl from active painter across devices
+  useEffect(() => {
+    if (!externalCanvasDataUrl) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = externalCanvasDataUrl;
+  }, [externalCanvasDataUrl]);
 
   // Draw ultra-realistic 4D CAD vector sketch outlines with dynamic multi-pass drop shadow & volumetric depth
   const drawSketchOutline = useCallback((ctx: CanvasRenderingContext2D, sketchId: string) => {

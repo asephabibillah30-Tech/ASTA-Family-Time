@@ -147,8 +147,10 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      // Filter ONLY family members who are actually logged in and online
-      const trulyOnlineMembers = initialPlayers.filter((p, idx) => Boolean(p.isOnline) || idx === activeIdx);
+      // Filter ONLY family members who are actually logged in and online (strictly exclude bot accounts)
+      const trulyOnlineMembers = initialPlayers.filter(
+        (p, idx) => !p.name.toLowerCase().includes('bot') && (Boolean(p.isOnline) || idx === activeIdx)
+      );
 
       return trulyOnlineMembers.map((p, idx) => {
         const isMe = Boolean(
@@ -168,9 +170,6 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     }
     return [
       { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
-      { id: '2', name: 'Bella', avatar: '👧', score: 0, cardsCompleted: 0, color: 'bg-pink-500', isOnline: true },
-      { id: '3', name: 'Papa Asep', avatar: '👨‍💼', score: 0, cardsCompleted: 0, color: 'bg-purple-500', isOnline: true },
-      { id: '4', name: 'Mamah Ita', avatar: '👩‍💼', score: 0, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
     ];
   }, [initialPlayers, currentUser, userDisplayName, userAvatar]);
 
@@ -211,6 +210,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const [activeTabMobile, setActiveTabMobile] = useState<'canvas' | 'players' | 'chat'>('canvas');
   const [roundWinnerMsg, setRoundWinnerMsg] = useState<string | null>(null);
 
+  // Real-time Canvas Drawing DataUrl state across connected devices
+  const [remoteCanvasDataUrl, setRemoteCanvasDataUrl] = useState<string | null>(null);
+
   // Keep ref for immediate round active check inside intervals to prevent race conditions
   const roundActiveRef = useRef<boolean>(isRoundActive);
   useEffect(() => {
@@ -245,6 +247,16 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     }
   }, [activeFamilyCode]);
 
+  // Handle local canvas changes from active drawer and broadcast to other devices
+  const handleCanvasChange = useCallback((dataUrl: string) => {
+    if (playMode === 'online_friends') {
+      const activeUser = getActiveUserPlayer(players);
+      if (currentDrawer.id === activeUser.id) {
+        broadcastGameEvent('CANVAS_DRAW', { dataUrl });
+      }
+    }
+  }, [playMode, currentDrawer.id, players, getActiveUserPlayer, broadcastGameEvent]);
+
   // Pick a new word for a new round (accepts optional targetWordIdx for 100% realtime sync across devices)
   const pickNewWord = useCallback((targetWordIdx?: number) => {
     const wordIdx = (typeof targetWordIdx === 'number' && SECRET_WORDS_DB[targetWordIdx])
@@ -259,6 +271,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     setIsRoundActive(true);
     roundActiveRef.current = true;
     setRoundWinnerMsg(null);
+    setRemoteCanvasDataUrl(null);
   }, []);
 
   // 3-2-1 Synchronous Start Countdown Sequence
@@ -320,6 +333,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     setIsRoundActive(true);
     roundActiveRef.current = true;
     setRoundWinnerMsg(null);
+    setRemoteCanvasDataUrl(null);
 
     const nextDrawer = players[nextDrawerIdx % players.length];
     setChatMessages((prev) => [
@@ -370,6 +384,10 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               startCountdownSequence(wordIdx);
             }, 500);
           }
+        }
+      } else if (event === 'CANVAS_DRAW') {
+        if (payload?.dataUrl) {
+          setRemoteCanvasDataUrl(payload.dataUrl);
         }
       } else if (event === 'CORRECT_GUESS') {
         if (!roundActiveRef.current) return;
@@ -553,8 +571,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       // Auto-trigger 3-2-1 countdown if all online players are now ready!
       if (updated.length >= players.length && players.length >= 2) {
         setTimeout(() => {
-          broadcastGameEvent('GAME_START_COUNTDOWN', { readyPlayerIds: updated });
-          startCountdownSequence();
+          const initialWordIdx = Math.floor(Math.random() * SECRET_WORDS_DB.length);
+          broadcastGameEvent('GAME_START_COUNTDOWN', { readyPlayerIds: updated, initialWordIdx });
+          startCountdownSequence(initialWordIdx);
         }, 500);
       }
       return updated;
@@ -586,13 +605,14 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
     // ALL online players ARE READY! Broadcast start countdown to ALL connected devices!
     setLobbyNoticeMsg(null);
-    broadcastGameEvent('GAME_START_COUNTDOWN', { readyPlayerIds: currentReady });
+    const initialWordIdx = Math.floor(Math.random() * SECRET_WORDS_DB.length);
+    broadcastGameEvent('GAME_START_COUNTDOWN', { readyPlayerIds: currentReady, initialWordIdx });
 
     setChatMessages([
       { id: '1', senderName: 'Sistem', text: `🌐 Mode Teman Online Aktif! Kode Keluarga: ${activeFamilyCode}. Permainan dimulai serempak!`, isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
     ]);
 
-    startCountdownSequence();
+    startCountdownSequence(initialWordIdx);
   };
 
   // Round Timer Countdown Loop & AI Bot Auto-Guessing in Solo Mode
@@ -1380,7 +1400,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               <div className="flex-1 min-h-0 w-full relative overflow-hidden rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center">
                 <DrawingCanvas
                   key={`${activeWordObj.word}-${currentRound}`}
-                  isReadOnly={false}
+                  isReadOnly={currentDrawer.id !== getActiveUserPlayer(players).id}
+                  onCanvasChange={handleCanvasChange}
+                  externalCanvasDataUrl={currentDrawer.id !== getActiveUserPlayer(players).id ? remoteCanvasDataUrl : null}
                   width={800}
                   height={520}
                   initialSketchId={getSketchIdForWord(activeWordObj.word)}
@@ -1714,7 +1736,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
               <DrawingCanvas
                 key={`${activeWordObj.word}-${currentRound}`}
-                isReadOnly={false}
+                isReadOnly={currentDrawer.id !== getActiveUserPlayer(players).id}
+                onCanvasChange={handleCanvasChange}
+                externalCanvasDataUrl={currentDrawer.id !== getActiveUserPlayer(players).id ? remoteCanvasDataUrl : null}
                 width={800}
                 height={520}
                 initialSketchId={getSketchIdForWord(activeWordObj.word)}
