@@ -36,6 +36,8 @@ export interface UnoPlayer {
   avatar: string;
   hand: UnoCard[];
   hasSaidUno: boolean;
+  isLeft?: boolean;
+  status?: 'playing' | 'keluar';
 }
 
 interface ChatMessage {
@@ -451,6 +453,10 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
             return [...prev, payload.msg];
           });
         }
+      } else if (event === 'PLAYER_LEFT') {
+        if (payload?.playerId) {
+          handlePlayerLeftGame(payload.playerId, payload.playerName);
+        }
       }
     };
 
@@ -459,11 +465,28 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
       const supabase = postgresService.getClient();
       if (supabase) {
         supabaseChannel = supabase
-          .channel(channelName)
+          .channel(channelName, {
+            config: {
+              presence: { key: activeUserUnoPlayer?.id || 'guest' }
+            }
+          })
           .on('broadcast', { event: '*' }, ({ event, payload }: any) => {
             handleIncomingEvent(event, payload);
           })
-          .subscribe();
+          .on('presence', { event: 'leave' }, ({ key }: any) => {
+            if (key) {
+              handlePlayerLeftGame(key);
+            }
+          })
+          .subscribe((status: string) => {
+            if (status === 'SUBSCRIBED' && activeUserUnoPlayer?.id) {
+              supabaseChannel.track({
+                id: activeUserUnoPlayer.id,
+                name: activeUserUnoPlayer.name,
+                online_at: new Date().toISOString()
+              }).catch(() => {});
+            }
+          });
       }
     } catch {}
 
@@ -752,15 +775,72 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
     });
   };
 
-  const getNextPlayerIndex = (steps: number): number => {
-    const total = unoPlayers.length;
+  const getNextPlayerIndex = (steps: number, playersList = unoPlayers): number => {
+    const total = playersList.length;
     if (total === 0) return 0;
-    if (isClockwise) {
-      return (currentTurnIdx + steps) % total;
-    } else {
-      return (currentTurnIdx - steps + total * 10) % total;
+    let idx = currentTurnIdx;
+    let stepCount = 0;
+    let attempts = 0;
+    while (stepCount < steps && attempts < total * 2) {
+      attempts++;
+      if (isClockwise) {
+        idx = (idx + 1) % total;
+      } else {
+        idx = (idx - 1 + total) % total;
+      }
+      if (!playersList[idx]?.isLeft) {
+        stepCount++;
+      }
     }
+    return idx;
   };
+
+  const handlePlayerLeftGame = useCallback((leavingId: string, leavingName?: string) => {
+    setUnoPlayers((prevPlayers) => {
+      const targetPlayer = prevPlayers.find(p => p.id === leavingId);
+      if (!targetPlayer || targetPlayer.isLeft) return prevPlayers;
+
+      const pName = leavingName || targetPlayer.name;
+      const updatedPlayers = prevPlayers.map((p) =>
+        p.id === leavingId ? { ...p, isLeft: true, status: 'keluar' as const } : p
+      );
+
+      const activePlayers = updatedPlayers.filter((p) => !p.isLeft);
+
+      // Rule: If game started with >= 2 players and only 1 active player remains -> Automatic Win!
+      if (prevPlayers.length >= 2 && activePlayers.length === 1) {
+        const winnerPlayer = activePlayers[0];
+        setWinner(winnerPlayer);
+        const winMsg = `🎉 ${winnerPlayer.name} MENANG JUARA 1! (${pName} keluar dari permainan) 🏆`;
+        setMessage(winMsg);
+        sound.playVictory();
+        fireVictoryShower();
+
+        broadcastGameState({
+          unoPlayers: updatedPlayers,
+          winner: winnerPlayer,
+          message: winMsg,
+        });
+      } else if (activePlayers.length > 1) {
+        const exitMsg = `📢 ${pName} telah keluar dari permainan (Status: Keluar). Permainan berlanjut!`;
+        setMessage(exitMsg);
+
+        let nextTurn = currentTurnIdx;
+        if (prevPlayers[currentTurnIdx]?.id === leavingId) {
+          nextTurn = getNextPlayerIndex(1, updatedPlayers);
+          setCurrentTurnIdx(nextTurn);
+        }
+
+        broadcastGameState({
+          unoPlayers: updatedPlayers,
+          currentTurnIdx: nextTurn,
+          message: exitMsg,
+        });
+      }
+
+      return updatedPlayers;
+    });
+  }, [currentTurnIdx, isClockwise, broadcastGameState]);
 
   const advanceTurn = (steps: number) => {
     const nextIdx = getNextPlayerIndex(steps);
@@ -1218,6 +1298,9 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
           <button
             onClick={() => {
               sound.playClick();
+              if (playMode === 'online_friends' && activeUserUnoPlayer) {
+                broadcastGameEvent('PLAYER_LEFT', { playerId: activeUserUnoPlayer.id, playerName: activeUserUnoPlayer.name });
+              }
               onBack();
             }}
             className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-black transition-all active:scale-95 shrink-0"
@@ -1385,7 +1468,9 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
                   <div
                     key={p.id}
                     className={`px-2.5 py-1.5 rounded-xl border-2 transition-all flex items-center gap-2 shrink-0 ${
-                      isCurrentTurn
+                      p.isLeft
+                        ? 'border-slate-300 bg-slate-200 dark:bg-slate-800 opacity-50 grayscale'
+                        : isCurrentTurn
                         ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/80 shadow-md ring-2 ring-rose-400/40 scale-102'
                         : 'border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 opacity-75'
                     }`}
@@ -1396,10 +1481,14 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
                         {p.name}
                       </div>
                       <div className="text-[9px] text-slate-500 font-bold mt-0.5">
-                        {p.hand.length} Kartu {p.hand.length === 1 && <span className="text-rose-600 font-black animate-pulse">UNO! 🔥</span>}
+                        {p.isLeft ? 'Keluar' : `${p.hand.length} Kartu`} {p.hand.length === 1 && !p.isLeft && <span className="text-rose-600 font-black animate-pulse">UNO! 🔥</span>}
                       </div>
                     </div>
-                    {isCurrentTurn && (
+                    {p.isLeft ? (
+                      <span className="px-1.5 py-0.5 rounded-full bg-slate-500 text-white text-[8px] font-black uppercase">
+                        Keluar
+                      </span>
+                    ) : isCurrentTurn && (
                       <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[8px] font-black uppercase">
                         Turn
                       </span>

@@ -7,7 +7,7 @@ import {
   Globe, Share2, Copy, Check, Play, Lightbulb, Zap, PlusCircle, RotateCcw, Home, Maximize
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
-import { fireBurstConfetti } from '../../utils/confetti';
+import { fireBurstConfetti, fireVictoryShower } from '../../utils/confetti';
 
 import type { UserAccount } from '../../types/auth';
 import { db } from '../../services/db/databaseService';
@@ -306,7 +306,12 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     sound.playCardShuffle();
     
     const nextRound = syncedRound ?? (currentRound + 1);
-    const nextDrawerIdx = syncedDrawerIdx ?? (drawerIndex + 1);
+    let nextDrawerIdx = syncedDrawerIdx ?? (drawerIndex + 1);
+    let attempts = 0;
+    while (players[nextDrawerIdx % (players.length || 1)]?.isLeft && attempts < players.length * 2) {
+      nextDrawerIdx++;
+      attempts++;
+    }
 
     if (playMode !== 'solo_bot' && nextRound > maxRounds) {
       setIsRoundActive(false);
@@ -357,6 +362,58 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       });
     }
   }, [currentRound, drawerIndex, maxRounds, players, broadcastGameEvent]);
+
+  const handlePlayerLeftGame = useCallback((leavingId: string, leavingName?: string) => {
+    setPlayers((prevPlayers) => {
+      const targetPlayer = prevPlayers.find(p => p.id === leavingId);
+      if (!targetPlayer || targetPlayer.isLeft) return prevPlayers;
+
+      const pName = leavingName || targetPlayer.name;
+      const updatedPlayers = prevPlayers.map((p) =>
+        p.id === leavingId ? { ...p, isLeft: true, status: 'keluar' as const } : p
+      );
+
+      const activePlayers = updatedPlayers.filter((p) => !p.isLeft);
+
+      // Rule: If game started with >= 2 players and only 1 active player remains -> Automatic Win!
+      if (prevPlayers.length >= 2 && activePlayers.length === 1) {
+        const winnerPlayer = activePlayers[0];
+        setIsGameOver(true);
+        setIsRoundActive(false);
+        roundActiveRef.current = false;
+        sound.playVictory();
+        fireVictoryShower();
+
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            senderName: 'Sistem',
+            text: `🎉 ${winnerPlayer.name} MENANG JUARA 1 ART FRENZY! (${pName} keluar dari permainan) 🏆`,
+            isSystem: true,
+            timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+      } else if (activePlayers.length > 1) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            senderName: 'Sistem',
+            text: `📢 ${pName} telah keluar dari permainan (Status: Keluar). Permainan berlanjut!`,
+            isSystem: true,
+            timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+
+        if (prevPlayers[drawerIndex % prevPlayers.length]?.id === leavingId) {
+          advanceTurn();
+        }
+      }
+
+      return updatedPlayers;
+    });
+  }, [drawerIndex, advanceTurn]);
 
   // Real-time Event Listener for Cross-Device Supabase WebSocket & Same-Device BroadcastChannel
   useEffect(() => {
@@ -441,19 +498,42 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             return [...prev, payload.msg];
           });
         }
+      } else if (event === 'PLAYER_LEFT') {
+        if (payload?.playerId) {
+          handlePlayerLeftGame(payload.playerId, payload.playerName);
+        }
       }
     };
+
+    const activeUser = getActiveUserPlayer(players);
 
     // 1. Supabase Realtime Listener
     try {
       const supabase = postgresService.getClient();
       if (supabase) {
         supabaseChannel = supabase
-          .channel(channelName)
+          .channel(channelName, {
+            config: {
+              presence: { key: activeUser?.id || 'guest' }
+            }
+          })
           .on('broadcast', { event: '*' }, ({ event, payload }: any) => {
             handleIncomingEvent(event, payload);
           })
-          .subscribe();
+          .on('presence', { event: 'leave' }, ({ key }: any) => {
+            if (key) {
+              handlePlayerLeftGame(key);
+            }
+          })
+          .subscribe((status: string) => {
+            if (status === 'SUBSCRIBED' && activeUser?.id) {
+              supabaseChannel.track({
+                id: activeUser.id,
+                name: activeUser.name,
+                online_at: new Date().toISOString()
+              }).catch(() => {});
+            }
+          });
       }
     } catch {}
 
@@ -1553,6 +1633,10 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               <button
                 onClick={() => {
                   sound.playClick();
+                  const activeUser = getActiveUserPlayer(players);
+                  if (playMode === 'online_friends' && activeUser) {
+                    broadcastGameEvent('PLAYER_LEFT', { playerId: activeUser.id, playerName: activeUser.name });
+                  }
                   onBack();
                 }}
                 className="p-2 sm:p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition-all shadow-2xs shrink-0"
@@ -1798,7 +1882,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                       <div
                         key={p.id}
                         className={`p-2.5 rounded-2xl flex items-center justify-between border transition-all ${
-                          isCurrentDrawer
+                          p.isLeft
+                            ? 'border-slate-300 bg-slate-200 dark:bg-slate-800 opacity-50 grayscale'
+                            : isCurrentDrawer
                             ? 'bg-amber-100 dark:bg-amber-950/80 border-amber-400 font-extrabold shadow-sm scale-[1.02]'
                             : 'bg-white dark:bg-slate-700/60 border-slate-200 dark:border-slate-600'
                         }`}
@@ -1808,15 +1894,19 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
                           <div className="min-w-0">
                             <div className="font-black text-xs text-slate-900 dark:text-white truncate flex items-center gap-1">
                               <span>{p.name}</span>
-                              {idx === 0 && <Crown className="w-3 h-3 text-amber-500 inline" />}
+                              {idx === 0 && !p.isLeft && <Crown className="w-3 h-3 text-amber-500 inline" />}
                             </div>
                             <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-                              {p.score} pts
+                              {p.isLeft ? <span className="text-slate-600 dark:text-slate-400 font-black">Keluar</span> : `${p.score} pts`}
                             </div>
                           </div>
                         </div>
 
-                        {isCurrentDrawer && (
+                        {p.isLeft ? (
+                          <span className="px-2 py-0.5 rounded-full bg-slate-500 text-white text-[9px] font-black uppercase">
+                            Keluar
+                          </span>
+                        ) : isCurrentDrawer && (
                           <span className="p-1.5 rounded-xl bg-amber-400 text-slate-900 text-xs font-black flex items-center gap-1 shadow-xs shrink-0">
                             <Pencil className="w-3.5 h-3.5" />
                             <span className="hidden sm:inline">Melukis</span>

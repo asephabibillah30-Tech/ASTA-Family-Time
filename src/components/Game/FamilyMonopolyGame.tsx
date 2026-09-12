@@ -27,6 +27,8 @@ export interface MonopolyPlayerConfig {
   isOnline?: boolean;
   isReady?: boolean;
   color: string;
+  isLeft?: boolean;
+  status?: 'playing' | 'keluar';
 }
 
 export interface ChatMessage {
@@ -336,17 +338,39 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
       if (payload.isGameStarted !== undefined) setIsGameStarted(payload.isGameStarted);
       if (payload.readyPlayers) setReadyPlayers(payload.readyPlayers);
       if (payload.countdown !== undefined) setCountdown(payload.countdown);
+      if (data?.event === 'PLAYER_LEFT' || payload?.event === 'PLAYER_LEFT') {
+        const pId = payload?.playerId || data?.payload?.playerId;
+        const pName = payload?.playerName || data?.payload?.playerName;
+        if (pId) handlePlayerLeftGame(pId, pName);
+      }
     };
+
+    const activeUser = getActiveUserPlayer(gamePlayers);
 
     // Supabase Realtime Channel
     let supabaseChannel: any = null;
     try {
       const supabase = postgresService.getClient();
       if (supabase) {
-        supabaseChannel = supabase.channel(`monopoly_${room}`);
+        supabaseChannel = supabase.channel(`monopoly_${room}`, {
+          config: {
+            presence: { key: activeUser?.id || 'guest' }
+          }
+        });
         supabaseChannel
-          .on('broadcast', { event: 'MONOPOLY_GAME_SYNC' }, (msg: any) => handleIncomingSync(msg))
-          .subscribe();
+          .on('broadcast', { event: '*' }, (msg: any) => handleIncomingSync(msg))
+          .on('presence', { event: 'leave' }, ({ key }: any) => {
+            if (key) handlePlayerLeftGame(key);
+          })
+          .subscribe((status: string) => {
+            if (status === 'SUBSCRIBED' && activeUser?.id) {
+              supabaseChannel.track({
+                id: activeUser.id,
+                name: activeUser.name,
+                online_at: new Date().toISOString()
+              }).catch(() => {});
+            }
+          });
       }
     } catch {}
 
@@ -466,7 +490,12 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
     }
 
     const updatedPositions = { ...positions, [playerToMove.id]: nextPos };
-    const nextTurnIdx = (currentTurnIdx + 1) % gamePlayers.length;
+    let nextTurnIdx = (currentTurnIdx + 1) % (gamePlayers.length || 1);
+    let attempts = 0;
+    while (gamePlayers[nextTurnIdx]?.isLeft && attempts < gamePlayers.length * 2) {
+      nextTurnIdx = (nextTurnIdx + 1) % gamePlayers.length;
+      attempts++;
+    }
 
     // Check winner if a player reaches 300+ coins or all properties are owned
     let gameWinner: MonopolyPlayerConfig | null = null;
@@ -501,6 +530,58 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
       });
     }
   }, [positions, coins, properties, currentTurnIdx, gamePlayers, playMode, broadcastGameState]);
+
+  const handlePlayerLeftGame = useCallback((leavingId: string, leavingName?: string) => {
+    setGamePlayers((prevPlayers) => {
+      const targetPlayer = prevPlayers.find(p => p.id === leavingId);
+      if (!targetPlayer || targetPlayer.isLeft) return prevPlayers;
+
+      const pName = leavingName || targetPlayer.name;
+      const updatedPlayers = prevPlayers.map((p) =>
+        p.id === leavingId ? { ...p, isLeft: true, status: 'keluar' as const } : p
+      );
+
+      const activePlayers = updatedPlayers.filter((p) => !p.isLeft);
+
+      // Rule: If game started with >= 2 players and only 1 active player remains -> Automatic Win!
+      if (prevPlayers.length >= 2 && activePlayers.length === 1) {
+        const winnerPlayer = activePlayers[0];
+        setWinner(winnerPlayer);
+        const winMsg = `🎉 ${winnerPlayer.name} MENANG JUARA MONOPOLI! (${pName} keluar dari permainan) 🏆`;
+        setLogMessage(winMsg);
+        sound.playVictory();
+        fireVictoryShower();
+
+        broadcastGameState({
+          gamePlayers: updatedPlayers,
+          winner: winnerPlayer,
+          logMessage: winMsg,
+        });
+      } else if (activePlayers.length > 1) {
+        const exitMsg = `📢 ${pName} telah keluar dari permainan (Status: Keluar). Permainan berlanjut!`;
+        setLogMessage(exitMsg);
+
+        let nextTurn = currentTurnIdx;
+        if (prevPlayers[currentTurnIdx]?.id === leavingId) {
+          let attempts = 0;
+          nextTurn = (currentTurnIdx + 1) % updatedPlayers.length;
+          while (updatedPlayers[nextTurn]?.isLeft && attempts < updatedPlayers.length * 2) {
+            nextTurn = (nextTurn + 1) % updatedPlayers.length;
+            attempts++;
+          }
+          setCurrentTurnIdx(nextTurn);
+        }
+
+        broadcastGameState({
+          gamePlayers: updatedPlayers,
+          currentTurnIdx: nextTurn,
+          logMessage: exitMsg,
+        });
+      }
+
+      return updatedPlayers;
+    });
+  }, [currentTurnIdx, broadcastGameState]);
 
   // Roll Dice Action
   const rollDice = useCallback(() => {
@@ -872,7 +953,14 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
           {/* Top Bar */}
           <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-sm">
             <button
-              onClick={onBack}
+              onClick={() => {
+                sound.playClick();
+                const activeUser = getActiveUserPlayer(gamePlayers);
+                if (playMode === 'online_friends' && activeUser) {
+                  broadcastGameEvent('PLAYER_LEFT', { playerId: activeUser.id, playerName: activeUser.name });
+                }
+                onBack();
+              }}
               className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 active:scale-95"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -916,7 +1004,9 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
                 <div
                   key={p.id}
                   className={`p-3 rounded-2xl border-2 flex items-center justify-between transition-all ${
-                    isTurn
+                    p.isLeft
+                      ? 'border-slate-300 bg-slate-200 dark:bg-slate-800 opacity-50 grayscale'
+                      : isTurn
                       ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-400 shadow-sm scale-[1.02]'
                       : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'
                   }`}
@@ -925,7 +1015,9 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
                     <span className="text-2xl">{p.avatar}</span>
                     <div>
                       <p className="font-display font-bold text-xs text-slate-800 dark:text-slate-100">{p.name}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Petak {positions[p.id] || 0}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                        {p.isLeft ? <span className="text-slate-600 dark:text-slate-400 font-black">Keluar</span> : `Petak ${positions[p.id] || 0}`}
+                      </p>
                     </div>
                   </div>
 

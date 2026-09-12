@@ -26,6 +26,8 @@ export interface LudoPlayerConfig {
   name: string;
   avatar: string;
   color: LudoColor;
+  isLeft?: boolean;
+  status?: 'playing' | 'keluar';
 }
 
 export interface LudoToken {
@@ -513,19 +515,42 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
             return [...prev, payload.msg];
           });
         }
+      } else if (event === 'PLAYER_LEFT') {
+        if (payload?.playerId) {
+          handlePlayerLeftGame(payload.playerId, payload.playerName);
+        }
       }
     };
+
+    const activeUser = getActiveUserPlayer(players);
 
     // 1. Supabase Realtime Listener
     try {
       const supabase = postgresService.getClient();
       if (supabase) {
         supabaseChannel = supabase
-          .channel(channelName)
+          .channel(channelName, {
+            config: {
+              presence: { key: activeUser?.id || 'guest' }
+            }
+          })
           .on('broadcast', { event: '*' }, ({ event, payload }: any) => {
             handleIncomingEvent(event, payload);
           })
-          .subscribe();
+          .on('presence', { event: 'leave' }, ({ key }: any) => {
+            if (key) {
+              handlePlayerLeftGame(key);
+            }
+          })
+          .subscribe((status: string) => {
+            if (status === 'SUBSCRIBED' && activeUser?.id) {
+              supabaseChannel.track({
+                id: activeUser.id,
+                name: activeUser.name,
+                online_at: new Date().toISOString()
+              }).catch(() => {});
+            }
+          });
       }
     } catch {}
 
@@ -832,6 +857,58 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
     }, getsExtraTurn ? 800 : 600);
   };
 
+  const handlePlayerLeftGame = useCallback((leavingId: string, leavingName?: string) => {
+    setGamePlayers((prevPlayers) => {
+      const targetPlayer = prevPlayers.find(p => p.id === leavingId);
+      if (!targetPlayer || targetPlayer.isLeft) return prevPlayers;
+
+      const pName = leavingName || targetPlayer.name;
+      const updatedPlayers = prevPlayers.map((p) =>
+        p.id === leavingId ? { ...p, isLeft: true, status: 'keluar' as const } : p
+      );
+
+      const activePlayers = updatedPlayers.filter((p) => !p.isLeft);
+
+      // Rule: If game started with >= 2 players and only 1 active player remains -> Automatic Win!
+      if (prevPlayers.length >= 2 && activePlayers.length === 1) {
+        const winnerPlayer = activePlayers[0];
+        setWinner(winnerPlayer);
+        const winMsg = `🎉 ${winnerPlayer.name} MENANG JUARA 1 LUDO! (${pName} keluar dari permainan) 🏆`;
+        setMessage(winMsg);
+        sound.playVictory();
+        fireVictoryShower();
+
+        broadcastGameState({
+          gamePlayers: updatedPlayers,
+          winner: winnerPlayer,
+          message: winMsg,
+        });
+      } else if (activePlayers.length > 1) {
+        const exitMsg = `📢 ${pName} telah keluar dari permainan (Status: Keluar). Permainan berlanjut!`;
+        setMessage(exitMsg);
+
+        let nextTurn = currentTurnIdx;
+        if (prevPlayers[currentTurnIdx]?.id === leavingId) {
+          let attempts = 0;
+          nextTurn = (currentTurnIdx + 1) % updatedPlayers.length;
+          while (updatedPlayers[nextTurn]?.isLeft && attempts < updatedPlayers.length * 2) {
+            nextTurn = (nextTurn + 1) % updatedPlayers.length;
+            attempts++;
+          }
+          setCurrentTurnIdx(nextTurn);
+        }
+
+        broadcastGameState({
+          gamePlayers: updatedPlayers,
+          currentTurnIdx: nextTurn,
+          message: exitMsg,
+        });
+      }
+
+      return updatedPlayers;
+    });
+  }, [currentTurnIdx, broadcastGameState]);
+
   // Pass turn to next player
   const passTurn = (extraTurn: boolean) => {
     setHasRolled(false);
@@ -841,10 +918,15 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
     let turnMsg = '';
 
     if (!extraTurn) {
-      nextIdx = (currentTurnIdx + 1) % gamePlayers.length;
+      let attempts = 0;
+      nextIdx = (currentTurnIdx + 1) % (gamePlayers.length || 1);
+      while (gamePlayers[nextIdx]?.isLeft && attempts < gamePlayers.length * 2) {
+        nextIdx = (nextIdx + 1) % gamePlayers.length;
+        attempts++;
+      }
       setCurrentTurnIdx(nextIdx);
       const nextP = gamePlayers[nextIdx];
-      turnMsg = `Giliran ${nextP.name} (${COLOR_INFO[nextP.color].name}). Kocok dadu! 🎲`;
+      turnMsg = nextP ? `Giliran ${nextP.name} (${COLOR_INFO[nextP.color].name}). Kocok dadu! 🎲` : 'Kocok dadu!';
     } else {
       turnMsg = `Giliran bonus untuk ${activePlayer.name}! Silakan kocok dadu lagi 🎲`;
     }
@@ -1204,6 +1286,10 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
           <button
             onClick={() => {
               sound.playClick();
+              const activeUser = getActiveUserPlayer(players);
+              if (playMode === 'online_friends' && activeUser) {
+                broadcastGameEvent('PLAYER_LEFT', { playerId: activeUser.id, playerName: activeUser.name });
+              }
               onBack();
             }}
             className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-black transition-all active:scale-95 shrink-0"
@@ -1401,7 +1487,9 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                   <div
                     key={p.id}
                     className={`p-2 rounded-2xl border-2 transition-all flex items-center gap-2 ${
-                      isCurrentTurn
+                      p.isLeft
+                        ? 'border-slate-300 bg-slate-200 dark:bg-slate-800 opacity-50 grayscale'
+                        : isCurrentTurn
                         ? `${info.borderClass} ${info.lightBg} shadow-md ring-2 ring-amber-400/40 scale-102`
                         : 'border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 opacity-75'
                     }`}
@@ -1412,7 +1500,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                         {p.name}
                       </div>
                       <div className="text-[10px] font-bold text-slate-500 truncate">
-                        {info.label} • {finishedCount}/{tokensPerPlayer} Finish
+                        {p.isLeft ? <span className="text-slate-600 dark:text-slate-400 font-black">Keluar</span> : `${info.label} • ${finishedCount}/${tokensPerPlayer} Finish`}
                       </div>
                     </div>
                   </div>

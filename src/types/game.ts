@@ -42,6 +42,8 @@ export interface Player {
   cardsCompleted: number;
   color: string;
   isOnline?: boolean;
+  isLeft?: boolean;
+  status?: 'playing' | 'keluar';
 }
 
 export type GameModeId = 'random' | 'funny' | 'expression' | 'charades' | 'animal' | 'smart' | 'family' | 'speed' | 'custom';
