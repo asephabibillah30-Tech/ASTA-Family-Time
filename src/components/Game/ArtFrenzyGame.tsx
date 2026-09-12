@@ -237,10 +237,13 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     }
   }, [activeFamilyCode]);
 
-  // Pick a new word for a new round
-  const pickNewWord = useCallback(() => {
-    const randomIdx = Math.floor(Math.random() * SECRET_WORDS_DB.length);
-    setActiveWordObj(SECRET_WORDS_DB[randomIdx]);
+  // Pick a new word for a new round (accepts optional targetWordIdx for 100% realtime sync across devices)
+  const pickNewWord = useCallback((targetWordIdx?: number) => {
+    const wordIdx = (typeof targetWordIdx === 'number' && SECRET_WORDS_DB[targetWordIdx])
+      ? targetWordIdx
+      : Math.floor(Math.random() * SECRET_WORDS_DB.length);
+
+    setActiveWordObj(SECRET_WORDS_DB[wordIdx]);
     setRevealedHints([]);
     setHasUsedExtraLetters(false);
     setHasUsedAddTime(false);
@@ -251,7 +254,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   }, []);
 
   // 3-2-1 Synchronous Start Countdown Sequence
-  const startCountdownSequence = useCallback(() => {
+  const startCountdownSequence = useCallback((targetWordIdx?: number) => {
     setIsWaitingLobby(false);
     setShowModeModal(false);
     setIsRoundActive(false);
@@ -271,7 +274,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       } else {
         clearInterval(interval);
         setCountdownNumber(null);
-        pickNewWord();
+        pickNewWord(targetWordIdx);
       }
     }, 1000);
   }, [pickNewWord]);
@@ -345,7 +348,8 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       if (event === 'GAME_START_COUNTDOWN') {
         setIsWaitingLobby(false);
         setShowModeModal(false);
-        startCountdownSequence();
+        const wordIdx = payload?.initialWordIdx;
+        startCountdownSequence(wordIdx);
       } else if (event === 'READY_STATUS_CHANGE') {
         if (Array.isArray(payload?.readyPlayerIds)) {
           setReadyPlayerIds(payload.readyPlayerIds);
@@ -354,7 +358,8 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             setTimeout(() => {
               setIsWaitingLobby(false);
               setShowModeModal(false);
-              startCountdownSequence();
+              const wordIdx = payload?.initialWordIdx ?? Math.floor(Math.random() * SECRET_WORDS_DB.length);
+              startCountdownSequence(wordIdx);
             }, 500);
           }
         }
