@@ -178,16 +178,17 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const getActiveUserPlayer = useCallback((playerList: Player[]): Player => {
     if (playerList.length === 0) return { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true };
     const activeId = currentUser?.id || '';
-    const activeName = (currentUser?.fullName || '').toLowerCase().trim();
+    const activeName = (currentUser?.fullName || '').toLowerCase().trim().replace(/\s*\(anda\)/gi, '');
 
     const matched = playerList.find((p) => {
+      const pCleanName = p.name.toLowerCase().replace(/\s*\(anda\)/gi, '').trim();
       if (activeId && p.id === activeId) return true;
-      if (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) return true;
-      if (p.name.includes('(Anda)')) return true;
+      if (activeName && activeName.length >= 2 && pCleanName.includes(activeName)) return true;
+      if (activeName && activeName.length >= 2 && activeName.includes(pCleanName)) return true;
       return false;
     });
 
-    return matched || playerList[0];
+    return matched || playerList.find(p => p.name.includes('(Anda)')) || playerList[0];
   }, [currentUser, userDisplayName, userAvatar]);
 
   const [currentRound, setCurrentRound] = useState(1);
@@ -396,9 +397,27 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         sound.playSuccess();
         fireBurstConfetti();
 
-        if (Array.isArray(payload?.updatedPlayers)) {
-          setPlayers(payload.updatedPlayers);
-        }
+        const { guesserId, cleanGuesserName, drawerId, cleanDrawerName, bonusGuesser = 100, bonusDrawer = 50 } = payload || {};
+
+        setPlayers((prev) =>
+          prev.map((p) => {
+            const pClean = p.name.replace(/\s*\(Anda\)/gi, '').trim();
+            let addScore = 0;
+            let addCard = 0;
+            if ((guesserId && p.id === guesserId) || (cleanGuesserName && pClean === cleanGuesserName)) {
+              addScore += bonusGuesser;
+              addCard += 1;
+            }
+            if ((drawerId && p.id === drawerId) || (cleanDrawerName && pClean === cleanDrawerName)) {
+              addScore += bonusDrawer;
+            }
+            if (addScore > 0) {
+              return { ...p, score: p.score + addScore, cardsCompleted: (p.cardsCompleted || 0) + addCard };
+            }
+            return p;
+          })
+        );
+
         if (payload?.winnerText) {
           setRoundWinnerMsg(payload.winnerText);
         }
@@ -756,23 +775,31 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       const bonusGuesser = 100;
       const bonusDrawer = 50;
 
-      // Update Scores strictly for Guesser and Drawer ONLY
-      const newPlayers = players.map((p) => {
-        if (p.id === guesserId && p.id === currentDrawer.id) {
-          return { ...p, score: p.score + bonusGuesser + bonusDrawer, cardsCompleted: (p.cardsCompleted || 0) + 1 };
-        }
-        if (p.id === guesserId) {
-          return { ...p, score: p.score + bonusGuesser, cardsCompleted: (p.cardsCompleted || 0) + 1 };
-        }
-        if (p.id === currentDrawer.id) {
-          return { ...p, score: p.score + bonusDrawer };
-        }
-        return p;
-      });
+      const cleanGuesserName = guesserName.replace(/\s*\(Anda\)/gi, '').trim();
+      const drawerId = currentDrawer.id;
+      const cleanDrawerName = currentDrawer.name.replace(/\s*\(Anda\)/gi, '').trim();
 
-      setPlayers(newPlayers);
+      // Update Scores strictly for Guesser and Drawer ONLY on local device
+      setPlayers((prev) =>
+        prev.map((p) => {
+          const pClean = p.name.replace(/\s*\(Anda\)/gi, '').trim();
+          let addScore = 0;
+          let addCard = 0;
+          if (p.id === guesserId || pClean === cleanGuesserName) {
+            addScore += bonusGuesser;
+            addCard += 1;
+          }
+          if (p.id === drawerId || pClean === cleanDrawerName) {
+            addScore += bonusDrawer;
+          }
+          if (addScore > 0) {
+            return { ...p, score: p.score + addScore, cardsCompleted: (p.cardsCompleted || 0) + addCard };
+          }
+          return p;
+        })
+      );
 
-      const winnerText = `🎉 BENAR! ${guesserName} menebak kata rahasia: ${activeWordObj.word}! (+100 PTS)`;
+      const winnerText = `🎉 BENAR! ${cleanGuesserName} menebak kata rahasia: ${activeWordObj.word}! (+100 PTS)`;
       setRoundWinnerMsg(winnerText);
 
       // Persist love points locally
@@ -783,7 +810,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
       const guessMsg: ChatMessage = {
         id: Date.now().toString(),
-        senderName: guesserName,
+        senderName: cleanGuesserName,
         text: guessInput,
         isCorrect: true,
         timestamp: nowTime,
@@ -803,12 +830,15 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       const nextDrawerIdx = drawerIndex + 1;
       const nextWordIdx = Math.floor(Math.random() * SECRET_WORDS_DB.length);
 
-      // Broadcast CORRECT_GUESS with updated scores so ALL devices update score & turn serempak!
+      // Broadcast CORRECT_GUESS with explicit IDs and clean names so ALL devices update score & turn serempak!
       broadcastGameEvent('CORRECT_GUESS', {
         guesserId,
-        guesserName,
+        cleanGuesserName,
+        drawerId,
+        cleanDrawerName,
+        bonusGuesser,
+        bonusDrawer,
         winnerText,
-        updatedPlayers: newPlayers,
         chatMessages: [guessMsg, sysMsg],
         nextRound,
         nextDrawerIdx,
