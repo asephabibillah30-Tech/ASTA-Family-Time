@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Player } from '../../types/game';
 import { DrawingCanvas } from './DrawingCanvas';
 import { 
@@ -27,6 +27,15 @@ interface ChatMessage {
   isSystem?: boolean;
   timestamp: string;
 }
+
+// Normalize strings for flexible guessing (removes spaces, hyphens, punctuation)
+const normalizeWord = (str: string): string => {
+  if (!str) return '';
+  return str
+    .toUpperCase()
+    .trim()
+    .replace(/[^A-Z0-9]/g, '');
+};
 
 // Database of family-friendly Indonesian secret words with categories
 const SECRET_WORDS_DB = [
@@ -159,6 +168,12 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const [activeTabMobile, setActiveTabMobile] = useState<'canvas' | 'players' | 'chat'>('canvas');
   const [roundWinnerMsg, setRoundWinnerMsg] = useState<string | null>(null);
 
+  // Keep ref for immediate round active check inside intervals to prevent race conditions
+  const roundActiveRef = useRef<boolean>(isRoundActive);
+  useEffect(() => {
+    roundActiveRef.current = isRoundActive;
+  }, [isRoundActive]);
+
   // Pick a new word for a new round
   const pickNewWord = useCallback(() => {
     const randomIdx = Math.floor(Math.random() * SECRET_WORDS_DB.length);
@@ -168,6 +183,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     setHasUsedAddTime(false);
     setTimeLeft(60);
     setIsRoundActive(true);
+    roundActiveRef.current = true;
     setRoundWinnerMsg(null);
   }, []);
 
@@ -242,11 +258,11 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   };
 
   // Handle Turn Rotation
-  // Handle Turn Rotation
   const advanceTurn = useCallback(() => {
     sound.playCardShuffle();
     if (currentRound >= maxRounds) {
       setIsRoundActive(false);
+      roundActiveRef.current = false;
       setIsGameOver(true);
       sound.playVictory();
       fireBurstConfetti();
@@ -283,9 +299,14 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
+        // Prevent interval tick if round has already been won/halted
+        if (!roundActiveRef.current) return prev;
+
         if (prev <= 1) {
           clearInterval(timer);
           sound.playTimerEnd();
+          roundActiveRef.current = false;
+          setIsRoundActive(false);
           setChatMessages((msg) => [
             ...msg,
             {
@@ -316,23 +337,24 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         }
 
         // AI Bot Automated Chat & Smart Guessing Logic when in Solo Mode
-        if (playMode === 'solo_bot' && prev % 8 === 0 && prev > 5) {
+        if (playMode === 'solo_bot' && prev % 8 === 0 && prev > 5 && roundActiveRef.current) {
           const nonDrawerBots = players.filter((p) => p.id !== currentDrawer.id && p.id !== '1');
           if (nonDrawerBots.length > 0) {
             const randomBot = nonDrawerBots[Math.floor(Math.random() * nonDrawerBots.length)];
 
-            // Increased chance to guess correctly when Aris is drawing as time elapses
-            const shouldGuessCorrectly = currentDrawer.id === '1' && prev <= 30 && Math.random() < 0.45;
+            // Increased chance to guess correctly when user ('1') is drawing as time elapses
+            const shouldGuessCorrectly = currentDrawer.id === '1' && prev <= 30 && Math.random() < 0.40;
 
-            if (shouldGuessCorrectly) {
+            if (shouldGuessCorrectly && roundActiveRef.current) {
+              roundActiveRef.current = false;
+              setIsRoundActive(false);
               sound.playSuccess();
               fireBurstConfetti();
-              setIsRoundActive(false);
 
               const bonusGuesser = 100;
               const bonusDrawer = 50;
 
-              // Give Bot +100 PTS (Guesser), Aris +50 PTS (Drawer)
+              // Give Bot +100 PTS (Guesser), User +50 PTS (Drawer)
               setPlayers((prevPlayers) =>
                 prevPlayers.map((p) => {
                   if (p.id === randomBot.id) return { ...p, score: p.score + bonusGuesser, cardsCompleted: (p.cardsCompleted || 0) + 1 };
@@ -438,17 +460,22 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     e.preventDefault();
     if (!guessInput.trim()) return;
 
-    const cleanInput = guessInput.trim().toUpperCase();
-    const cleanSecret = activeWordObj.word.toUpperCase();
+    const normInput = normalizeWord(guessInput);
+    const normSecret = normalizeWord(activeWordObj.word);
 
     sound.playClick();
     const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-    // Check if guess is correct
-    if (cleanInput === cleanSecret) {
+    // Flexible normalized matching (handles spaces, hyphens, and partial matches like "kupu-kupu" vs "kupu kupu")
+    const isCorrectGuess = 
+      normInput === normSecret || 
+      (normSecret.length >= 4 && (normInput === normSecret || normInput.includes(normSecret) || normSecret.includes(normInput)));
+
+    if (isCorrectGuess) {
+      roundActiveRef.current = false;
+      setIsRoundActive(false);
       sound.playSuccess();
       fireBurstConfetti();
-      setIsRoundActive(false);
 
       const userPlayer = players.find((p) => p.id === '1') || players[0];
       const guesserId = userPlayer.id;
