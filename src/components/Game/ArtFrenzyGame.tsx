@@ -384,7 +384,12 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
       // Rule: If game started with >= 2 players and only 1 active player remains -> Automatic Win!
       if (prevPlayers.length >= 2 && activePlayers.length === 1) {
-        const winnerPlayer = activePlayers[0];
+        const winningId = activePlayers[0].id;
+        const playersWithWinPoints = updatedPlayers.map((p) =>
+          p.id === winningId ? { ...p, score: p.score + 100 } : p
+        );
+        const winnerPlayer = playersWithWinPoints.find((p) => p.id === winningId) || activePlayers[0];
+
         setIsGameOver(true);
         setIsRoundActive(false);
         roundActiveRef.current = false;
@@ -396,11 +401,13 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           {
             id: Date.now().toString(),
             senderName: 'Sistem',
-            text: `🎉 ${winnerPlayer.name} MENANG JUARA 1 ART FRENZY! (${pName} keluar dari permainan) 🏆`,
+            text: `🎉 ${winnerPlayer.name} MENANG JUARA 1 ART FRENZY! (+100 PTS Kemenangan karena ${pName} keluar dari permainan) 🏆`,
             isSystem: true,
             timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
           },
         ]);
+
+        return playersWithWinPoints;
       } else if (activePlayers.length > 1) {
         setChatMessages((prev) => [
           ...prev,
@@ -982,8 +989,12 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     }).join('');
   };
 
-  // Sorted players for Podium Ceremony
-  const sortedLeaderboard = [...players].sort((a, b) => b.score - a.score);
+  // Sorted players for Podium Ceremony (Active players first, then highest score)
+  const sortedLeaderboard = [...players].sort((a, b) => {
+    if (a.isLeft && !b.isLeft) return 1;
+    if (!a.isLeft && b.isLeft) return -1;
+    return b.score - a.score;
+  });
 
   return (
     <div
