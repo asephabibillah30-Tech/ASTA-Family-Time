@@ -348,6 +348,14 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       } else if (event === 'READY_STATUS_CHANGE') {
         if (Array.isArray(payload?.readyPlayerIds)) {
           setReadyPlayerIds(payload.readyPlayerIds);
+          sound.playTimerTick();
+          if (payload.readyPlayerIds.length >= players.length && players.length >= 2) {
+            setTimeout(() => {
+              setIsWaitingLobby(false);
+              setShowModeModal(false);
+              startCountdownSequence();
+            }, 500);
+          }
         }
       } else if (event === 'CORRECT_GUESS') {
         if (!roundActiveRef.current) return;
@@ -492,8 +500,11 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       setPlayers(onlineList);
 
       const activeUser = getActiveUserPlayer(onlineList);
-      setReadyPlayerIds([activeUser.id]);
+      const initialReady = [activeUser.id];
+      setReadyPlayerIds(initialReady);
       setIsWaitingLobby(true);
+
+      broadcastGameEvent('READY_STATUS_CHANGE', { readyPlayerIds: initialReady });
       return;
     }
 
@@ -520,7 +531,14 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       const updated = prev.includes(playerId)
         ? prev.filter((id) => id !== playerId)
         : [...prev, playerId];
+      
       broadcastGameEvent('READY_STATUS_CHANGE', { readyPlayerIds: updated });
+
+      if (updated.length >= players.length && players.length >= 2) {
+        setTimeout(() => {
+          handleStartSynchronousGame();
+        }, 500);
+      }
       return updated;
     });
   };
@@ -940,8 +958,26 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               </div>
             </div>
 
-            {/* Tombol Mulai Serempak */}
+            {/* Tombol Toggle Siap Saya & Mulai Serempak */}
             <div className="pt-2 space-y-2">
+              <button
+                onClick={() => {
+                  const me = getActiveUserPlayer(players);
+                  handleToggleReady(me.id);
+                }}
+                className={`w-full py-2.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border-2 active:scale-98 transition-all ${
+                  readyPlayerIds.includes(getActiveUserPlayer(players).id)
+                    ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-400'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-500 shadow-md'
+                }`}
+              >
+                <span>
+                  {readyPlayerIds.includes(getActiveUserPlayer(players).id)
+                    ? '✅ SAYA SUDAH SIAP (KLIK UNTUK BATAL)'
+                    : '⚡ KLIK UNTUK SIAP BERMAIN!'}
+                </span>
+              </button>
+
               <button
                 onClick={handleStartSynchronousGame}
                 className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-display font-black text-base shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 active:scale-98 transition-all"
