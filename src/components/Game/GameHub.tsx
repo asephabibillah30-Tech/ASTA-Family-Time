@@ -64,7 +64,7 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
   }
 
   if (activeGame === 'ludo') {
-    return <FamilyLudoGame players={players} onBack={() => setActiveGame('hub')} />;
+    return <FamilyLudoGame players={players} currentUser={currentUser} familyCode={familyCode} onBack={() => setActiveGame('hub')} />;
   }
 
   if (activeGame === 'snake') {
