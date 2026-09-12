@@ -1464,7 +1464,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                       }
                     }}
                     className={`w-10 h-10 rounded-xl bg-slate-900 text-amber-300 font-display font-black text-xl flex items-center justify-center border-2 border-amber-400 shadow-md ${
-                      hasRolled && movableTokens.length > 0 ? 'cursor-pointer animate-bounce' : ''
+                      hasRolled && movableTokens.length > 0 ? 'cursor-pointer animate-pulse ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900' : ''
                     }`}
                     title="Klik untuk jalankan pion"
                   >
@@ -1569,16 +1569,26 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                         fill="transparent"
                         pointerEvents="all"
                       />
+                      {/* Professional smooth pulsing golden halo for movable tokens */}
+                      {isMovable && (
+                        <circle
+                          cx={coords.cx}
+                          cy={coords.cy}
+                          r="24"
+                          fill="none"
+                          stroke="#F59E0B"
+                          strokeWidth="3.5"
+                          className="animate-pulse"
+                        />
+                      )}
                       <circle
                         cx={coords.cx}
                         cy={coords.cy}
                         r="18"
                         fill={colorHex}
-                        stroke="#FFFFFF"
-                        strokeWidth="3.5"
-                        className={`transition-all duration-300 ${
-                          isMovable ? 'ring-4 ring-amber-400 animate-bounce' : ''
-                        }`}
+                        stroke={isMovable ? '#FACC15' : '#FFFFFF'}
+                        strokeWidth={isMovable ? '4' : '3.5'}
+                        className="transition-all duration-300"
                       />
                       <circle
                         cx={coords.cx}
