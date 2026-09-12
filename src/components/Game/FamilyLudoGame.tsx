@@ -708,18 +708,20 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
       return;
     }
 
-    if (movable.length === 1) {
-      const autoMoveMsg = `${activePlayer.name} melempar ${roll}! Pion bergerak otomatis.`;
+    // Auto-move if only 1 token can move OR if all movable tokens are in the base yard (step === -1)
+    const allInBase = movable.every(t => t.step === -1);
+    if (movable.length === 1 || allInBase) {
+      const autoMoveMsg = `${activePlayer.name} melempar ${roll}! Pion melangkah ke luar / bergerak otomatis.`;
       setMessage(autoMoveMsg);
       broadcastGameState({ diceValue: roll, isRolling: false, hasRolled: true, message: autoMoveMsg });
 
       setTimeout(() => {
         moveToken(movable[0], roll);
-      }, 600);
+      }, 500);
       return;
     }
 
-    const selectPawnMsg = `${activePlayer.name} melempar ${roll}! Pilih pion yang ingin digerakkan.`;
+    const selectPawnMsg = `${activePlayer.name} melempar ${roll}! Pilih pion pada papan atau klik JALANKAN PION.`;
     setMessage(selectPawnMsg);
     broadcastGameState({ diceValue: roll, isRolling: false, hasRolled: true, message: selectPawnMsg });
   };
@@ -1428,16 +1430,44 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
               {/* Dice Roll Controls */}
               <div className="flex items-center gap-2 shrink-0">
                 <button
-                  onClick={handleRollDice}
-                  disabled={isRolling || hasRolled || Boolean(winner) || (playMode === 'online_friends' && activePlayer.id !== activeUserPlayer.id)}
-                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-95 text-white font-display font-black text-xs shadow-md disabled:opacity-40 active:scale-95 transition-all flex items-center gap-2"
+                  onClick={() => {
+                    if (hasRolled && movableTokens.length > 0 && diceValue) {
+                      sound.playClick();
+                      moveToken(movableTokens[0], diceValue);
+                    } else {
+                      handleRollDice();
+                    }
+                  }}
+                  disabled={isRolling || (hasRolled && movableTokens.length === 0) || Boolean(winner) || (playMode === 'online_friends' && activePlayer.id !== activeUserPlayer.id)}
+                  className={`px-4 py-2.5 rounded-2xl font-display font-black text-xs shadow-md transition-all flex items-center gap-2 active:scale-95 ${
+                    hasRolled && movableTokens.length > 0
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white animate-pulse'
+                      : 'bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-95 text-white'
+                  }`}
                 >
                   <Dices className={`w-4 h-4 ${isRolling ? 'animate-spin' : ''}`} />
-                  <span>{isRolling ? 'MENGOKOK...' : 'KOCOK DADU 🎲'}</span>
+                  <span>
+                    {isRolling
+                      ? 'MENGOKOK...'
+                      : hasRolled && movableTokens.length > 0
+                      ? 'JALANKAN PION ➔'
+                      : 'KOCOK DADU 🎲'}
+                  </span>
                 </button>
 
                 {diceValue !== null && (
-                  <div className="w-10 h-10 rounded-xl bg-slate-900 text-amber-300 font-display font-black text-xl flex items-center justify-center border-2 border-amber-400 shadow-md">
+                  <div
+                    onClick={() => {
+                      if (hasRolled && movableTokens.length > 0 && diceValue) {
+                        sound.playClick();
+                        moveToken(movableTokens[0], diceValue);
+                      }
+                    }}
+                    className={`w-10 h-10 rounded-xl bg-slate-900 text-amber-300 font-display font-black text-xl flex items-center justify-center border-2 border-amber-400 shadow-md ${
+                      hasRolled && movableTokens.length > 0 ? 'cursor-pointer animate-bounce' : ''
+                    }`}
+                    title="Klik untuk jalankan pion"
+                  >
                     {diceValue}
                   </div>
                 )}
@@ -1531,10 +1561,18 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                       }}
                       className={isMovable ? 'cursor-pointer' : ''}
                     >
+                      {/* Expanded Touch Target (64px) for mobile fingers */}
                       <circle
                         cx={coords.cx}
                         cy={coords.cy}
-                        r="16"
+                        r="32"
+                        fill="transparent"
+                        pointerEvents="all"
+                      />
+                      <circle
+                        cx={coords.cx}
+                        cy={coords.cy}
+                        r="18"
                         fill={colorHex}
                         stroke="#FFFFFF"
                         strokeWidth="3.5"
@@ -1545,7 +1583,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                       <circle
                         cx={coords.cx}
                         cy={coords.cy}
-                        r="8"
+                        r="9"
                         fill="#FFFFFF"
                         opacity="0.85"
                       />
