@@ -213,6 +213,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   // Real-time Canvas Drawing DataUrl state across connected devices
   const [remoteCanvasDataUrl, setRemoteCanvasDataUrl] = useState<string | null>(null);
+  const [hasDrawnThisRound, setHasDrawnThisRound] = useState<boolean>(false);
 
   // Keep ref for immediate round active check inside intervals to prevent race conditions
   const roundActiveRef = useRef<boolean>(isRoundActive);
@@ -250,6 +251,9 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
   // Handle local canvas changes from active drawer and broadcast to other devices
   const handleCanvasChange = useCallback((dataUrl: string) => {
+    if (dataUrl && dataUrl.length > 500) {
+      setHasDrawnThisRound(true);
+    }
     if (playMode === 'online_friends') {
       const activeUser = getActiveUserPlayer(players);
       if (currentDrawer.id === activeUser.id) {
@@ -273,6 +277,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     roundActiveRef.current = true;
     setRoundWinnerMsg(null);
     setRemoteCanvasDataUrl(null);
+    setHasDrawnThisRound(false);
   }, []);
 
   // 3-2-1 Synchronous Start Countdown Sequence
@@ -340,6 +345,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     roundActiveRef.current = true;
     setRoundWinnerMsg(null);
     setRemoteCanvasDataUrl(null);
+    setHasDrawnThisRound(false);
 
     const nextDrawer = players[nextDrawerIdx % players.length];
     setChatMessages((prev) => [
@@ -415,6 +421,55 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     });
   }, [drawerIndex, advanceTurn]);
 
+  const processCorrectGuessPayload = useCallback((payload: any) => {
+    if (!roundActiveRef.current) return;
+    roundActiveRef.current = false;
+    setIsRoundActive(false);
+    sound.playSuccess();
+    fireBurstConfetti();
+
+    const { guesserId, cleanGuesserName, drawerId, cleanDrawerName, bonusGuesser = 100, bonusDrawer = 0 } = payload || {};
+
+    setPlayers((prev) =>
+      prev.map((p) => {
+        const pClean = p.name.replace(/\s*\(Anda\)/gi, '').trim();
+        const isGuesser = Boolean((guesserId && p.id === guesserId) || (cleanGuesserName && pClean === cleanGuesserName));
+        const isDrawer = Boolean((drawerId && p.id === drawerId) || (cleanDrawerName && pClean === cleanDrawerName));
+
+        let addScore = 0;
+        let addCard = 0;
+
+        if (isGuesser) {
+          addScore += bonusGuesser;
+          addCard += 1;
+        }
+        if (isDrawer && bonusDrawer > 0) {
+          addScore += bonusDrawer;
+        }
+
+        if (addScore > 0) {
+          return { ...p, score: p.score + addScore, cardsCompleted: (p.cardsCompleted || 0) + addCard };
+        }
+        return p;
+      })
+    );
+
+    if (payload?.winnerText) {
+      setRoundWinnerMsg(payload.winnerText);
+    }
+    if (Array.isArray(payload?.chatMessages)) {
+      setChatMessages((prev) => {
+        const existingIds = new Set(prev.map((m) => m.id));
+        const newMsgs = payload.chatMessages.filter((m: ChatMessage) => !existingIds.has(m.id));
+        return [...prev, ...newMsgs];
+      });
+    }
+
+    setTimeout(() => {
+      advanceTurn(payload?.nextRound, payload?.nextDrawerIdx, payload?.nextWordIdx);
+    }, 3000);
+  }, [advanceTurn]);
+
   // Real-time Event Listener for Cross-Device Supabase WebSocket & Same-Device BroadcastChannel
   useEffect(() => {
     if (!activeFamilyCode) return;
@@ -446,49 +501,10 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       } else if (event === 'CANVAS_DRAW') {
         if (payload?.dataUrl) {
           setRemoteCanvasDataUrl(payload.dataUrl);
+          setHasDrawnThisRound(true);
         }
       } else if (event === 'CORRECT_GUESS') {
-        if (!roundActiveRef.current) return;
-        roundActiveRef.current = false;
-        setIsRoundActive(false);
-        sound.playSuccess();
-        fireBurstConfetti();
-
-        const { guesserId, cleanGuesserName, drawerId, cleanDrawerName, bonusGuesser = 100, bonusDrawer = 50 } = payload || {};
-
-        setPlayers((prev) =>
-          prev.map((p) => {
-            const pClean = p.name.replace(/\s*\(Anda\)/gi, '').trim();
-            let addScore = 0;
-            let addCard = 0;
-            if ((guesserId && p.id === guesserId) || (cleanGuesserName && pClean === cleanGuesserName)) {
-              addScore += bonusGuesser;
-              addCard += 1;
-            }
-            if ((drawerId && p.id === drawerId) || (cleanDrawerName && pClean === cleanDrawerName)) {
-              addScore += bonusDrawer;
-            }
-            if (addScore > 0) {
-              return { ...p, score: p.score + addScore, cardsCompleted: (p.cardsCompleted || 0) + addCard };
-            }
-            return p;
-          })
-        );
-
-        if (payload?.winnerText) {
-          setRoundWinnerMsg(payload.winnerText);
-        }
-        if (Array.isArray(payload?.chatMessages)) {
-          setChatMessages((prev) => {
-            const existingIds = new Set(prev.map((m) => m.id));
-            const newMsgs = payload.chatMessages.filter((m: ChatMessage) => !existingIds.has(m.id));
-            return [...prev, ...newMsgs];
-          });
-        }
-
-        setTimeout(() => {
-          advanceTurn(payload?.nextRound, payload?.nextDrawerIdx, payload?.nextWordIdx);
-        }, 3000);
+        processCorrectGuessPayload(payload);
       } else if (event === 'ADVANCE_TURN') {
         advanceTurn(payload?.nextRound, payload?.nextDrawerIdx, payload?.nextWordIdx);
       } else if (event === 'NEW_CHAT_MESSAGE') {
@@ -853,34 +869,42 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       }
 
       const bonusGuesser = 100;
-      const bonusDrawer = 50;
+      const bonusDrawer = hasDrawnThisRound ? 50 : 0;
 
       const cleanGuesserName = guesserName.replace(/\s*\(Anda\)/gi, '').trim();
       const drawerId = currentDrawer.id;
       const cleanDrawerName = currentDrawer.name.replace(/\s*\(Anda\)/gi, '').trim();
 
-      // Update Scores strictly for Guesser and Drawer ONLY on local device
-      setPlayers((prev) =>
-        prev.map((p) => {
-          const pClean = p.name.replace(/\s*\(Anda\)/gi, '').trim();
-          let addScore = 0;
-          let addCard = 0;
-          if (p.id === guesserId || pClean === cleanGuesserName) {
-            addScore += bonusGuesser;
-            addCard += 1;
-          }
-          if (p.id === drawerId || pClean === cleanDrawerName) {
-            addScore += bonusDrawer;
-          }
-          if (addScore > 0) {
-            return { ...p, score: p.score + addScore, cardsCompleted: (p.cardsCompleted || 0) + addCard };
-          }
-          return p;
-        })
-      );
+      const winnerText = `🎉 BENAR! ${cleanGuesserName} menebak kata rahasia: ${activeWordObj.word}! (+100 PTS Tebakan Benar)`;
+      
+      const newChatMsgs: ChatMessage[] = [
+        {
+          id: Date.now().toString(),
+          senderName: cleanGuesserName,
+          text: guessInput,
+          isCorrect: true,
+          timestamp: nowTime,
+        },
+        {
+          id: (Date.now() + 1).toString(),
+          senderName: 'Sistem',
+          text: winnerText,
+          isSystem: true,
+          timestamp: nowTime,
+        }
+      ];
 
-      const winnerText = `🎉 BENAR! ${cleanGuesserName} menebak kata rahasia: ${activeWordObj.word}! (+100 PTS)`;
-      setRoundWinnerMsg(winnerText);
+      if (bonusDrawer > 0) {
+        newChatMsgs.push({
+          id: (Date.now() + 2).toString(),
+          senderName: 'Sistem',
+          text: `🎨 ${cleanDrawerName} mendapatkan +50 PTS Bonus Pewarnaan Kanvas!`,
+          isSystem: true,
+          timestamp: nowTime,
+        });
+      }
+
+      setGuessInput('');
 
       // Persist love points locally
       try {
@@ -888,30 +912,11 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         localStorage.setItem('asta_family_love_points', String(currentLovePoints + bonusGuesser));
       } catch {}
 
-      const guessMsg: ChatMessage = {
-        id: Date.now().toString(),
-        senderName: cleanGuesserName,
-        text: guessInput,
-        isCorrect: true,
-        timestamp: nowTime,
-      };
-      const sysMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        senderName: 'Sistem',
-        text: winnerText,
-        isSystem: true,
-        timestamp: nowTime,
-      };
-
-      setChatMessages((prev) => [...prev, guessMsg, sysMsg]);
-      setGuessInput('');
-
       const nextRound = currentRound + 1;
       const nextDrawerIdx = drawerIndex + 1;
       const nextWordIdx = Math.floor(Math.random() * SECRET_WORDS_DB.length);
 
-      // Broadcast CORRECT_GUESS with explicit IDs and clean names so ALL devices update score & turn serempak!
-      broadcastGameEvent('CORRECT_GUESS', {
+      const correctGuessPayload = {
         guesserId,
         cleanGuesserName,
         drawerId,
@@ -919,11 +924,17 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         bonusGuesser,
         bonusDrawer,
         winnerText,
-        chatMessages: [guessMsg, sysMsg],
+        chatMessages: newChatMsgs,
         nextRound,
         nextDrawerIdx,
         nextWordIdx,
-      });
+      };
+
+      // Process locally ONCE
+      processCorrectGuessPayload(correctGuessPayload);
+
+      // Broadcast to all other devices
+      broadcastGameEvent('CORRECT_GUESS', correctGuessPayload);
 
       // Move to next turn after 3s
       setTimeout(() => {
