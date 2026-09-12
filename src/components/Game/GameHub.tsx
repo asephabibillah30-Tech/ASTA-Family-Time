@@ -72,7 +72,7 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
   }
 
   if (activeGame === 'monopoly') {
-    return <FamilyMonopolyGame players={players} onBack={() => setActiveGame('hub')} />;
+    return <FamilyMonopolyGame players={players} currentUser={currentUser} familyCode={familyCode} onBack={() => setActiveGame('hub')} />;
   }
 
   // Master Games List for Search & Filtering
