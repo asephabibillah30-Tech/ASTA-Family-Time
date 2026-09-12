@@ -532,6 +532,7 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
   }, [positions, coins, properties, currentTurnIdx, gamePlayers, playMode, broadcastGameState]);
 
   const handlePlayerLeftGame = useCallback((leavingId: string, leavingName?: string) => {
+    if (!isGameStarted) return;
     setGamePlayers((prevPlayers) => {
       const targetPlayer = prevPlayers.find(p => p.id === leavingId);
       if (!targetPlayer || targetPlayer.isLeft) return prevPlayers;
@@ -581,7 +582,7 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
 
       return updatedPlayers;
     });
-  }, [currentTurnIdx, broadcastGameState]);
+  }, [isGameStarted, currentTurnIdx, broadcastGameState]);
 
   // Roll Dice Action
   const rollDice = useCallback(() => {

@@ -816,7 +816,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
 
     // Check Win Condition for active player
     const playerTokens = updatedTokens.filter(t => t.color === activePlayer.color);
-    const allFinished = playerTokens.every(t => t.step === 56);
+    const allFinished = playerTokens.length > 0 && playerTokens.length === tokensPerPlayer && playerTokens.every(t => t.step === 56);
 
     if (allFinished) {
       setWinner(activePlayer);
@@ -858,6 +858,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
   };
 
   const handlePlayerLeftGame = useCallback((leavingId: string, leavingName?: string) => {
+    if (!isGameStarted) return;
     setGamePlayers((prevPlayers) => {
       const targetPlayer = prevPlayers.find(p => p.id === leavingId);
       if (!targetPlayer || targetPlayer.isLeft) return prevPlayers;
@@ -907,7 +908,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
 
       return updatedPlayers;
     });
-  }, [currentTurnIdx, broadcastGameState]);
+  }, [isGameStarted, currentTurnIdx, broadcastGameState]);
 
   // Pass turn to next player
   const passTurn = (extraTurn: boolean) => {

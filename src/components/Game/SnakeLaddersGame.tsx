@@ -515,6 +515,7 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
   }, [positions, currentTurnIdx, gamePlayers, playMode, broadcastGameState]);
 
   const handlePlayerLeftGame = useCallback((leavingId: string, leavingName?: string) => {
+    if (!isGameStarted) return;
     setGamePlayers((prevPlayers) => {
       const targetPlayer = prevPlayers.find(p => p.id === leavingId);
       if (!targetPlayer || targetPlayer.isLeft) return prevPlayers;
@@ -564,7 +565,7 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
 
       return updatedPlayers;
     });
-  }, [currentTurnIdx, broadcastGameState]);
+  }, [isGameStarted, currentTurnIdx, broadcastGameState]);
 
   // Roll Dice Action
   const rollDice = useCallback(() => {

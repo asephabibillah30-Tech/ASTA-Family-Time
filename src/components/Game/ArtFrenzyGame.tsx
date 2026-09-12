@@ -370,6 +370,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   }, [currentRound, drawerIndex, maxRounds, players, broadcastGameEvent]);
 
   const handlePlayerLeftGame = useCallback((leavingId: string, leavingName?: string) => {
+    if (showModeModal || isWaitingLobby || countdownNumber !== null) return;
     setPlayers((prevPlayers) => {
       const targetPlayer = prevPlayers.find(p => p.id === leavingId);
       if (!targetPlayer || targetPlayer.isLeft) return prevPlayers;
@@ -419,7 +420,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
       return updatedPlayers;
     });
-  }, [drawerIndex, advanceTurn]);
+  }, [showModeModal, isWaitingLobby, countdownNumber, drawerIndex, advanceTurn]);
 
   const processCorrectGuessPayload = useCallback((payload: any) => {
     if (!roundActiveRef.current) return;

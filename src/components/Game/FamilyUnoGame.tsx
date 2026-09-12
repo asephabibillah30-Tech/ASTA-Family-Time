@@ -796,6 +796,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
   };
 
   const handlePlayerLeftGame = useCallback((leavingId: string, leavingName?: string) => {
+    if (!isGameStarted) return;
     setUnoPlayers((prevPlayers) => {
       const targetPlayer = prevPlayers.find(p => p.id === leavingId);
       if (!targetPlayer || targetPlayer.isLeft) return prevPlayers;
@@ -840,7 +841,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
 
       return updatedPlayers;
     });
-  }, [currentTurnIdx, isClockwise, broadcastGameState]);
+  }, [isGameStarted, currentTurnIdx, isClockwise, broadcastGameState]);
 
   const advanceTurn = (steps: number) => {
     const nextIdx = getNextPlayerIndex(steps);
