@@ -154,7 +154,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      // Filter ONLY family members (excluding bot accounts)
+      // Filter ONLY family members who are ACTUALLY online right now
       const trulyOnlineMembers = initialPlayers.filter((p, idx) => {
         if (p.name.toLowerCase().includes('bot') || p.id.startsWith('bot')) return false;
         const isMe = (activeId && p.id === activeId) ||
@@ -164,7 +164,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         if (p.isOnline === true) return true;
         if (cachedOnlineIds.includes(p.id)) return true;
         if (cachedOnlineIds.some(id => p.name.toLowerCase().includes(id.toLowerCase()))) return true;
-        return true;
+        return false;
       });
 
       return trulyOnlineMembers.map((p) => {
