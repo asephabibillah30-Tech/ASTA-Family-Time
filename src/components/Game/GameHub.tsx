@@ -285,9 +285,9 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
       chipBg: 'bg-indigo-100 text-indigo-900 border border-indigo-300 dark:bg-indigo-950/80 dark:text-indigo-300 dark:border-indigo-800',
       desc: 'Kumpulan cerita dongeng edukatif dengan suara pendongeng Bahasa Indonesia, ilustrasi emoji, & pesan kebaikan.',
       emoji: '📚',
-      cardGradient: 'from-indigo-500 via-purple-500 to-pink-600',
+      cardGradient: 'from-indigo-500 via-blue-500 to-cyan-600',
       hoverBorder: 'hover:border-indigo-400 dark:hover:border-indigo-500',
-      btnGradient: 'bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-600 hover:to-pink-700',
+      btnGradient: 'bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700',
       btnText: 'BACA CERITA CERIA',
       tags: ['cerita', 'dongeng', 'buku', 'pesan moral', 'baca', 'kisah'],
       onClick: () => { sound.playClick(); setActiveGame('story'); }
@@ -359,7 +359,7 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-5 sm:space-y-6 animate-pop-in">
+    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6 sm:space-y-8 animate-pop-in">
       
       {/* Page Title */}
       <div className="text-center space-y-2">
@@ -401,9 +401,9 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
               sound.playClick();
               setActiveCategory('all');
             }}
-            className={`flex-1 py-2 px-3 rounded-xl font-display font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 px-3 rounded-xl font-display font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
               activeCategory === 'all'
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm scale-[1.02]'
+                ? 'bg-blue-600 text-white shadow-md scale-[1.02]'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -416,7 +416,7 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
               sound.playClick();
               setActiveCategory('play');
             }}
-            className={`flex-1 py-2 px-3 rounded-xl font-display font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 px-3 rounded-xl font-display font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
               activeCategory === 'play'
                 ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white shadow-md scale-[1.02]'
                 : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400'
@@ -431,7 +431,7 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
               sound.playClick();
               setActiveCategory('learn');
             }}
-            className={`flex-1 py-2 px-3 rounded-xl font-display font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 px-3 rounded-xl font-display font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
               activeCategory === 'learn'
                 ? 'bg-gradient-to-r from-teal-500 via-emerald-600 to-cyan-600 text-white shadow-md scale-[1.02]'
                 : 'text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400'
@@ -457,12 +457,12 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
       )}
 
       {/* MAIN CONTENT DISPLAY (Row-by-Row Category Sections or Filtered Grid) */}
-      <div className="space-y-8">
+      <div className="space-y-10 sm:space-y-12">
         
         {/* 1. BARIS KATEGORI: BERMAIN 🎲 */}
         {playGames.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-2 border-slate-200/80 dark:border-slate-700/80">
+          <div>
+            <div className="flex items-center justify-between border-b pb-3.5 border-slate-200/80 dark:border-slate-700/80 mb-5 sm:mb-6">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🎲</span>
                 <div>
@@ -480,7 +480,7 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {playGames.map((game) => renderCard(game))}
             </div>
           </div>
@@ -488,8 +488,8 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
 
         {/* 2. BARIS KATEGORI: BELAJAR & EDUKASI 📚 */}
         {learnGames.length > 0 && (
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between border-b pb-2 border-slate-200/80 dark:border-slate-700/80">
+          <div>
+            <div className="flex items-center justify-between border-b pb-3.5 border-slate-200/80 dark:border-slate-700/80 mb-5 sm:mb-6">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">📚</span>
                 <div>
@@ -507,7 +507,7 @@ export const GameHub: React.FC<GameHubProps> = ({ players, currentUser, familyCo
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {learnGames.map((game) => renderCard(game))}
             </div>
           </div>
