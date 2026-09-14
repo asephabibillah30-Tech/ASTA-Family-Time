@@ -60,8 +60,8 @@ export function useAuth() {
     const supabase = postgresService.getClient();
 
     // ── Cleanup channel lama jika ada ──
-    if (realtimeChannelRef.current) {
-      realtimeChannelRef.current.unsubscribe();
+    if (realtimeChannelRef.current && supabase) {
+      supabase.removeChannel(realtimeChannelRef.current);
       realtimeChannelRef.current = null;
     }
 
@@ -138,8 +138,6 @@ export function useAuth() {
     }
 
     // ── Tandai offline saat tab disembunyikan / ditutup ──
-    // Untuk Supabase Realtime: WebSocket putus otomatis → tidak perlu manual.
-    // Tapi untuk localStorage fallback, kita tetap bersihkan.
     const handlePageHide = () => {
       db.markUserOffline(familyId, userId);
     };
@@ -147,8 +145,8 @@ export function useAuth() {
 
     return () => {
       window.removeEventListener('pagehide', handlePageHide);
-      if (realtimeChannelRef.current) {
-        realtimeChannelRef.current.unsubscribe();
+      if (realtimeChannelRef.current && supabase) {
+        supabase.removeChannel(realtimeChannelRef.current);
         realtimeChannelRef.current = null;
       }
     };

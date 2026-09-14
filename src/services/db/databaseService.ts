@@ -717,30 +717,14 @@ class DatabaseService {
         ch.close();
       }
 
-      // 2. Cloud heartbeat (cross-device via Supabase)
-      const supabase = postgresService.getClient();
-      if (supabase) {
-        supabase.from('user_presence').upsert(
-          {
-            user_id: userId,
-            family_id: familyId,
-            last_seen_at: new Date().toISOString(),
-            is_online: true
-          },
-          { onConflict: 'user_id' }
-        ).then(({ error }) => {
-          if (error) {
-            this._ensurePresenceTable(supabase, userId, familyId);
-          }
-        });
-      }
+      // 2. Cloud heartbeat handled seamlessly via Supabase Realtime Channels (useAuth)
     } catch {
       // ignore
     }
   }
 
   /**
-   * Tandai user offline — hapus dari semua localStorage presence maps dan update Supabase.
+   * Tandai user offline — hapus dari semua localStorage presence maps.
    * Dipanggil saat tab disembunyikan / browser ditutup / ganti akun / logout.
    */
   public markUserOffline(familyId: string, userId: string): void {
@@ -766,44 +750,12 @@ class DatabaseService {
       // Reset in-memory
       this.users = this.users.map(u => u.id === userId ? { ...u, isOnline: false } : u);
 
-      // 2. Update Supabase (set timestamp jauh ke masa lalu agar tidak terdeteksi online)
-      const supabase = postgresService.getClient();
-      if (supabase) {
-        Promise.resolve(supabase.from('user_presence').upsert(
-          {
-            user_id: userId,
-            family_id: familyId,
-            last_seen_at: new Date(Date.now() - 600000).toISOString(), // 10 menit lalu
-            is_online: false
-          },
-          { onConflict: 'user_id' }
-        )).catch(() => {});
-      }
-
       // Broadcast offline ke tab lain
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         const ch = new BroadcastChannel(`asta_presence_${familyId}`);
         ch.postMessage({ type: 'PRESENCE_OFFLINE', userId });
         ch.close();
       }
-    } catch {
-      // ignore
-    }
-  }
-
-  /** Buat tabel user_presence jika belum ada via raw SQL exec */
-  private async _ensurePresenceTable(supabase: any, userId: string, familyId: string): Promise<void> {
-    try {
-      await supabase.rpc('create_presence_table_if_not_exists').catch(() => {});
-      await supabase.from('user_presence').upsert(
-        {
-          user_id: userId,
-          family_id: familyId,
-          last_seen_at: new Date().toISOString(),
-          is_online: true
-        },
-        { onConflict: 'user_id' }
-      ).catch(() => {});
     } catch {
       // ignore
     }
@@ -846,20 +798,6 @@ class DatabaseService {
         } catch { /* ignore */ }
       }
 
-      // === Sumber 3: Supabase cloud presence cache (threshold 30 detik) ===
-      const cloudKey = `asta_cloud_presence_${familyId}`;
-      const cloudRaw = localStorage.getItem(cloudKey);
-      if (cloudRaw) {
-        try {
-          const cloudMap: Record<string, number> = JSON.parse(cloudRaw);
-          Object.keys(cloudMap).forEach((uid) => {
-            if (now - cloudMap[uid] < 30000 && !onlineIds.includes(uid)) {
-              onlineIds.push(uid);
-            }
-          });
-        } catch { /* ignore */ }
-      }
-
       // User yang sedang aktif menggunakan browser ini selalu online
       if (currentUserId && !onlineIds.includes(currentUserId)) {
         onlineIds.push(currentUserId);
@@ -873,37 +811,10 @@ class DatabaseService {
 
   /**
    * Ambil status online dari Supabase secara async dan cache ke localStorage.
-   * Dipanggil dari useAuth setiap 15 detik.
    */
   public async fetchCloudPresence(familyId: string): Promise<string[]> {
     if (!familyId) return [];
-    const supabase = postgresService.getClient();
-    if (!supabase) return [];
-
-    try {
-      const cutoff = new Date(Date.now() - 90000).toISOString(); // 90 detik
-      const { data, error } = await supabase
-        .from('user_presence')
-        .select('user_id, last_seen_at')
-        .eq('family_id', familyId)
-        .gte('last_seen_at', cutoff);
-
-      if (error || !data) return [];
-
-      // Cache ke localStorage agar getOnlineUserIds() bisa menggunakannya secara sinkron
-      const cloudMap: Record<string, number> = {};
-      const onlineIds: string[] = [];
-      for (const row of data) {
-        const ts = new Date(row.last_seen_at).getTime();
-        cloudMap[row.user_id] = ts;
-        onlineIds.push(row.user_id);
-      }
-      localStorage.setItem(`asta_cloud_presence_${familyId}`, JSON.stringify(cloudMap));
-
-      return onlineIds;
-    } catch {
-      return [];
-    }
+    return this.getOnlineUserIds(familyId);
   }
 
   /**
