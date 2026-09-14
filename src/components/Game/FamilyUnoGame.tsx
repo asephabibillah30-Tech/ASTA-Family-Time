@@ -1908,7 +1908,9 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
               <button
                 onClick={() => {
                   sound.playClick();
+                  setWinner(null);
                   setIsGameStarted(false);
+                  setIsWaitingLobby(false);
                   setShowModeModal(true);
                 }}
                 className="py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-display font-black text-xs active:scale-95 transition-all"
