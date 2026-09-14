@@ -121,8 +121,10 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
   const [lobbyNoticeMsg, setLobbyNoticeMsg] = useState<string | null>(null);
 
-  // Dynamically resolve active family code from props, DB session, or fallback
-  const activeFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA-2026';
+  // Active Room Number & Code
+  const [selectedRoomNumber, setSelectedRoomNumber] = useState<number>(1);
+  const baseFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA-2026';
+  const activeFamilyCode = selectedRoomNumber === 1 ? baseFamilyCode : `${baseFamilyCode}-${selectedRoomNumber}`;
 
   // Power-Up Boosters usage state per round
   const [hasUsedExtraLetters, setHasUsedExtraLetters] = useState(false);
@@ -143,7 +145,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       const activeName = (currentUser?.fullName || '').toLowerCase().trim();
       const sess = db.getSavedSession();
       const familyId = sess?.family?.id || '';
-      const activeCode = familyCode || sess?.family?.familyCode || '';
+      const activeCode = activeFamilyCode;
 
       const cachedOnlineIdsByFamId = familyId ? db.getOnlineUserIds(familyId, activeId) : [];
       const cachedOnlineIdsByCode = activeCode ? db.getOnlineUserIds(activeCode, activeId) : [];
@@ -167,7 +169,11 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
         return false;
       });
 
-      return trulyOnlineMembers.map((p) => {
+      // Max 4 players per room
+      const startIndex = (selectedRoomNumber - 1) * 4;
+      const roomMembers = trulyOnlineMembers.slice(startIndex, startIndex + 4);
+
+      return roomMembers.map((p) => {
         const cleanName = p.name.replace(/\s*\(Anda\)/gi, '').trim();
         return {
           ...p,
@@ -182,9 +188,16 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     return [
       { id: currentUser?.id || '1', name: cleanUser || 'Saya', avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
     ];
-  }, [initialPlayers, currentUser, userDisplayName, userAvatar, familyCode]);
+  }, [initialPlayers, currentUser, userDisplayName, userAvatar, activeFamilyCode, selectedRoomNumber]);
 
   const [players, setPlayers] = useState<Player[]>(getSoloPlayers());
+
+  useEffect(() => {
+    if (playMode === 'online_friends') {
+      const onlineMembers = getOnlinePlayers();
+      setPlayers(onlineMembers);
+    }
+  }, [playMode, selectedRoomNumber, getOnlinePlayers]);
 
   const getActiveUserPlayer = useCallback((playerList: Player[]): Player => {
     const cleanUser = (currentUser?.fullName || userDisplayName).replace(/\s*\(Anda\)/gi, '').trim();
@@ -734,6 +747,12 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const handleStartSynchronousGame = () => {
     sound.playClick();
 
+    if (playMode === 'online_friends' && players.length < 2) {
+      sound.playTimerWarning();
+      setLobbyNoticeMsg("⚠️ Membutuhkan minimal 2 pemain online untuk mulai bermain serempak!");
+      return;
+    }
+
     const activeUser = getActiveUserPlayer(players);
     let currentReady = [...readyPlayerIds];
 
@@ -1086,6 +1105,31 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               </div>
             </div>
 
+            {/* Room Selector Switcher (Room 1, Room 2, Room 3) */}
+            <div className="bg-slate-100 dark:bg-slate-700/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-600 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Pilih Ruangan Multiplayer (Maks 4 Pemain per Ruang):
+              </div>
+              <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                {[1, 2, 3].map((rNum) => (
+                  <button
+                    key={rNum}
+                    onClick={() => {
+                      sound.playClick();
+                      setSelectedRoomNumber(rNum);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl font-display font-bold text-xs transition-all shrink-0 ${
+                      selectedRoomNumber === rNum
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600'
+                    }`}
+                  >
+                    Ruang {rNum}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Warning / Notice Banner if waiting for unready players */}
             {lobbyNoticeMsg && (
               <div className="bg-amber-100 dark:bg-amber-950/80 border-2 border-amber-400 dark:border-amber-600 p-3.5 rounded-2xl text-amber-900 dark:text-amber-200 font-bold text-xs flex items-center gap-2.5 animate-bounce-short text-left shadow-sm">
@@ -1097,7 +1141,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
             {/* List Pemain Online & Status Ready */}
             <div className="space-y-2 text-left">
               <div className="flex justify-between items-center text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                <span>Status Pemain Online ({players.length}):</span>
+                <span>Status Pemain Online Ruang {selectedRoomNumber} ({players.length}/4):</span>
                 <span className="text-indigo-600 dark:text-indigo-400 font-bold">{readyPlayerIds.length}/{players.length} Siap</span>
               </div>
 

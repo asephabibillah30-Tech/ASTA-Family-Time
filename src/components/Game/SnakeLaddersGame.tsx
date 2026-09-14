@@ -4,7 +4,7 @@ import type { UserAccount } from '../../types/auth';
 import { 
   ArrowLeft, Dices, RotateCcw, HelpCircle, X,
   Check, Copy, Share2, Play, Clock, MessageSquare,
-  Send, CheckCircle2, Sparkles, Trophy, Users, Globe
+  Send, CheckCircle2, Sparkles, Trophy, Globe
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireBurstConfetti, fireVictoryShower } from '../../utils/confetti';
@@ -20,18 +20,18 @@ interface SnakeLaddersGameProps {
 
 export type PlayMode = 'solo_bot' | 'online_friends';
 
-export interface SnakePlayerConfig {
+interface SnakePlayerConfig {
   id: string;
   name: string;
   avatar: string;
+  color: string;
   isOnline?: boolean;
   isReady?: boolean;
-  color: string;
   isLeft?: boolean;
-  status?: 'playing' | 'keluar';
+  status?: 'aktif' | 'menunggu' | 'keluar';
 }
 
-export interface ChatMessage {
+interface ChatMessage {
   id: string;
   senderName: string;
   text: string;
@@ -46,27 +46,27 @@ const PLAYER_COLORS = [
   'bg-indigo-500 text-white border-indigo-600',
 ];
 
-// 25 tiles board for fast and enjoyable family play
+// 25-Tile Snake & Ladders Board configuration with family challenge topics
 const BOARD_TILES = [
-  { id: 1, type: 'start', label: 'Mulai 🏁', action: 'Selamat bermain Ular Tangga Keluarga!' },
-  { id: 2, type: 'normal', label: 'Petak 2', action: 'Beri senyum termanis pada keluarga.' },
-  { id: 3, type: 'ladder', to: 11, label: 'Tangga 🪜 (ke 11)', action: 'Rajin merapikan tempat tidur! Naik ke petak 11.' },
-  { id: 4, type: 'normal', label: 'Petak 4', action: 'Tos jempol ke semua pemain.' },
-  { id: 5, type: 'challenge', label: 'Tantangan 🎯', action: 'Tirukan suara kucing mengeong 3 kali!' },
-  { id: 6, type: 'normal', label: 'Petak 6', action: 'Sebutkan 1 makanan kesukaan keluargamu.' },
-  { id: 7, type: 'snake', to: 2, label: 'Ular 🐍 (ke 2)', action: 'Lupa mencuci tangan sebelum makan! Turun ke petak 2.' },
-  { id: 8, type: 'ladder', to: 15, label: 'Tangga 🪜 (ke 15)', action: 'Bantu Ayah & Ibu mencuci piring! Naik ke petak 15.' },
-  { id: 9, type: 'challenge', label: 'Tantangan 🎯', action: 'Beri pelukan kilat ke pemain di sebelah kanan.' },
-  { id: 10, type: 'normal', label: 'Petak 10', action: 'Pijat bahu pemain di sebelah kirimu 5 detik.' },
-  { id: 11, type: 'normal', label: 'Petak 11', action: 'Katakan "Keluarga ini nomor satu!"' },
-  { id: 12, type: 'challenge', label: 'Tantangan 🎯', action: 'Goyangkan badan seperti robot selama 10 detik!' },
-  { id: 13, type: 'snake', to: 4, label: 'Ular 🐍 (ke 4)', action: 'Begadang main HP! Turun ke petak 4.' },
-  { id: 14, type: 'normal', label: 'Petak 14', action: 'Ucapkan terima kasih pada semua pemain.' },
-  { id: 15, type: 'normal', label: 'Petak 15', action: 'Sebutkan 3 hal yang kamu syukuri hari ini.' },
-  { id: 16, type: 'ladder', to: 22, label: 'Tangga 🪜 (ke 22)', action: 'Sholat/Ibadah tepat waktu! Naik ke petak 22.' },
-  { id: 17, type: 'snake', to: 9, label: 'Ular 🐍 (ke 9)', action: 'Malas membereskan mainan! Turun ke petak 9.' },
-  { id: 18, type: 'challenge', label: 'Tantangan 🎯', action: 'Tirukan tawa paling heboh!' },
-  { id: 19, type: 'normal', label: 'Petak 19', action: 'Doakan kesehatan untuk seluruh keluarga.' },
+  { id: 1, type: 'start', label: 'START 🚩', action: 'Mulai petualangan Ular Tangga Keluarga ASTA!' },
+  { id: 2, type: 'normal', label: 'Petak 2', action: 'Senyum manis ke kamera!' },
+  { id: 3, type: 'ladder', to: 11, label: 'Tangga 🪜 (ke 11)', action: 'Membantu Mamah/Papa merapikan kamar! Naik ke petak 11.' },
+  { id: 4, type: 'normal', label: 'Petak 4', action: 'Sebutkan makanan favorit keluarga!' },
+  { id: 5, type: 'challenge', label: 'Tantangan 🎯', action: 'Sebutkan 3 hal yang disyukuri hari ini.' },
+  { id: 6, type: 'ladder', to: 15, label: 'Tangga 🪜 (ke 15)', action: 'Belajar rajin dan dapat nilai bagus! Naik ke petak 15.' },
+  { id: 7, type: 'normal', label: 'Petak 7', action: 'Tepuk tangan 3 kali untuk keluarga!' },
+  { id: 8, type: 'snake', to: 2, label: 'Ular 🐍 (ke 2)', action: 'Main HP berlebihan! Turun ke petak 2.' },
+  { id: 9, type: 'normal', label: 'Petak 9', action: 'Katakan "Aku sayang keluarga ASTA".' },
+  { id: 10, type: 'ladder', to: 18, label: 'Tangga 🪜 (ke 18)', action: 'Bicara sopan dan santun! Naik ke petak 18.' },
+  { id: 11, type: 'normal', label: 'Petak 11', action: 'Peluk anggota keluarga terdekat!' },
+  { id: 12, type: 'challenge', label: 'Tantangan 🎯', action: 'Peragakan gaya hewan favoritmu!' },
+  { id: 13, type: 'snake', to: 5, label: 'Ular 🐍 (ke 5)', action: 'Bermalas-malasan! Turun ke petak 5.' },
+  { id: 14, type: 'normal', label: 'Petak 14', action: 'Bantu cuci piring bersama!' },
+  { id: 15, type: 'normal', label: 'Petak 15', action: 'Minum air putih agar sehat!' },
+  { id: 16, type: 'ladder', to: 22, label: 'Tangga 🪜 (ke 22)', action: 'Jujur dan bertanggung jawab! Naik ke petak 22.' },
+  { id: 17, type: 'normal', label: 'Petak 17', action: 'Ceritakan pengalaman lucu minggu ini!' },
+  { id: 18, type: 'challenge', label: 'Tantangan 🎯', action: 'Tebak gaya ekspresi wajah bahagia!' },
+  { id: 19, type: 'normal', label: 'Petak 19', action: 'Tidur tepat waktu malam ini!' },
   { id: 20, type: 'snake', to: 12, label: 'Ular 🐍 (ke 12)', action: 'Bicara ketus saat dipanggil! Turun ke petak 12.' },
   { id: 21, type: 'normal', label: 'Petak 21', action: 'Beri pujian tulus pada salah satu pemain.' },
   { id: 22, type: 'normal', label: 'Petak 22', action: 'Tunjukkan pose pahlawan super!' },
@@ -82,7 +82,9 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
   onBack,
 }) => {
   // Family & User Setup
-  const activeFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA123';
+  const [selectedRoomNumber, setSelectedRoomNumber] = useState<number>(1);
+  const baseFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA-4539';
+  const activeFamilyCode = selectedRoomNumber === 1 ? baseFamilyCode : `${baseFamilyCode}-${selectedRoomNumber}`;
   const roomCode = `SNAKE-${activeFamilyCode.toUpperCase()}`;
   const userDisplayName = currentUser?.fullName || initialPlayers[0]?.name || 'Pemain';
   const userAvatar = currentUser?.avatar || initialPlayers[0]?.avatar || '👨‍👩‍👧‍👦';
@@ -118,7 +120,7 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
       const activeName = (currentUser?.fullName || '').toLowerCase().trim();
       const sess = db.getSavedSession();
       const familyId = sess?.family?.id || '';
-      const activeCode = familyCode || sess?.family?.familyCode || '';
+      const activeCode = activeFamilyCode;
 
       const cachedOnlineIdsByFamId = familyId ? db.getOnlineUserIds(familyId, activeId) : [];
       const cachedOnlineIdsByCode = activeCode ? db.getOnlineUserIds(activeCode, activeId) : [];
@@ -142,7 +144,11 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
         return false;
       });
 
-      return trulyOnlineMembers.map((p) => {
+      // Max 4 players per room
+      const startIndex = (selectedRoomNumber - 1) * 4;
+      const roomMembers = trulyOnlineMembers.slice(startIndex, startIndex + 4);
+
+      return roomMembers.map((p) => {
         const cleanName = p.name.replace(/\s*\(Anda\)/gi, '').trim();
         return {
           ...p,
@@ -157,7 +163,7 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
     return [
       { id: currentUser?.id || '1', name: cleanUser || 'Saya', avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-emerald-500', isOnline: true },
     ];
-  }, [initialPlayers, currentUser, userDisplayName, userAvatar, familyCode]);
+  }, [initialPlayers, currentUser, userDisplayName, userAvatar, activeFamilyCode, selectedRoomNumber]);
 
   const [players, setPlayers] = useState<Player[]>(getSoloPlayers());
 
@@ -325,6 +331,13 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
   // Start synchronous countdown 3-2-1
   const startCountdownAndLaunch = useCallback(() => {
     sound.playClick();
+
+    if (playMode === 'online_friends' && players.length < 2) {
+      sound.playTimerWarning();
+      setLastActionMessage('⚠️ Membutuhkan minimal 2 pemain online untuk mulai bermain serempak! Silakan ajak anggota keluarga lain untuk bergabung.');
+      return;
+    }
+
     let currentCount = 3;
     setCountdown(currentCount);
 
@@ -918,14 +931,34 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
 
           {/* Connected Online Family Players */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                <Users className="w-4 h-4 text-emerald-500" />
-                <span>Pemain Online ({players.length} Orang)</span>
-              </h3>
-              <span className="text-xs text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full">
-                Terhubung ke Database Database ASTA
-              </span>
+            <div className="bg-slate-100 dark:bg-slate-700/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-600 space-y-2 text-left">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-black text-slate-700 dark:text-slate-200">
+                  Kapasitas Ruang {selectedRoomNumber}: <strong className="text-emerald-500">{players.length}/4 Pemain</strong> (Min. 2, Maks. 4)
+                </span>
+                <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full">
+                  {players.length >= 2 ? '✅ Siap Bermain' : '⚠️ Butuh Min. 2 Pemain'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 pt-0.5">
+                {[1, 2, 3].map((rNum) => (
+                  <button
+                    key={rNum}
+                    onClick={() => {
+                      sound.playClick();
+                      setSelectedRoomNumber(rNum);
+                    }}
+                    className={`px-3 py-1 rounded-xl text-xs font-black transition-all ${
+                      selectedRoomNumber === rNum
+                        ? 'bg-emerald-500 text-white shadow-sm'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {rNum === 1 ? `Ruang 1` : `Ruang ${rNum}`}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -68,7 +68,9 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
   onBack,
 }) => {
   // Family & User Setup
-  const activeFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA2026';
+  const [selectedRoomNumber, setSelectedRoomNumber] = useState<number>(1);
+  const baseFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA-4539';
+  const activeFamilyCode = selectedRoomNumber === 1 ? baseFamilyCode : `${baseFamilyCode}-${selectedRoomNumber}`;
   const roomCode = `MONOPOLY-${activeFamilyCode.toUpperCase()}`;
   const userDisplayName = currentUser?.fullName || initialPlayers[0]?.name || 'Pemain';
   const userAvatar = currentUser?.avatar || initialPlayers[0]?.avatar || '🎩';
@@ -104,7 +106,7 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
       const activeName = (currentUser?.fullName || '').toLowerCase().trim();
       const sess = db.getSavedSession();
       const familyId = sess?.family?.id || '';
-      const activeCode = familyCode || sess?.family?.familyCode || '';
+      const activeCode = activeFamilyCode;
 
       const cachedOnlineIdsByFamId = familyId ? db.getOnlineUserIds(familyId, activeId) : [];
       const cachedOnlineIdsByCode = activeCode ? db.getOnlineUserIds(activeCode, activeId) : [];
@@ -128,7 +130,11 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
         return false;
       });
 
-      return trulyOnlineMembers.map((p) => {
+      // Max 4 players per room
+      const startIndex = (selectedRoomNumber - 1) * 4;
+      const roomMembers = trulyOnlineMembers.slice(startIndex, startIndex + 4);
+
+      return roomMembers.map((p) => {
         const cleanName = p.name.replace(/\s*\(Anda\)/gi, '').trim();
         return {
           ...p,
@@ -143,7 +149,7 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
     return [
       { id: currentUser?.id || '1', name: cleanUser || 'Saya', avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-amber-500', isOnline: true },
     ];
-  }, [initialPlayers, currentUser, userDisplayName, userAvatar, familyCode]);
+  }, [initialPlayers, currentUser, userDisplayName, userAvatar, activeFamilyCode, selectedRoomNumber]);
 
   const [players, setPlayers] = useState<Player[]>(getSoloPlayers());
 
@@ -320,9 +326,20 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
     }
   }, [playMode, getOnlineFamilyPlayers, getSoloPlayers, readyPlayers, broadcastGameState]);
 
+  useEffect(() => {
+    if (playMode === 'online_friends') {
+      const onlineMembers = getOnlineFamilyPlayers();
+      setPlayers(onlineMembers);
+    }
+  }, [playMode, selectedRoomNumber, getOnlineFamilyPlayers]);
+
   // Start synchronous countdown 3-2-1
   const startCountdownAndLaunch = useCallback(() => {
     sound.playClick();
+    if (playMode === 'online_friends' && players.length < 2) {
+      alert("⚠️ Membutuhkan minimal 2 pemain online untuk mulai bermain serempak!");
+      return;
+    }
     let currentCount = 3;
     setCountdown(currentCount);
 
@@ -344,7 +361,7 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
         initializeGame();
       }
     }, 1000);
-  }, [playMode, broadcastGameState, initializeGame]);
+  }, [playMode, players.length, broadcastGameState, initializeGame]);
 
   // Real-time Event Subscription (PostgreSQL WebSocket & BroadcastChannel)
   useEffect(() => {
@@ -933,12 +950,37 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
             </div>
           </div>
 
+          {/* Room Selector Switcher (Room 1, Room 2, Room 3) */}
+          <div className="bg-amber-50 dark:bg-amber-950/40 p-3 rounded-2xl border border-amber-200 dark:border-amber-800/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              Pilih Ruangan Multiplayer (Maks 4 Pemain per Ruang):
+            </div>
+            <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+              {[1, 2, 3].map((rNum) => (
+                <button
+                  key={rNum}
+                  onClick={() => {
+                    sound.playClick();
+                    setSelectedRoomNumber(rNum);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl font-display font-bold text-xs transition-all shrink-0 ${
+                    selectedRoomNumber === rNum
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  Ruang {rNum}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Connected Online Family Players */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-display font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
                 <Users className="w-4 h-4 text-amber-500" />
-                <span>Pemain Online ({players.length} Orang)</span>
+                <span>ANGGOTA KELUARGA ONLINE DI RUANG {selectedRoomNumber} ({players.length}/4):</span>
               </h3>
               <span className="text-xs text-amber-600 font-bold bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-full">
                 Terhubung ke Database ASTA

@@ -227,8 +227,10 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
   const [lobbyNoticeMsg, setLobbyNoticeMsg] = useState<string | null>(null);
   const isCountdownRunningRef = React.useRef(false);
 
-  // Active Family Code
-  const activeFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA-2026';
+  // Active Room Number & Code
+  const [selectedRoomNumber, setSelectedRoomNumber] = useState<number>(1);
+  const baseFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA-4539';
+  const activeFamilyCode = selectedRoomNumber === 1 ? baseFamilyCode : `${baseFamilyCode}-${selectedRoomNumber}`;
 
   // Logged-in user information
   const userFullName = currentUser?.fullName || (initialPlayers.length > 0 ? initialPlayers[0].name : 'Papa Asep');
@@ -248,7 +250,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
       const activeName = (currentUser?.fullName || '').toLowerCase().trim();
       const sess = db.getSavedSession();
       const familyId = sess?.family?.id || '';
-      const activeCode = familyCode || sess?.family?.familyCode || '';
+      const activeCode = activeFamilyCode;
 
       const cachedOnlineIdsByFamId = familyId ? db.getOnlineUserIds(familyId, activeId) : [];
       const cachedOnlineIdsByCode = activeCode ? db.getOnlineUserIds(activeCode, activeId) : [];
@@ -272,7 +274,11 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
         return false;
       });
 
-      return trulyOnlineMembers.map((p) => {
+      // Max 4 players per room
+      const startIndex = (selectedRoomNumber - 1) * 4;
+      const roomMembers = trulyOnlineMembers.slice(startIndex, startIndex + 4);
+
+      return roomMembers.map((p) => {
         const cleanName = p.name.replace(/\s*\(Anda\)/gi, '').trim();
         return {
           ...p,
@@ -287,7 +293,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
     return [
       { id: currentUser?.id || '1', name: cleanUser || 'Saya', avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
     ];
-  }, [initialPlayers, currentUser, userDisplayName, userAvatar, familyCode]);
+  }, [initialPlayers, currentUser, userDisplayName, userAvatar, activeFamilyCode, selectedRoomNumber]);
 
   const [players, setPlayers] = useState<Player[]>(getSoloPlayers());
 
@@ -682,6 +688,12 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
 
   const handleStartSynchronousGame = () => {
     sound.playClick();
+
+    if (players.length < 2) {
+      sound.playTimerWarning();
+      setLobbyNoticeMsg('⚠️ Membutuhkan minimal 2 pemain online untuk mulai bermain serempak! Silakan tunggu atau ajak anggota keluarga lain untuk bergabung.');
+      return;
+    }
 
     const activeUser = getActiveUserPlayer(players);
     let currentReady = [...readyPlayerIds];
@@ -1211,8 +1223,40 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                 Ruang Ludo Keluarga ({activeFamilyCode})
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-1">
-                Semua pemain yang sedang online harus mengklik tombol <strong>SIAP</strong> untuk mulai bersama!
+                Aturan: <strong>Min. 2 Pemain, Maks. 4 Pemain</strong> per Ruangan. Klik <strong>SIAP</strong> untuk mulai serempak!
               </p>
+            </div>
+
+            {/* Room Selector & Capacity Indicator */}
+            <div className="bg-slate-100 dark:bg-slate-700/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-600 space-y-2 text-left">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-black text-slate-700 dark:text-slate-200">
+                  Kapasitas Ruang: <strong className="text-amber-500">{players.length}/4 Pemain</strong>
+                </span>
+                <span className="text-[10px] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold px-2 py-0.5 rounded-full">
+                  {players.length >= 2 ? '✅ Siap Bermain' : '⚠️ Butuh Min. 2 Pemain'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 pt-0.5">
+                {[1, 2, 3].map((rNum) => (
+                  <button
+                    key={rNum}
+                    onClick={() => {
+                      sound.playClick();
+                      setSelectedRoomNumber(rNum);
+                      setReadyPlayerIds([]);
+                    }}
+                    className={`px-3 py-1 rounded-xl text-xs font-black transition-all ${
+                      selectedRoomNumber === rNum
+                        ? 'bg-amber-500 text-white shadow-sm'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {rNum === 1 ? `Ruang 1` : `Ruang ${rNum}`}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {lobbyNoticeMsg && (
@@ -1224,7 +1268,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
             {/* Online Members Ready Status List */}
             <div className="space-y-2 text-left bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
               <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
-                ANGGOTA KELUARGA ONLINE ({players.length}):
+                ANGGOTA KELUARGA ONLINE DI RUANG {selectedRoomNumber} ({players.length}/4):
               </span>
               {players.map((p) => {
                 const isReady = readyPlayerIds.includes(p.id);
