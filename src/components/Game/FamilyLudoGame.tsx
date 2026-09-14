@@ -218,6 +218,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
   const [playMode, setPlayMode] = useState<PlayMode>('solo_bot');
   const [showModeModal, setShowModeModal] = useState<boolean>(true);
   const [showOnlineErrorModal, setShowOnlineErrorModal] = useState<boolean>(false);
+  const [showMultiplayerSetup, setShowMultiplayerSetup] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
   // Ready Room & 3-2-1 Synchronous Start States
@@ -632,38 +633,53 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
     sound.playClick();
 
     if (mode === 'online_friends') {
-      const onlineMembers = getOnlinePlayers();
-
       setPlayMode('online_friends');
       setShowModeModal(false);
       setShowOnlineErrorModal(false);
-      setPlayers(onlineMembers);
-
-      const activeUser = getActiveUserPlayer(onlineMembers);
-      const initialReady = [activeUser.id];
-      setReadyPlayerIds(initialReady);
-      setIsWaitingLobby(true);
-      setChatMessages([
-        {
-          id: Date.now().toString(),
-          senderName: 'Sistem',
-          text: `🌐 Mode Teman Online Aktif (Kode: ${activeFamilyCode})! Selamat bergabung, permainan Ludo dimulai serempak ketika semua siap.`,
-          isSystem: true,
-          timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        }
-      ]);
-
-      broadcastGameEvent('READY_STATUS_CHANGE', { readyPlayerIds: initialReady });
+      setShowMultiplayerSetup(true); // Tampilkan pengaturan ludo multiplayer dulu
       return;
     }
 
     setPlayMode(mode);
     setShowModeModal(false);
     setShowOnlineErrorModal(false);
+    setShowMultiplayerSetup(false);
     setPlayers(getSoloPlayers());
     setChatMessages([
       { id: '1', senderName: 'Sistem', text: '🤖 Mode Bermain Sendiri (vs AI Bot) dimulai! Nikmati permainan solo!', isSystem: true, timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }
     ]);
+  };
+
+  // Enter Online Lobby after multiplayer setup is confirmed
+  const enterOnlineLobby = () => {
+    sound.playClick();
+    const onlineMembers = getOnlinePlayers();
+
+    if (onlineMembers.length < 1) {
+      setShowOnlineErrorModal(true);
+      return;
+    }
+
+    setShowMultiplayerSetup(false);
+    setPlayers(onlineMembers);
+    setIsWaitingLobby(true);
+    setLobbyNoticeMsg(null);
+
+    const activeUser = getActiveUserPlayer(onlineMembers);
+    const initialReady = [activeUser.id];
+    setReadyPlayerIds(initialReady);
+
+    setChatMessages([
+      {
+        id: Date.now().toString(),
+        senderName: 'Sistem',
+        text: `🌐 Mode Teman Online Aktif (Kode: ${activeFamilyCode})! Bermain Ludo ${playerCount} pemain, ${tokensPerPlayer} pion/pemain. Klik SIAP!`,
+        isSystem: true,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      }
+    ]);
+
+    broadcastGameEvent('READY_STATUS_CHANGE', { readyPlayerIds: initialReady, playerCount, tokensPerPlayer });
   };
 
   const handleToggleReady = (playerId: string) => {
@@ -1206,7 +1222,132 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
         </div>
       )}
 
-      {/* 0. LOBBY WAITING ROOM FOR MULTIPLAYER */}
+      {/* 0b. MULTIPLAYER SETUP SCREEN */}
+      {showMultiplayerSetup && (
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-pop-in">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-lg w-full max-h-[92vh] overflow-y-auto border-2 sm:border-4 border-indigo-300 dark:border-indigo-700 shadow-2xl space-y-4 my-auto">
+
+            {/* Header */}
+            <div className="text-center space-y-1">
+              <div className="w-14 h-14 rounded-3xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-rose-500 text-white flex items-center justify-center text-3xl mx-auto shadow-md">
+                🎲
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 font-black text-[10px] uppercase tracking-wider">
+                <Globe className="w-3 h-3" /> MULTIPLAYER ONLINE
+              </div>
+              <h2 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">
+                Pengaturan Ludo Multiplayer
+              </h2>
+              <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium">
+                Atur jumlah pemain dan mode pion sebelum masuk ke ruang online bersama keluarga!
+              </p>
+            </div>
+
+            {/* 1. Pilih Jumlah Pemain */}
+            <div className="space-y-2">
+              <label className="block text-xs font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                1. Pilih Jumlah Pemain (Maks. 4/Ruang)
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[2, 3, 4].map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => { sound.playClick(); setPlayerCount(num as 2 | 3 | 4); }}
+                    className={`p-3 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                      playerCount === num
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 shadow-md scale-102'
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:border-indigo-300'
+                    }`}
+                  >
+                    <span className="text-xl">{num === 2 ? '👥' : num === 3 ? '👨‍👩‍👦' : '👨‍👩‍👧‍👦'}</span>
+                    <span className="font-display font-black text-xs text-slate-900 dark:text-white">
+                      {num} Pemain
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Jumlah Pion per Pemain */}
+            <div className="space-y-2">
+              <label className="block text-xs font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                2. Jumlah Pion per Pemain
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => { sound.playClick(); setTokensPerPlayer(2); }}
+                  className={`p-3 rounded-2xl border-2 flex items-center gap-2 transition-all active:scale-95 ${
+                    tokensPerPlayer === 2
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
+                  }`}
+                >
+                  <div className="text-xl">⚡</div>
+                  <div className="text-left min-w-0">
+                    <div className="font-display font-black text-xs text-slate-900 dark:text-white">Mode Cepat</div>
+                    <div className="text-[10px] text-slate-500 font-medium">2 Pion / Pemain</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { sound.playClick(); setTokensPerPlayer(4); }}
+                  className={`p-3 rounded-2xl border-2 flex items-center gap-2 transition-all active:scale-95 ${
+                    tokensPerPlayer === 4
+                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
+                  }`}
+                >
+                  <div className="text-xl">👑</div>
+                  <div className="text-left min-w-0">
+                    <div className="font-display font-black text-xs text-slate-900 dark:text-white">Mode Standar</div>
+                    <div className="text-[10px] text-slate-500 font-medium">4 Pion / Pemain</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Ringkasan Ruangan */}
+            <div className="bg-indigo-50 dark:bg-indigo-950/60 rounded-2xl p-3 border border-indigo-200 dark:border-indigo-800 space-y-1.5">
+              <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                <Globe className="w-3 h-3" /> INFO RUANGAN ONLINE
+              </div>
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                📍 Kode Keluarga: <span className="text-indigo-600 dark:text-indigo-300 font-black">{activeFamilyCode}</span>
+              </div>
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                👥 Kapasitas: <span className="text-indigo-600 dark:text-indigo-300 font-black">Maks. 4 Pemain / Ruang</span>
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-snug">
+                Jika ruang sudah penuh (4 orang), anggota keluarga lain akan otomatis masuk ke <strong>Ruang 2</strong>, <strong>Ruang 3</strong>, dst.
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  setShowMultiplayerSetup(false);
+                  setPlayMode('solo_bot');
+                  setShowModeModal(true);
+                }}
+                className="px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-200 active:scale-95 transition-all"
+              >
+                ← Kembali
+              </button>
+              <button
+                onClick={enterOnlineLobby}
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-rose-500 text-white font-display font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+              >
+                <Globe className="w-4 h-4" />
+                <span>LANJUT KE RUANG ONLINE 🚀</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* 0c. LOBBY WAITING ROOM FOR MULTIPLAYER */}
       {isWaitingLobby && (
         <div className="fixed inset-0 z-50 bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-pop-in">
           <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-7 max-w-lg w-full border-4 border-indigo-500 shadow-2xl space-y-4 text-center">
@@ -1222,6 +1363,20 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
               <h2 className="font-display font-black text-xl sm:text-2xl text-slate-900 dark:text-white mt-1.5">
                 Ruang Ludo Keluarga ({activeFamilyCode})
               </h2>
+              <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
+                <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-black text-[10px]">
+                  {playerCount === 2 ? '👥' : playerCount === 3 ? '👨‍👩‍👦' : '👨‍👩‍👧‍👦'} {playerCount} Pemain
+                </span>
+                <span className="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-black text-[10px]">
+                  {tokensPerPlayer === 2 ? '⚡ Mode Cepat (2 Pion)' : '👑 Mode Standar (4 Pion)'}
+                </span>
+                <button
+                  onClick={() => { sound.playClick(); setIsWaitingLobby(false); setShowMultiplayerSetup(true); }}
+                  className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[10px] hover:bg-slate-200 underline"
+                >
+                  Ubah Pengaturan
+                </button>
+              </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-1">
                 Aturan: <strong>Min. 2 Pemain, Maks. 4 Pemain</strong> per Ruangan. Klik <strong>SIAP</strong> untuk mulai serempak!
               </p>
@@ -1909,6 +2064,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                   setWinner(null);
                   setIsGameStarted(false);
                   setIsWaitingLobby(false);
+                  setShowMultiplayerSetup(false);
                   setShowModeModal(true);
                 }}
                 className="py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-display font-black text-xs active:scale-95 transition-all"
