@@ -1830,13 +1830,15 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
             </div>
             <div>
               <span className="text-xs font-black uppercase tracking-wider text-family-coral">
-                JUARA 1 UNO KELUARGA ASTA
+                {isCurrentPlayerMe(winner) ? '🎉 SELAMAT! ANDA MENANG JUARA 1!' : `🏆 ${winner.name.replace(/\s*\(Anda\)/gi, '')} MENANG JUARA 1!`}
               </span>
               <h3 className="font-display font-black text-xl text-slate-900 dark:text-white mt-0.5">
-                {winner.name}
+                {winner.name.replace(/\s*\(Anda\)/gi, '')}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                Kartu di tangan habis lebih dahulu! Kemenangan luar biasa untuk keluarga 🎉
+                {isCurrentPlayerMe(winner)
+                  ? 'Kartu di tangan Anda habis lebih dahulu! Kemenangan luar biasa untuk keluarga 🎉'
+                  : `Kartu di tangan ${winner.name.replace(/\s*\(Anda\)/gi, '')} habis lebih dahulu. Tetap semangat untuk permainan berikutnya!`}
               </p>
             </div>
 

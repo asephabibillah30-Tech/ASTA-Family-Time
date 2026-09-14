@@ -1394,13 +1394,17 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
 
             <div>
               <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-black text-xs uppercase tracking-wider">
-                🎉 UPACARA KEMENANGAN SELESAI
+                {sortedLeaderboard[0] && isCurrentPlayerMe(sortedLeaderboard[0])
+                  ? '🎉 SELAMAT! ANDA MENANG JUARA 1!'
+                  : `🏆 ${sortedLeaderboard[0]?.name.replace(/\s*\(Anda\)/gi, '')} MENANG JUARA 1!`}
               </span>
               <h2 className="font-display font-black text-2xl sm:text-3xl text-slate-900 dark:text-white mt-2">
                 Pemenang Art Frenzy! 🏆
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
-                Selamat! Keluarga mendapatkan <span className="font-black text-amber-500">+200 ⭐ Love Points</span>!
+                {sortedLeaderboard[0] && isCurrentPlayerMe(sortedLeaderboard[0])
+                  ? 'Selamat! Anda meraih skor tertinggi! Keluarga mendapatkan +200 ⭐ Love Points!'
+                  : `Selamat untuk ${sortedLeaderboard[0]?.name.replace(/\s*\(Anda\)/gi, '')}! Tetap semangat untuk game berikutnya!`}
               </p>
             </div>
 
@@ -1410,7 +1414,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               {sortedLeaderboard[1] && (
                 <div className="bg-slate-100 dark:bg-slate-700 p-3 rounded-2xl border-2 border-slate-300 text-center space-y-1">
                   <span className="text-2xl">🥈</span>
-                  <div className="font-black text-xs truncate">{sortedLeaderboard[1].name}</div>
+                  <div className="font-black text-xs truncate">{sortedLeaderboard[1].name.replace(/\s*\(Anda\)/gi, '')}</div>
                   <div className="text-[10px] font-bold text-slate-500">{sortedLeaderboard[1].score} pts</div>
                 </div>
               )}
@@ -1419,7 +1423,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
               {sortedLeaderboard[0] && (
                 <div className="bg-gradient-to-b from-amber-100 to-amber-200 dark:from-amber-950 dark:to-amber-900 p-4 rounded-2xl border-3 border-amber-400 text-center space-y-1 shadow-md scale-105">
                   <span className="text-3xl">🥇</span>
-                  <div className="font-black text-sm text-slate-900 dark:text-white truncate">{sortedLeaderboard[0].name}</div>
+                  <div className="font-black text-sm text-slate-900 dark:text-white truncate">{sortedLeaderboard[0].name.replace(/\s*\(Anda\)/gi, '')}</div>
                   <div className="text-xs font-black text-amber-700 dark:text-amber-300">{sortedLeaderboard[0].score} pts</div>
                 </div>
               )}

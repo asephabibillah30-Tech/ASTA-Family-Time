@@ -1828,13 +1828,15 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
             </div>
             <div>
               <span className="text-xs font-black uppercase tracking-wider text-amber-500">
-                JUARA 1 LUDO KELUARGA ASTA
+                {isCurrentPlayerMe(winner) ? '🎉 SELAMAT! ANDA MENANG JUARA 1!' : `🏆 ${winner.name.replace(/\s*\(Anda\)/gi, '')} MENANG JUARA 1!`}
               </span>
               <h3 className="font-display font-black text-xl text-slate-900 dark:text-white mt-0.5">
-                {winner.name} ({COLOR_INFO[winner.color].name})
+                {winner.name.replace(/\s*\(Anda\)/gi, '')} ({COLOR_INFO[winner.color].name})
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                Seluruh pion berhasil mencapai garis finish mahkota! Kemenangan luar biasa 🎉
+                {isCurrentPlayerMe(winner)
+                  ? 'Seluruh pion Anda berhasil mencapai garis finish mahkota! Kemenangan luar biasa 🎉'
+                  : `Pion ${winner.name.replace(/\s*\(Anda\)/gi, '')} telah mencapai garis finish mahkota. Tetap semangat untuk permainan berikutnya!`}
               </p>
             </div>
 
