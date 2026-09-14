@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Player } from '../types/game';
 import { AVATAR_PRESETS } from '../hooks/useGame';
-import { Plus, Trash2, ArrowRight, Users, Sparkles } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, ArrowLeft, Users, Sparkles } from 'lucide-react';
 import { sound } from '../utils/sound';
 
 interface PlayerSetupProps {
@@ -9,6 +9,7 @@ interface PlayerSetupProps {
   onAddPlayer: (name: string, rolePreset?: string, avatar?: string) => void;
   onRemovePlayer: (id: string) => void;
   onProceedToMode: () => void;
+  onBack?: () => void;
 }
 
 export const PlayerSetup: React.FC<PlayerSetupProps> = ({
@@ -16,6 +17,7 @@ export const PlayerSetup: React.FC<PlayerSetupProps> = ({
   onAddPlayer,
   onRemovePlayer,
   onProceedToMode,
+  onBack,
 }) => {
   const [inputName, setInputName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_PRESETS[0].emoji);
@@ -44,6 +46,23 @@ export const PlayerSetup: React.FC<PlayerSetupProps> = ({
   return (
     <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 animate-pop-in">
       
+      {/* Top Header Bar with Back Button */}
+      {onBack && (
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              sound.playClick();
+              onBack();
+            }}
+            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-display font-bold text-xs sm:text-sm border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-500" />
+            <span>Kembali</span>
+          </button>
+        </div>
+      )}
+
       {/* Title Section */}
       <div className="text-center space-y-1.5 sm:space-y-2">
         <span className="text-3xl sm:text-4xl inline-block animate-bounce">👨‍👩‍👧‍👦</span>
@@ -206,15 +225,29 @@ export const PlayerSetup: React.FC<PlayerSetupProps> = ({
         </div>
       </div>
 
-      {/* Proceed Button */}
-      <div className="pt-2 sm:pt-4">
+      {/* Proceed & Back Action Buttons */}
+      <div className="pt-2 sm:pt-4 flex items-center gap-2 sm:gap-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={() => {
+              sound.playClick();
+              onBack();
+            }}
+            className="px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl sm:rounded-3xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-display font-bold text-xs sm:text-sm shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Kembali</span>
+          </button>
+        )}
+
         <button
           onClick={() => {
             sound.playClick();
             onProceedToMode();
           }}
           disabled={players.length < 2}
-          className="w-full py-3.5 sm:py-4 px-4 sm:px-8 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-family-coral to-rose-600 hover:from-rose-600 hover:to-family-coral disabled:opacity-40 text-white font-display font-black text-base sm:text-lg shadow-bubbly-coral active:scale-95 transition-all flex items-center justify-center gap-2"
+          className="flex-1 py-3.5 sm:py-4 px-4 sm:px-8 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-family-coral to-rose-600 hover:from-rose-600 hover:to-family-coral disabled:opacity-40 text-white font-display font-black text-base sm:text-lg shadow-bubbly-coral active:scale-95 transition-all flex items-center justify-center gap-2"
         >
           <span>PILIH MODE PERMAINAN</span>
           <ArrowRight className="w-5 h-5" />

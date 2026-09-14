@@ -175,6 +175,11 @@ export function App() {
             onAddPlayer={game.addPlayer}
             onRemovePlayer={game.removePlayer}
             onProceedToMode={() => game.setScreen('mode_select')}
+            onBack={() => {
+              game.resetToHome();
+              setCurrentTab('home');
+              setSubScreen(null);
+            }}
           />
         )}
 
