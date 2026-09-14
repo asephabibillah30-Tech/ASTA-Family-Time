@@ -151,6 +151,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
   const [readyPlayerIds, setReadyPlayerIds] = useState<string[]>([]);
   const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
   const [lobbyNoticeMsg, setLobbyNoticeMsg] = useState<string | null>(null);
+  const isCountdownRunningRef = React.useRef(false);
 
   // Active Family Code
   const activeFamilyCode = familyCode || db.getSavedSession()?.family?.familyCode || 'ASTA-2026';
@@ -346,18 +347,6 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
     const startColor = firstCard.color === 'wild' ? 'red' : firstCard.color;
     const startMsg = `Game dimulai! Giliran ${activeConfigs[0].name}. Cocokkan warna ${COLOR_MAP[startColor].name} atau angka ${firstCard.value.toUpperCase()}!`;
 
-    const freshState = {
-      unoPlayers: activeConfigs,
-      drawPile: newDeck,
-      discardPile: [firstCard],
-      activeColor: startColor,
-      currentTurnIdx: 0,
-      isClockwise: true,
-      winner: null,
-      message: startMsg,
-      specialActionText: null,
-    };
-
     setUnoPlayers(activeConfigs);
     setDrawPile(newDeck);
     setDiscardPile([firstCard]);
@@ -373,18 +362,21 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
 
     sound.playSuccess();
     fireBurstConfetti();
+  }, [cardsPerHand, getOnlinePlayers, getSoloPlayers]);
 
-    if (playMode === 'online_friends') {
-      broadcastGameEvent('GAME_START_COUNTDOWN', { initialGameState: freshState });
-    }
-  }, [playMode, cardsPerHand, getOnlinePlayers, getSoloPlayers, broadcastGameEvent]);
+  // 3-2-1 Synchronous Start Countdown Sequence (Executes EXACTLY ONCE per game start)
+  const startCountdownSequence = useCallback((initialState?: any, isInitiator = false) => {
+    if (isCountdownRunningRef.current || isGameStarted) return;
+    isCountdownRunningRef.current = true;
 
-  // 3-2-1 Synchronous Start Countdown Sequence
-  const startCountdownSequence = useCallback((initialState?: any) => {
     setIsWaitingLobby(false);
     setShowModeModal(false);
     setCountdownNumber(3);
     sound.playTimerTick();
+
+    if (isInitiator && playMode === 'online_friends') {
+      broadcastGameEvent('GAME_START_COUNTDOWN', { initialGameState: initialState });
+    }
 
     let count = 3;
     const interval = setInterval(() => {
@@ -398,10 +390,11 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
       } else {
         clearInterval(interval);
         setCountdownNumber(null);
+        isCountdownRunningRef.current = false;
         initializeGame(initialState);
       }
     }, 1000);
-  }, [initializeGame]);
+  }, [initializeGame, isGameStarted, playMode, broadcastGameEvent]);
 
   // Real-time Event Listener for Cross-Device Supabase WebSocket & BroadcastChannel
   useEffect(() => {
@@ -414,19 +407,23 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
 
     const handleIncomingEvent = (event: string, payload: any) => {
       if (event === 'GAME_START_COUNTDOWN') {
-        setIsWaitingLobby(false);
-        setShowModeModal(false);
-        startCountdownSequence(payload?.initialGameState);
+        if (!isCountdownRunningRef.current && !isGameStarted) {
+          setIsWaitingLobby(false);
+          setShowModeModal(false);
+          startCountdownSequence(payload?.initialGameState, false);
+        }
       } else if (event === 'READY_STATUS_CHANGE') {
         if (Array.isArray(payload?.readyPlayerIds)) {
           setReadyPlayerIds(payload.readyPlayerIds);
           sound.playTimerTick();
           if (payload.readyPlayerIds.length >= players.length && players.length >= 2) {
-            setTimeout(() => {
-              setIsWaitingLobby(false);
-              setShowModeModal(false);
-              startCountdownSequence(payload?.initialGameState);
-            }, 500);
+            if (!isCountdownRunningRef.current && !isGameStarted) {
+              setTimeout(() => {
+                setIsWaitingLobby(false);
+                setShowModeModal(false);
+                startCountdownSequence(payload?.initialGameState, false);
+              }, 500);
+            }
           }
         }
       } else if (event === 'UNO_GAME_SYNC') {
@@ -577,7 +574,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
 
       if (updated.length >= players.length && players.length >= 2) {
         setTimeout(() => {
-          startCountdownSequence();
+          startCountdownSequence(undefined, true);
         }, 500);
       }
       return updated;
@@ -606,7 +603,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
     }
 
     setLobbyNoticeMsg(null);
-    startCountdownSequence();
+    startCountdownSequence(undefined, true);
   };
 
   // Turn & User helpers
