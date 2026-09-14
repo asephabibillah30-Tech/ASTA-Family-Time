@@ -1044,7 +1044,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-2 sm:px-4 py-2 space-y-2.5 sm:space-y-3 animate-pop-in select-none">
+    <div className="max-w-5xl mx-auto px-2 sm:px-4 py-2 space-y-2.5 sm:space-y-3 select-none">
       
       {/* ONLINE REQUIRED ERROR MODAL */}
       {showOnlineErrorModal && (
@@ -1084,16 +1084,16 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
       {/* 0. MODE SELECTION MODAL */}
       {showModeModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-pop-in">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border-2 sm:border-4 border-amber-300 dark:border-slate-700 shadow-2xl space-y-3.5 sm:space-y-5 my-auto">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 max-w-lg w-full max-h-[92vh] overflow-y-auto border-2 sm:border-4 border-rose-400 dark:border-slate-700 shadow-2xl space-y-3 sm:space-y-5 my-auto">
             
-            <div className="text-center space-y-1.5 sm:space-y-2">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-red-500 via-amber-500 to-blue-600 text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto shadow-md">
-                🃏
+            <div className="text-center space-y-1 sm:space-y-2">
+              <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-3xl bg-gradient-to-tr from-rose-500 via-amber-400 to-indigo-600 text-white flex items-center justify-center text-xl sm:text-3xl mx-auto shadow-md">
+                🎴
               </div>
-              <h2 className="font-display font-black text-xl sm:text-2xl text-slate-900 dark:text-white">
+              <h2 className="font-display font-black text-lg sm:text-2xl text-slate-900 dark:text-white">
                 ASTA UNO Kartu Keluarga
               </h2>
-              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+              <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium">
                 Pilih mode permainan favorit Anda untuk mulai bermain UNO bersama!
               </p>
             </div>
