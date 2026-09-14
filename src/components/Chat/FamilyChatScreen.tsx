@@ -2,10 +2,37 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { Player } from '../../types/game';
 import type { ChatMessage } from '../../types/family';
 import type { UserAccount } from '../../types/auth';
-import { Send, PhoneCall, Video, Smile, Trash2, Check, CheckCheck, RotateCcw, ShieldCheck, ShieldAlert, CheckCircle2, Clock, X, Users } from 'lucide-react';
+import { Send, PhoneCall, Video, Smile, Trash2, Check, CheckCheck, RotateCcw, ShieldCheck, ShieldAlert, CheckCircle2, Clock, X, Users, Calendar } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireSmallPop } from '../../utils/confetti';
 import { moderateChatMessage } from '../../utils/security';
+
+export const formatReadDateTime = (rawReadAt?: string): string => {
+  if (!rawReadAt) {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+    return `${dateStr}, ${timeStr}`;
+  }
+
+  const trimmed = rawReadAt.trim();
+
+  if (trimmed.includes('-')) {
+    const parsedDate = new Date(trimmed);
+    if (!isNaN(parsedDate.getTime())) {
+      const dateStr = parsedDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+      const timeStr = parsedDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+      return `${dateStr}, ${timeStr}`;
+    }
+  }
+
+  if (/^\d{1,2}[:.]\d{2}$/.test(trimmed)) {
+    const todayStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    return `${todayStr}, ${trimmed.replace(':', '.')}`;
+  }
+
+  return trimmed;
+};
 
 interface FamilyChatScreenProps {
   players: Player[];
@@ -649,13 +676,14 @@ export const FamilyChatScreen: React.FC<FamilyChatScreenProps> = ({
                     {(selectedMessageInfo.readBy || [])
                       .filter(r => r.userId !== selectedMessageInfo.senderId)
                       .map((r, i) => (
-                        <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">{r.userAvatar || '😊'}</span>
-                            <span className="text-xs font-bold text-slate-800 dark:text-white">{r.userName}</span>
+                        <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700 gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xl shrink-0">{r.userAvatar || '😊'}</span>
+                            <span className="text-xs font-bold text-slate-800 dark:text-white truncate">{r.userName}</span>
                           </div>
-                          <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                            {r.readAt}
+                          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 shrink-0 flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                            <span>{formatReadDateTime(r.readAt)}</span>
                           </span>
                         </div>
                       ))}

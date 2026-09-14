@@ -654,12 +654,19 @@ export function useFamilyState(familyId?: string | null) {
       };
     }
 
+    const getNowReadAt = () => {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+      return `${dateStr}, ${timeStr}`;
+    };
+
     const newMsg: ChatMessage = {
       id: 'msg-' + Date.now(),
       senderId, senderName, senderAvatar, senderColor, text: text.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       reactions: [],
-      readBy: [{ userId: senderId, userName: senderName, userAvatar: senderAvatar, readAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }],
+      readBy: [{ userId: senderId, userName: senderName, userAvatar: senderAvatar, readAt: getNowReadAt() }],
       mediaType
     };
     setChatMessages((prev) => {
@@ -719,13 +726,18 @@ export function useFamilyState(familyId?: string | null) {
         const alreadyRead = currentReadBy.some((r) => r.userId === userId);
         if (!alreadyRead) {
           changed = true;
+          const now = new Date();
+          const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+          const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+          const fullReadAt = `${dateStr}, ${timeStr}`;
+
           const newReadBy = [
             ...currentReadBy,
             {
               userId,
               userName,
               userAvatar: userAvatar || '😊',
-              readAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              readAt: fullReadAt
             }
           ];
           supabaseFamilyService.updateChatReadBy(m.id, newReadBy).catch(console.warn);
