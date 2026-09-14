@@ -714,56 +714,91 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
       {/* Mode Selection Modal */}
       {showModeModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-pop-in">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border-2 sm:border-4 border-amber-400 dark:border-slate-700 shadow-2xl space-y-3.5 sm:space-y-5 text-center my-auto">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto shadow-lg">
-              🎩
-            </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-display font-black text-slate-900 dark:text-white">
-                Monopoli Keluarga ASTA
+          <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border-2 sm:border-4 border-amber-300 dark:border-slate-700 shadow-2xl space-y-3.5 sm:space-y-5 my-auto">
+            
+            <div className="text-center space-y-1.5 sm:space-y-2">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-purple-500 via-indigo-500 to-amber-400 text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto shadow-md">
+                🎩
+              </div>
+              <h2 className="font-display font-black text-xl sm:text-2xl text-slate-900 dark:text-white">
+                ASTA Monopoli Keluarga
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Pilih mode permainan keluarga favoritmu:
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                Pilih mode permainan favorit Anda untuk mulai bermain Monopoli bersama!
               </p>
             </div>
 
-            <div className="space-y-2.5 sm:space-y-3 pt-1 sm:pt-2">
+            {/* Mode Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4 pt-1 sm:pt-2">
+              
+              {/* Option 1: Bermain Sendiri (vs AI Bot) */}
               <button
-                onClick={() => handleSelectMode('online_friends')}
-                className="w-full p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-display font-bold text-left shadow-lg active:scale-95 transition-all flex items-center gap-3 border border-amber-400"
+                onClick={() => handleSelectMode('solo_bot')}
+                className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-700 dark:to-slate-700/80 border-2 sm:border-3 border-amber-300 dark:border-amber-600 hover:scale-[1.02] active:scale-95 transition-all text-left space-y-2 flex flex-col justify-between group shadow-md"
               >
-                <div className="p-2.5 sm:p-3 bg-white/20 rounded-xl text-xl sm:text-2xl shrink-0">🌐</div>
                 <div>
-                  <div className="text-sm sm:text-base font-black flex items-center gap-1.5 flex-wrap">
-                    <span>Main Online / Teman & Keluarga</span>
-                    <span className="text-[9px] bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded-full font-black">REALTIME</span>
+                  <div className="flex items-center justify-between">
+                    <span className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-amber-400 text-slate-900 text-lg sm:text-xl font-black shadow-xs">
+                      🤖
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-950 text-amber-900 dark:text-amber-300 text-[9px] sm:text-[10px] font-black uppercase">
+                      MAIN SENDIRI
+                    </span>
                   </div>
-                  <div className="text-[11px] sm:text-xs opacity-90 font-normal">
-                    Lawan anggota keluarga asli serempak antar perangkat!
-                  </div>
+                  <h3 className="font-display font-black text-sm sm:text-base text-slate-900 dark:text-white mt-2 sm:mt-3">
+                    Bermain Sendiri (vs AI Bot)
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-snug">
+                    Latihan bermain Monopoli secara solo melawan AI Bot Keluarga (Bot Bella, Bot Papa, Bot Mamah).
+                  </p>
+                </div>
+
+                <div className="w-full py-2 sm:py-2.5 mt-2 rounded-xl bg-amber-500 group-hover:bg-amber-600 text-white font-display font-black text-xs text-center shadow-xs flex items-center justify-center gap-1.5">
+                  <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white" />
+                  <span>MULAI MAIN SENDIRI</span>
                 </div>
               </button>
 
+              {/* Option 2: Bermain Sama Teman Online */}
               <button
-                onClick={() => handleSelectMode('solo_bot')}
-                className="w-full p-3.5 sm:p-4 rounded-2xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-display font-bold text-left shadow-md active:scale-95 transition-all flex items-center gap-3 border border-slate-200 dark:border-slate-600"
+                onClick={() => handleSelectMode('online_friends')}
+                className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-700 dark:to-slate-700/80 border-2 sm:border-3 border-indigo-300 dark:border-indigo-600 hover:scale-[1.02] active:scale-95 transition-all text-left space-y-2 flex flex-col justify-between group shadow-md"
               >
-                <div className="p-2.5 sm:p-3 bg-slate-200 dark:bg-slate-600 rounded-xl text-xl sm:text-2xl shrink-0">🤖</div>
                 <div>
-                  <div className="text-sm sm:text-base font-black">Main Sendiri / Lawan BOT</div>
-                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal">
-                    Latihan santai lawan AI Bot tanpa perlombaan online
+                  <div className="flex items-center justify-between">
+                    <span className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-indigo-600 text-white text-lg sm:text-xl font-black shadow-xs">
+                      🌐
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-200 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-300 text-[9px] sm:text-[10px] font-black uppercase">
+                      TEMAN ONLINE
+                    </span>
                   </div>
+                  <h3 className="font-display font-black text-sm sm:text-base text-slate-900 dark:text-white mt-2 sm:mt-3">
+                    Main Teman Online
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-snug">
+                    Bermain bersama keluarga & teman online secara real-time menggunakan Kode Keluarga.
+                  </p>
+                </div>
+
+                <div className="w-full py-2 sm:py-2.5 mt-2 rounded-xl bg-indigo-600 group-hover:bg-indigo-700 text-white font-display font-black text-xs text-center shadow-xs flex items-center justify-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span>MAIN TEMAN ONLINE</span>
                 </div>
               </button>
+
             </div>
 
             <button
-              onClick={onBack}
-              className="w-full py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 active:scale-95 transition-all"
+              onClick={() => {
+                sound.playClick();
+                onBack();
+              }}
+              className="w-full py-2.5 sm:py-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-extrabold text-xs sm:text-sm hover:bg-slate-200 active:scale-95 transition-all"
             >
-              Kembali ke Game Hub
+              Kembali ke Arena Game
             </button>
+
           </div>
         </div>
       )}
