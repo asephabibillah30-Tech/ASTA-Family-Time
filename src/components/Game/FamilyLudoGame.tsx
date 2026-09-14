@@ -246,18 +246,22 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
     if (initialPlayers.length > 0) {
       const activeId = currentUser?.id || '';
       const activeName = (currentUser?.fullName || '').toLowerCase().trim();
-      
+      const sess = db.getSavedSession();
+      const familyId = sess?.family?.id || '';
+      const activeCode = familyCode || sess?.family?.familyCode || '';
+
+      const cachedOnlineIdsByFamId = familyId ? db.getOnlineUserIds(familyId, activeId) : [];
+      const cachedOnlineIdsByCode = activeCode ? db.getOnlineUserIds(activeCode, activeId) : [];
+      const cachedOnlineIds = Array.from(new Set([...cachedOnlineIdsByFamId, ...cachedOnlineIdsByCode, activeId]));
+
       const loggedInIndex = initialPlayers.findIndex(
         (p) => (activeId && p.id === activeId) || (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName))
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      const activeCode = familyCode || db.getSavedSession()?.family?.familyCode || '';
-      const cachedOnlineIds = activeCode ? db.getOnlineUserIds(activeCode, activeId) : [activeId];
-
-      // Filter ONLY family members who are ACTUALLY online right now
+      // Filter ONLY family members (excluding bot accounts)
       const trulyOnlineMembers = initialPlayers.filter((p, idx) => {
-        if (p.name.toLowerCase().includes('bot')) return false;
+        if (p.name.toLowerCase().includes('bot') || p.id.startsWith('bot')) return false;
         const isMe = (activeId && p.id === activeId) ||
                      (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
                      (idx === activeIdx && Boolean(activeId || activeName));
@@ -265,41 +269,38 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
         if (p.isOnline === true) return true;
         if (cachedOnlineIds.includes(p.id)) return true;
         if (cachedOnlineIds.some(id => p.name.toLowerCase().includes(id.toLowerCase()))) return true;
-        return false;
+        return true;
       });
 
-      return trulyOnlineMembers.map((p, idx) => {
-        const isMe = Boolean(
-          (activeId && p.id === activeId) ||
-          (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
-          (idx === activeIdx && Boolean(activeId || activeName))
-        );
-        const cleanName = p.name.replace(/\s*\(Anda\)/gi, '');
+      return trulyOnlineMembers.map((p) => {
+        const cleanName = p.name.replace(/\s*\(Anda\)/gi, '').trim();
         return {
           ...p,
-          name: isMe ? `${cleanName} (Anda)` : cleanName,
+          name: cleanName,
           score: 0,
           cardsCompleted: 0,
           isOnline: true,
         };
       });
     }
+    const cleanUser = (currentUser?.fullName || userDisplayName).replace(/\s*\(Anda\)/gi, '').trim();
     return [
-      { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
+      { id: currentUser?.id || '1', name: cleanUser || 'Saya', avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
     ];
   }, [initialPlayers, currentUser, userDisplayName, userAvatar, familyCode]);
 
   const [players, setPlayers] = useState<Player[]>(getSoloPlayers());
 
   const getActiveUserPlayer = useCallback((playerList: Player[]): Player => {
-    if (playerList.length === 0) return { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true };
+    const cleanUser = (currentUser?.fullName || userDisplayName).replace(/\s*\(Anda\)/gi, '').trim();
+    if (playerList.length === 0) return { id: currentUser?.id || '1', name: cleanUser || 'Saya', avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true };
     const activeId = currentUser?.id || '';
     const activeName = (currentUser?.fullName || '').toLowerCase().trim();
 
     const matched = playerList.find((p) => {
       if (activeId && p.id === activeId) return true;
-      if (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) return true;
-      if (p.name.includes('(Anda)')) return true;
+      const cleanPName = p.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      if (activeName && activeName.length >= 2 && cleanPName.includes(activeName)) return true;
       return false;
     });
 
@@ -308,14 +309,16 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
 
   const isCurrentPlayerMe = useCallback((player?: LudoPlayerConfig | null): boolean => {
     if (!player) return false;
-    if (player.name.includes('(Anda)')) return true;
-    if (currentUser?.id && player.id === currentUser.id) return true;
-    if (currentUser?.fullName && player.name.toLowerCase().includes(currentUser.fullName.toLowerCase().trim())) return true;
+    const activeId = currentUser?.id || '';
+    const activeName = (currentUser?.fullName || '').toLowerCase().trim();
+    const cleanPlayerName = player.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+
+    if (activeId && player.id === activeId) return true;
+    if (activeName && activeName.length >= 2 && cleanPlayerName.includes(activeName)) return true;
 
     const activeUser = getActiveUserPlayer(players);
     if (activeUser) {
       if (player.id === activeUser.id) return true;
-      const cleanPlayerName = player.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
       const cleanUserPlayerName = activeUser.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
       if (cleanPlayerName && cleanUserPlayerName && cleanPlayerName === cleanUserPlayerName) return true;
     }
@@ -406,33 +409,44 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
       return;
     }
 
-    let assignedColors: LudoColor[] = [];
-    if (playerCount === 2) {
-      assignedColors = ['red', 'yellow'];
-    } else if (playerCount === 3) {
-      assignedColors = ['red', 'green', 'yellow'];
-    } else {
-      assignedColors = ['red', 'green', 'yellow', 'blue'];
-    }
-
     const playerList = playMode === 'online_friends' ? getOnlinePlayers() : getSoloPlayers();
 
-    const configs: LudoPlayerConfig[] = assignedColors.map((color, idx) => {
-      const p = playerList[idx % playerList.length];
-      return {
-        id: p?.id || `ludo-p-${idx}`,
-        name: p?.name || `Pemain ${idx + 1}`,
-        avatar: p?.avatar || (color === 'red' ? '👨‍💼' : color === 'green' ? '👩‍🍳' : color === 'yellow' ? '👦' : '👧'),
-        color
-      };
-    });
+    let configs: LudoPlayerConfig[] = [];
+    if (playMode === 'online_friends') {
+      const colors: LudoColor[] = ['red', 'yellow', 'green', 'blue'];
+      configs = playerList.map((p, idx) => ({
+        id: p.id,
+        name: p.name.replace(/\s*\(Anda\)/gi, '').trim(),
+        avatar: p.avatar || (colors[idx % colors.length] === 'red' ? '👨‍💼' : '👩‍🍳'),
+        color: colors[idx % colors.length]
+      }));
+    } else {
+      let assignedColors: LudoColor[] = [];
+      if (playerCount === 2) {
+        assignedColors = ['red', 'yellow'];
+      } else if (playerCount === 3) {
+        assignedColors = ['red', 'green', 'yellow'];
+      } else {
+        assignedColors = ['red', 'green', 'yellow', 'blue'];
+      }
+
+      configs = assignedColors.map((color, idx) => {
+        const p = playerList[idx % playerList.length];
+        return {
+          id: p?.id || `ludo-p-${idx}`,
+          name: p?.name ? p.name.replace(/\s*\(Anda\)/gi, '').trim() : `Pemain ${idx + 1}`,
+          avatar: p?.avatar || (color === 'red' ? '👨‍💼' : color === 'green' ? '👩‍🍳' : color === 'yellow' ? '👦' : '👧'),
+          color
+        };
+      });
+    }
 
     const initTokens: LudoToken[] = [];
-    assignedColors.forEach((color) => {
+    configs.forEach((cfg) => {
       for (let i = 0; i < tokensPerPlayer; i++) {
         initTokens.push({
           id: i,
-          color,
+          color: cfg.color,
           step: -1 // -1 means in base
         });
       }
@@ -451,7 +465,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
 
     sound.playSuccess();
     fireBurstConfetti();
-  }, [playerCount, tokensPerPlayer, getOnlinePlayers, getSoloPlayers]);
+  }, [playerCount, tokensPerPlayer, getOnlinePlayers, getSoloPlayers, playMode]);
 
   // 3-2-1 Synchronous Start Countdown Sequence (Executes EXACTLY ONCE per game start)
   const startCountdownSequence = useCallback((initialState?: any, isInitiator = false) => {
@@ -613,12 +627,6 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
 
     if (mode === 'online_friends') {
       const onlineMembers = getOnlinePlayers();
-
-      if (onlineMembers.length < 2) {
-        sound.playSkip();
-        setShowOnlineErrorModal(true);
-        return;
-      }
 
       setPlayMode('online_friends');
       setShowModeModal(false);
@@ -975,7 +983,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
   useEffect(() => {
     if (playMode !== 'solo_bot' || !isGameStarted || winner || isRolling || !activePlayer) return;
 
-    const isBotTurn = activePlayer.id.startsWith('bot') || !activePlayer.name.includes('(Anda)');
+    const isBotTurn = activePlayer.id.startsWith('bot') || currentTurnIdx !== 0;
     if (!isBotTurn) return;
 
     const timer = setTimeout(() => {

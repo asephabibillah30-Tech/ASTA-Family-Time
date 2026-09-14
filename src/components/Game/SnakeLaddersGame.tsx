@@ -116,17 +116,22 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
     if (initialPlayers && initialPlayers.length > 0) {
       const activeId = currentUser?.id || '';
       const activeName = (currentUser?.fullName || '').toLowerCase().trim();
+      const sess = db.getSavedSession();
+      const familyId = sess?.family?.id || '';
+      const activeCode = familyCode || sess?.family?.familyCode || '';
+
+      const cachedOnlineIdsByFamId = familyId ? db.getOnlineUserIds(familyId, activeId) : [];
+      const cachedOnlineIdsByCode = activeCode ? db.getOnlineUserIds(activeCode, activeId) : [];
+      const cachedOnlineIds = Array.from(new Set([...cachedOnlineIdsByFamId, ...cachedOnlineIdsByCode, activeId]));
+
       const loggedInIndex = initialPlayers.findIndex(
         (p) => (activeId && p.id === activeId) || (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName))
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      const activeCode = familyCode || db.getSavedSession()?.family?.familyCode || '';
-      const cachedOnlineIds = activeCode ? db.getOnlineUserIds(activeCode, activeId) : [activeId];
-
-      // Filter ONLY family members who are ACTUALLY online right now
+      // Filter ONLY family members (excluding bot accounts)
       const trulyOnlineMembers = initialPlayers.filter((p, idx) => {
-        if (p.name.toLowerCase().includes('bot')) return false;
+        if (p.name.toLowerCase().includes('bot') || p.id.startsWith('bot')) return false;
         const isMe = (activeId && p.id === activeId) ||
                      (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
                      (idx === activeIdx && Boolean(activeId || activeName));
@@ -134,43 +139,40 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
         if (p.isOnline === true) return true;
         if (cachedOnlineIds.includes(p.id)) return true;
         if (cachedOnlineIds.some(id => p.name.toLowerCase().includes(id.toLowerCase()))) return true;
-        return false;
+        return true;
       });
 
-      return trulyOnlineMembers.map((p, idx) => {
-        const isMe = Boolean(
-          (activeId && p.id === activeId) ||
-          (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
-          (idx === activeIdx && Boolean(activeId || activeName))
-        );
-        const cleanName = p.name.replace(/\s*\(Anda\)/gi, '');
+      return trulyOnlineMembers.map((p) => {
+        const cleanName = p.name.replace(/\s*\(Anda\)/gi, '').trim();
         return {
           ...p,
-          name: isMe ? `${cleanName} (Anda)` : cleanName,
+          name: cleanName,
           score: 0,
           cardsCompleted: 0,
           isOnline: true,
         };
       });
     }
+    const cleanUser = (currentUser?.fullName || userDisplayName).replace(/\s*\(Anda\)/gi, '').trim();
     return [
-      { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-emerald-500', isOnline: true },
+      { id: currentUser?.id || '1', name: cleanUser || 'Saya', avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-emerald-500', isOnline: true },
     ];
   }, [initialPlayers, currentUser, userDisplayName, userAvatar, familyCode]);
 
   const [players, setPlayers] = useState<Player[]>(getSoloPlayers());
 
   const getActiveUserPlayer = useCallback((playerList: SnakePlayerConfig[]): SnakePlayerConfig => {
+    const cleanUser = (currentUser?.fullName || userDisplayName).replace(/\s*\(Anda\)/gi, '').trim();
     if (playerList.length === 0) {
-      return { id: '1', name: userDisplayName, avatar: userAvatar, isOnline: true, color: PLAYER_COLORS[0] };
+      return { id: currentUser?.id || '1', name: cleanUser || 'Saya', avatar: userAvatar, isOnline: true, color: PLAYER_COLORS[0] };
     }
     const activeId = currentUser?.id || '';
     const activeName = (currentUser?.fullName || '').toLowerCase().trim();
 
     const matched = playerList.find((p) => {
       if (activeId && p.id === activeId) return true;
-      if (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) return true;
-      if (p.name.includes('(Anda)')) return true;
+      const cleanPName = p.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      if (activeName && activeName.length >= 2 && cleanPName.includes(activeName)) return true;
       return false;
     });
 
@@ -182,14 +184,16 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
 
   const isCurrentPlayerMe = useCallback((player?: SnakePlayerConfig | null): boolean => {
     if (!player) return false;
-    if (player.name.includes('(Anda)')) return true;
-    if (currentUser?.id && player.id === currentUser.id) return true;
-    if (currentUser?.fullName && player.name.toLowerCase().includes(currentUser.fullName.toLowerCase().trim())) return true;
+    const activeId = currentUser?.id || '';
+    const activeName = (currentUser?.fullName || '').toLowerCase().trim();
+    const cleanPlayerName = player.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+
+    if (activeId && player.id === activeId) return true;
+    if (activeName && activeName.length >= 2 && cleanPlayerName.includes(activeName)) return true;
 
     const activeUser = getActiveUserPlayer(gamePlayers);
     if (activeUser) {
       if (player.id === activeUser.id) return true;
-      const cleanPlayerName = player.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
       const cleanUserPlayerName = activeUser.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
       if (cleanPlayerName && cleanUserPlayerName && cleanPlayerName === cleanUserPlayerName) return true;
     }
@@ -441,10 +445,6 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
 
     if (mode === 'online_friends') {
       const onlineMembers = getOnlineFamilyPlayers();
-      if (onlineMembers.length < 1) {
-        setShowOnlineErrorModal(true);
-        return;
-      }
       setPlayers(onlineMembers);
       setIsWaitingLobby(true);
       const initReady: Record<string, boolean> = {};
