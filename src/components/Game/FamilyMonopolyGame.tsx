@@ -4,7 +4,7 @@ import type { UserAccount } from '../../types/auth';
 import { 
   ArrowLeft, Dices, RotateCcw, HelpCircle, X,
   Check, Copy, Share2, Play, Clock, MessageSquare,
-  Send, CheckCircle2, Sparkles, Trophy, Users, Coins
+  Send, CheckCircle2, Sparkles, Trophy, Users, Coins, Globe
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { fireBurstConfetti, fireVictoryShower, fireSmallPop } from '../../utils/confetti';
