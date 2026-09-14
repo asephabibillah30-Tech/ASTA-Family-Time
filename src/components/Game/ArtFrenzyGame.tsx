@@ -147,14 +147,23 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      // Filter ALL real family members (strictly exclude bot accounts)
-      const trulyOnlineMembers = initialPlayers.filter(
-        (p) => !p.name.toLowerCase().includes('bot')
-      );
+      const activeCode = familyCode || db.getSavedSession()?.family?.familyCode || '';
+      const cachedOnlineIds = activeCode ? db.getOnlineUserIds(activeCode, activeId) : [activeId];
 
-      const targetList = trulyOnlineMembers.length >= 1 ? trulyOnlineMembers : initialPlayers;
+      // Filter ONLY family members who are ACTUALLY online right now
+      const trulyOnlineMembers = initialPlayers.filter((p, idx) => {
+        if (p.name.toLowerCase().includes('bot')) return false;
+        const isMe = (activeId && p.id === activeId) ||
+                     (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
+                     (idx === activeIdx && Boolean(activeId || activeName));
+        if (isMe) return true;
+        if (p.isOnline === true) return true;
+        if (cachedOnlineIds.includes(p.id)) return true;
+        if (cachedOnlineIds.some(id => p.name.toLowerCase().includes(id.toLowerCase()))) return true;
+        return false;
+      });
 
-      return targetList.map((p, idx) => {
+      return trulyOnlineMembers.map((p, idx) => {
         const isMe = Boolean(
           (activeId && p.id === activeId) ||
           (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
@@ -173,7 +182,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
     return [
       { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true },
     ];
-  }, [initialPlayers, currentUser, userDisplayName, userAvatar]);
+  }, [initialPlayers, currentUser, userDisplayName, userAvatar, familyCode]);
 
   const [players, setPlayers] = useState<Player[]>(getSoloPlayers());
 
