@@ -262,17 +262,17 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </button>
 
-              {/* Notification Popup Dropdown (100% Responsive for All Devices) */}
+              {/* Notification Popup Dropdown (100% Responsive for HP, Tablet & Desktop) */}
               {showNotifToast && (
                 <>
-                  {/* Backdrop Overlay for Mobile to easily close on tap outside */}
+                  {/* Backdrop Overlay for easy tap/click outside dismiss */}
                   <div 
-                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 sm:hidden"
+                    className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40"
                     onClick={() => setShowNotifToast(false)}
                   />
 
                   <div 
-                    className="fixed top-16 left-3 right-3 sm:absolute sm:top-12 sm:right-0 sm:left-auto sm:w-96 z-50 max-w-full bg-white dark:bg-slate-800 rounded-3xl p-4 border-2 border-amber-200 dark:border-amber-900 shadow-bubbly-lg space-y-3 animate-pop-in text-xs max-h-[80vh] flex flex-col"
+                    className="fixed top-16 left-3 right-3 sm:left-auto sm:right-6 sm:top-16 sm:w-96 z-50 bg-white dark:bg-slate-800 rounded-3xl p-4 border-2 border-amber-200 dark:border-amber-900 shadow-2xl space-y-3 animate-pop-in text-xs max-h-[85vh] flex flex-col"
                   >
                     <div className="flex items-center justify-between border-b pb-2.5 dark:border-slate-700 shrink-0">
                       <span className="font-extrabold text-slate-800 dark:text-white flex items-center gap-1.5 text-sm">
@@ -298,7 +298,7 @@ export const Header: React.FC<HeaderProps> = ({
                         )}
                         <button
                           onClick={() => setShowNotifToast(false)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 sm:hidden"
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                           title="Tutup Notifikasi"
                         >
                           <X className="w-4 h-4" />
