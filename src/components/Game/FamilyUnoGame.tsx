@@ -178,12 +178,14 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      // Filter ONLY family members who are actually logged in and online (strictly exclude bot accounts)
+      // Filter ALL real family members (strictly exclude bot accounts)
       const trulyOnlineMembers = initialPlayers.filter(
-        (p, idx) => !p.name.toLowerCase().includes('bot') && (Boolean(p.isOnline) || idx === activeIdx)
+        (p) => !p.name.toLowerCase().includes('bot')
       );
 
-      return trulyOnlineMembers.map((p, idx) => {
+      const targetList = trulyOnlineMembers.length >= 1 ? trulyOnlineMembers : initialPlayers;
+
+      return targetList.map((p, idx) => {
         const isMe = Boolean(
           (activeId && p.id === activeId) ||
           (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
@@ -195,7 +197,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
           name: isMe ? `${cleanName} (Anda)` : cleanName,
           score: 0,
           cardsCompleted: 0,
-          isOnline: isMe ? true : Boolean(p.isOnline),
+          isOnline: true,
         };
       });
     }
@@ -244,6 +246,22 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
 
   // Active play state
   const [unoPlayers, setUnoPlayers] = useState<UnoPlayer[]>([]);
+
+  const isCurrentPlayerMe = useCallback((player?: UnoPlayer | null): boolean => {
+    if (!player) return false;
+    if (player.name.includes('(Anda)')) return true;
+    if (currentUser?.id && player.id === currentUser.id) return true;
+    if (currentUser?.fullName && player.name.toLowerCase().includes(currentUser.fullName.toLowerCase().trim())) return true;
+
+    const activeUser = getActiveUserUnoPlayer(unoPlayers);
+    if (activeUser) {
+      if (player.id === activeUser.id) return true;
+      const cleanPlayerName = player.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      const cleanUserPlayerName = activeUser.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      if (cleanPlayerName && cleanUserPlayerName && cleanPlayerName === cleanUserPlayerName) return true;
+    }
+    return false;
+  }, [currentUser, unoPlayers, getActiveUserUnoPlayer]);
   const [drawPile, setDrawPile] = useState<UnoCard[]>([]);
   const [discardPile, setDiscardPile] = useState<UnoCard[]>([]);
   const [activeColor, setActiveColor] = useState<UnoColor>('red');
@@ -642,7 +660,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
     if (!activePlayer || !topDiscard || winner) return;
 
     // Check if it's the current user's turn in multiplayer
-    if (playMode === 'online_friends' && activePlayer.id !== activeUserUnoPlayer.id) {
+    if (playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer)) {
       sound.playClick();
       setMessage(`⏳ Masih giliran ${activePlayer.name}! Harap tunggu giliran Anda.`);
       return;
@@ -901,7 +919,7 @@ export const FamilyUnoGame: React.FC<FamilyUnoGameProps> = ({ players: initialPl
   const handlePlayerDrawCard = () => {
     if (!activePlayer || winner) return;
 
-    if (playMode === 'online_friends' && activePlayer.id !== activeUserUnoPlayer.id) {
+    if (playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer)) {
       sound.playClick();
       setMessage(`⏳ Masih giliran ${activePlayer.name}! Harap tunggu giliran Anda.`);
       return;

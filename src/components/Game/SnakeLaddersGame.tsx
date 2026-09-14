@@ -121,12 +121,14 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      // Strictly exclude bot accounts in online mode
+      // Filter ALL real family members (strictly exclude bot accounts)
       const trulyOnlineMembers = initialPlayers.filter(
-        (p, idx) => !p.name.toLowerCase().includes('bot') && (Boolean(p.isOnline) || idx === activeIdx)
+        (p) => !p.name.toLowerCase().includes('bot')
       );
 
-      return trulyOnlineMembers.map((p, idx) => {
+      const targetList = trulyOnlineMembers.length >= 1 ? trulyOnlineMembers : initialPlayers;
+
+      return targetList.map((p, idx) => {
         const isMe = Boolean(
           (activeId && p.id === activeId) ||
           (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
@@ -138,7 +140,7 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
           name: isMe ? `${cleanName} (Anda)` : cleanName,
           score: 0,
           cardsCompleted: 0,
-          isOnline: isMe ? true : Boolean(p.isOnline),
+          isOnline: true,
         };
       });
     }
@@ -168,6 +170,22 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
 
   // Gameplay State
   const [gamePlayers, setGamePlayers] = useState<SnakePlayerConfig[]>([]);
+
+  const isCurrentPlayerMe = useCallback((player?: SnakePlayerConfig | null): boolean => {
+    if (!player) return false;
+    if (player.name.includes('(Anda)')) return true;
+    if (currentUser?.id && player.id === currentUser.id) return true;
+    if (currentUser?.fullName && player.name.toLowerCase().includes(currentUser.fullName.toLowerCase().trim())) return true;
+
+    const activeUser = getActiveUserPlayer(gamePlayers);
+    if (activeUser) {
+      if (player.id === activeUser.id) return true;
+      const cleanPlayerName = player.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      const cleanUserPlayerName = activeUser.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      if (cleanPlayerName && cleanUserPlayerName && cleanPlayerName === cleanUserPlayerName) return true;
+    }
+    return false;
+  }, [currentUser, gamePlayers, getActiveUserPlayer]);
   const [positions, setPositions] = useState<Record<string, number>>({});
   const [currentTurnIdx, setCurrentTurnIdx] = useState(0);
   const [diceValue, setDiceValue] = useState<number | null>(null);
@@ -578,7 +596,7 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
 
   // Roll Dice Action
   const rollDice = useCallback(() => {
-    if (isRolling || winner || !isMyTurn) return;
+    if (isRolling || winner || (playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer))) return;
 
     setIsRolling(true);
     sound.playCardShuffle();
@@ -1037,14 +1055,14 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
                 </span>
                 <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white flex items-center gap-2">
                   <span>{activePlayer.name}</span>
-                  {activePlayer.id === activeUserPlayer.id && (
+                  {isCurrentPlayerMe(activePlayer) && (
                     <span className="text-[9px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold">
                       Anda
                     </span>
                   )}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Posisi Sekarang: <strong className="text-emerald-600 dark:text-emerald-400">Petak {positions[activePlayer.id] || 1}</strong>
+                  Posisi Sekarang: <strong className="text-emerald-600 dark:text-emerald-400">Petak {positions[activePlayer?.id || '1'] || 1}</strong>
                 </p>
               </div>
             </div>
@@ -1058,20 +1076,20 @@ export const SnakeLaddersGame: React.FC<SnakeLaddersGameProps> = ({
               {!winner ? (
                 <button
                   onClick={rollDice}
-                  disabled={isRolling || !isMyTurn}
+                  disabled={isRolling || (playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer))}
                   className={`flex-1 sm:flex-none px-6 py-3.5 rounded-2xl font-display font-black text-sm sm:text-base shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all ${
-                    isMyTurn
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-bubbly-teal'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-75'
+                    playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer)
+                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-75'
+                      : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-bubbly-teal'
                   }`}
                 >
                   <Dices className="w-5 h-5" />
                   <span>
                     {isRolling
                       ? 'Mengocok...'
-                      : isMyTurn
-                      ? 'KOCOK DADU'
-                      : `Menunggu ${activePlayer.name}...`}
+                      : playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer)
+                      ? `Menunggu ${activePlayer?.name || 'Pemain'}...`
+                      : 'KOCOK DADU'}
                   </span>
                 </button>
               ) : (

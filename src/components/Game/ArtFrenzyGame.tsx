@@ -147,12 +147,14 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      // Filter ONLY family members who are actually logged in and online (strictly exclude bot accounts)
+      // Filter ALL real family members (strictly exclude bot accounts)
       const trulyOnlineMembers = initialPlayers.filter(
-        (p, idx) => !p.name.toLowerCase().includes('bot') && (Boolean(p.isOnline) || idx === activeIdx)
+        (p) => !p.name.toLowerCase().includes('bot')
       );
 
-      return trulyOnlineMembers.map((p, idx) => {
+      const targetList = trulyOnlineMembers.length >= 1 ? trulyOnlineMembers : initialPlayers;
+
+      return targetList.map((p, idx) => {
         const isMe = Boolean(
           (activeId && p.id === activeId) ||
           (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
@@ -164,7 +166,7 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
           name: isMe ? `${cleanName} (Anda)` : cleanName,
           score: 0,
           cardsCompleted: 0,
-          isOnline: isMe ? true : Boolean(p.isOnline),
+          isOnline: true,
         };
       });
     }
@@ -178,18 +180,33 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
   const getActiveUserPlayer = useCallback((playerList: Player[]): Player => {
     if (playerList.length === 0) return { id: '1', name: userDisplayName, avatar: userAvatar, score: 0, cardsCompleted: 0, color: 'bg-blue-500', isOnline: true };
     const activeId = currentUser?.id || '';
-    const activeName = (currentUser?.fullName || '').toLowerCase().trim().replace(/\s*\(anda\)/gi, '');
+    const activeName = (currentUser?.fullName || '').toLowerCase().trim();
 
     const matched = playerList.find((p) => {
-      const pCleanName = p.name.toLowerCase().replace(/\s*\(anda\)/gi, '').trim();
       if (activeId && p.id === activeId) return true;
-      if (activeName && activeName.length >= 2 && pCleanName.includes(activeName)) return true;
-      if (activeName && activeName.length >= 2 && activeName.includes(pCleanName)) return true;
+      if (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) return true;
+      if (p.name.includes('(Anda)')) return true;
       return false;
     });
 
-    return matched || playerList.find(p => p.name.includes('(Anda)')) || playerList[0];
+    return matched || playerList[0];
   }, [currentUser, userDisplayName, userAvatar]);
+
+  const isCurrentPlayerMe = useCallback((player?: Player | null): boolean => {
+    if (!player) return false;
+    if (player.name.includes('(Anda)')) return true;
+    if (currentUser?.id && player.id === currentUser.id) return true;
+    if (currentUser?.fullName && player.name.toLowerCase().includes(currentUser.fullName.toLowerCase().trim())) return true;
+
+    const activeUser = getActiveUserPlayer(players);
+    if (activeUser) {
+      if (player.id === activeUser.id) return true;
+      const cleanPlayerName = player.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      const cleanUserPlayerName = activeUser.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      if (cleanPlayerName && cleanUserPlayerName && cleanPlayerName === cleanUserPlayerName) return true;
+    }
+    return false;
+  }, [currentUser, players, getActiveUserPlayer]);
 
   const [currentRound, setCurrentRound] = useState(1);
   const maxRounds = 10;
@@ -255,12 +272,11 @@ export const ArtFrenzyGame: React.FC<ArtFrenzyGameProps> = ({ players: initialPl
       setHasDrawnThisRound(true);
     }
     if (playMode === 'online_friends') {
-      const activeUser = getActiveUserPlayer(players);
-      if (currentDrawer.id === activeUser.id) {
+      if (isCurrentPlayerMe(currentDrawer)) {
         broadcastGameEvent('CANVAS_DRAW', { dataUrl });
       }
     }
-  }, [playMode, currentDrawer.id, players, getActiveUserPlayer, broadcastGameEvent]);
+  }, [playMode, currentDrawer, isCurrentPlayerMe, broadcastGameEvent]);
 
   // Pick a new word for a new round (accepts optional targetWordIdx for 100% realtime sync across devices)
   const pickNewWord = useCallback((targetWordIdx?: number) => {

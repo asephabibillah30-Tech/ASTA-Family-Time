@@ -252,12 +252,14 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
       );
       const activeIdx = loggedInIndex !== -1 ? loggedInIndex : 0;
 
-      // Filter ONLY family members who are actually logged in and online (strictly exclude bot accounts)
+      // Filter ALL real family members (strictly exclude bot accounts)
       const trulyOnlineMembers = initialPlayers.filter(
-        (p, idx) => !p.name.toLowerCase().includes('bot') && (Boolean(p.isOnline) || idx === activeIdx)
+        (p) => !p.name.toLowerCase().includes('bot')
       );
 
-      return trulyOnlineMembers.map((p, idx) => {
+      const targetList = trulyOnlineMembers.length >= 1 ? trulyOnlineMembers : initialPlayers;
+
+      return targetList.map((p, idx) => {
         const isMe = Boolean(
           (activeId && p.id === activeId) ||
           (activeName && activeName.length >= 2 && p.name.toLowerCase().includes(activeName)) ||
@@ -269,7 +271,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
           name: isMe ? `${cleanName} (Anda)` : cleanName,
           score: 0,
           cardsCompleted: 0,
-          isOnline: isMe ? true : Boolean(p.isOnline),
+          isOnline: true,
         };
       });
     }
@@ -294,6 +296,22 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
 
     return matched || playerList[0];
   }, [currentUser, userDisplayName, userAvatar]);
+
+  const isCurrentPlayerMe = useCallback((player?: LudoPlayerConfig | null): boolean => {
+    if (!player) return false;
+    if (player.name.includes('(Anda)')) return true;
+    if (currentUser?.id && player.id === currentUser.id) return true;
+    if (currentUser?.fullName && player.name.toLowerCase().includes(currentUser.fullName.toLowerCase().trim())) return true;
+
+    const activeUser = getActiveUserPlayer(players);
+    if (activeUser) {
+      if (player.id === activeUser.id) return true;
+      const cleanPlayerName = player.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      const cleanUserPlayerName = activeUser.name.replace(/\s*\(Anda\)/gi, '').toLowerCase().trim();
+      if (cleanPlayerName && cleanUserPlayerName && cleanPlayerName === cleanUserPlayerName) return true;
+    }
+    return false;
+  }, [currentUser, players, getActiveUserPlayer]);
 
   // Setup configuration state
   const [playerCount, setPlayerCount] = useState<2 | 3 | 4>(2);
@@ -690,8 +708,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
   const handleRollDice = () => {
     if (isRolling || hasRolled || winner || !activePlayer) return;
 
-    const activeUser = getActiveUserPlayer(players);
-    if (playMode === 'online_friends' && activePlayer.id !== activeUser.id) {
+    if (playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer)) {
       sound.playClick();
       setMessage(`⏳ Masih giliran ${activePlayer.name}! Harap tunggu giliran Anda.`);
       return;
@@ -1029,7 +1046,6 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
   };
 
   const movableTokens = hasRolled && diceValue ? getMovableTokens(diceValue) : [];
-  const activeUserPlayer = getActiveUserPlayer(players);
 
   return (
     <div className="max-w-5xl mx-auto px-2 sm:px-4 py-3 space-y-3 select-none">
@@ -1531,9 +1547,9 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                       handleRollDice();
                     }
                   }}
-                  disabled={isRolling || (hasRolled && movableTokens.length === 0) || Boolean(winner) || (playMode === 'online_friends' && activePlayer.id !== activeUserPlayer.id)}
+                  disabled={isRolling || (hasRolled && movableTokens.length === 0) || Boolean(winner) || (playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer))}
                   className={`px-4 py-2.5 rounded-2xl font-display font-black text-xs transition-all flex items-center gap-2 active:scale-95 ${
-                    playMode === 'online_friends' && activePlayer.id !== activeUserPlayer.id
+                    playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer)
                       ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-75 border border-slate-300 dark:border-slate-600 shadow-none'
                       : hasRolled && movableTokens.length > 0
                       ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white animate-pulse shadow-md'
@@ -1543,8 +1559,8 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                   <Dices className={`w-4 h-4 ${isRolling ? 'animate-spin' : ''}`} />
                   <span>
                     {isRolling
-                      ? 'MENGOKOK...'
-                      : playMode === 'online_friends' && activePlayer.id !== activeUserPlayer.id
+                      ? 'KOCOK DADU...'
+                      : playMode === 'online_friends' && !isCurrentPlayerMe(activePlayer)
                       ? `MENUNGGU ${activePlayer.name.toUpperCase()}...`
                       : hasRolled && movableTokens.length > 0
                       ? 'JALANKAN PION ➔'
