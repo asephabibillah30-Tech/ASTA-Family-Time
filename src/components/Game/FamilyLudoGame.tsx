@@ -1071,48 +1071,48 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
 
       {/* 0. MODE SELECTION MODAL */}
       {showModeModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-pop-in">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 sm:p-8 max-w-xl w-full border-4 border-amber-300 dark:border-slate-700 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-pop-in">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border-2 sm:border-4 border-amber-300 dark:border-slate-700 shadow-2xl space-y-3.5 sm:space-y-5 my-auto">
             
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-600 text-white flex items-center justify-center text-3xl mx-auto shadow-lg">
+            <div className="text-center space-y-1.5 sm:space-y-2">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-600 text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto shadow-md">
                 🎲
               </div>
-              <h2 className="font-display font-black text-2xl sm:text-3xl text-slate-900 dark:text-white">
+              <h2 className="font-display font-black text-xl sm:text-2xl text-slate-900 dark:text-white">
                 ASTA Ludo Papan Keluarga
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
                 Pilih mode permainan favorit Anda untuk mulai bermain Ludo bersama!
               </p>
             </div>
 
             {/* Mode Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4 pt-1 sm:pt-2">
               
               {/* Option 1: Bermain Sendiri (vs AI Bot) */}
               <button
                 onClick={() => handleSelectMode('solo_bot')}
-                className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-700 dark:to-slate-700/80 border-3 border-amber-300 dark:border-amber-600 hover:scale-[1.02] active:scale-95 transition-all text-left space-y-2 flex flex-col justify-between group shadow-md"
+                className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-700 dark:to-slate-700/80 border-2 sm:border-3 border-amber-300 dark:border-amber-600 hover:scale-[1.02] active:scale-95 transition-all text-left space-y-2 flex flex-col justify-between group shadow-md"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="p-2.5 rounded-2xl bg-amber-400 text-slate-900 text-xl font-black shadow-xs">
+                    <span className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-amber-400 text-slate-900 text-lg sm:text-xl font-black shadow-xs">
                       🤖
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-950 text-amber-900 dark:text-amber-300 text-[9px] font-black uppercase">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-950 text-amber-900 dark:text-amber-300 text-[9px] sm:text-[10px] font-black uppercase">
                       MAIN SENDIRI
                     </span>
                   </div>
-                  <h3 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white mt-3">
+                  <h3 className="font-display font-black text-sm sm:text-base text-slate-900 dark:text-white mt-2 sm:mt-3">
                     Bermain Sendiri (vs AI Bot)
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-snug">
+                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-snug">
                     Latihan bermain Ludo secara solo melawan AI Bot Keluarga (Bot Bella, Bot Papa, Bot Mamah).
                   </p>
                 </div>
 
-                <div className="w-full py-2.5 rounded-xl bg-amber-500 group-hover:bg-amber-600 text-white font-display font-black text-xs text-center shadow-xs flex items-center justify-center gap-1.5">
-                  <Play className="w-4 h-4 fill-white" />
+                <div className="w-full py-2 sm:py-2.5 mt-2 rounded-xl bg-amber-500 group-hover:bg-amber-600 text-white font-display font-black text-xs text-center shadow-xs flex items-center justify-center gap-1.5">
+                  <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white" />
                   <span>MULAI MAIN SENDIRI</span>
                 </div>
               </button>
@@ -1120,27 +1120,27 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
               {/* Option 2: Bermain Sama Teman Online */}
               <button
                 onClick={() => handleSelectMode('online_friends')}
-                className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-700 dark:to-slate-700/80 border-3 border-indigo-300 dark:border-indigo-600 hover:scale-[1.02] active:scale-95 transition-all text-left space-y-2 flex flex-col justify-between group shadow-md"
+                className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-700 dark:to-slate-700/80 border-2 sm:border-3 border-indigo-300 dark:border-indigo-600 hover:scale-[1.02] active:scale-95 transition-all text-left space-y-2 flex flex-col justify-between group shadow-md"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="p-2.5 rounded-2xl bg-indigo-600 text-white text-xl font-black shadow-xs">
+                    <span className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-indigo-600 text-white text-lg sm:text-xl font-black shadow-xs">
                       🌐
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-indigo-200 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-300 text-[9px] font-black uppercase">
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-200 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-300 text-[9px] sm:text-[10px] font-black uppercase">
                       TEMAN ONLINE
                     </span>
                   </div>
-                  <h3 className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white mt-3">
+                  <h3 className="font-display font-black text-sm sm:text-base text-slate-900 dark:text-white mt-2 sm:mt-3">
                     Main Teman Online
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-snug">
+                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-snug">
                     Bermain bersama keluarga & teman online secara real-time menggunakan Kode Keluarga.
                   </p>
                 </div>
 
-                <div className="w-full py-2.5 rounded-xl bg-indigo-600 group-hover:bg-indigo-700 text-white font-display font-black text-xs text-center shadow-xs flex items-center justify-center gap-1.5">
-                  <Globe className="w-4 h-4" />
+                <div className="w-full py-2 sm:py-2.5 mt-2 rounded-xl bg-indigo-600 group-hover:bg-indigo-700 text-white font-display font-black text-xs text-center shadow-xs flex items-center justify-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>MAIN TEMAN ONLINE</span>
                 </div>
               </button>
@@ -1152,7 +1152,7 @@ export const FamilyLudoGame: React.FC<FamilyLudoGameProps> = ({ players: initial
                 sound.playClick();
                 onBack();
               }}
-              className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-extrabold text-xs hover:bg-slate-200"
+              className="w-full py-2.5 sm:py-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-extrabold text-xs sm:text-sm hover:bg-slate-200 active:scale-95 transition-all"
             >
               Kembali ke Arena Game
             </button>

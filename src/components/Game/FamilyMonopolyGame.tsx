@@ -713,13 +713,13 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
 
       {/* Mode Selection Modal */}
       {showModeModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full border-4 border-amber-400 shadow-2xl space-y-5 text-center animate-scale-up">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center text-3xl mx-auto shadow-lg">
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-pop-in">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border-2 sm:border-4 border-amber-400 dark:border-slate-700 shadow-2xl space-y-3.5 sm:space-y-5 text-center my-auto">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto shadow-lg">
               🎩
             </div>
             <div>
-              <h2 className="text-2xl font-display font-black text-slate-900 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-display font-black text-slate-900 dark:text-white">
                 Monopoli Keluarga ASTA
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -727,18 +727,18 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
               </p>
             </div>
 
-            <div className="space-y-3 pt-2">
+            <div className="space-y-2.5 sm:space-y-3 pt-1 sm:pt-2">
               <button
                 onClick={() => handleSelectMode('online_friends')}
-                className="w-full p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-display font-bold text-left shadow-lg active:scale-95 transition-all flex items-center gap-3 border border-amber-400"
+                className="w-full p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-display font-bold text-left shadow-lg active:scale-95 transition-all flex items-center gap-3 border border-amber-400"
               >
-                <div className="p-3 bg-white/20 rounded-xl text-2xl">🌐</div>
+                <div className="p-2.5 sm:p-3 bg-white/20 rounded-xl text-xl sm:text-2xl shrink-0">🌐</div>
                 <div>
-                  <div className="text-base font-black flex items-center gap-1.5">
+                  <div className="text-sm sm:text-base font-black flex items-center gap-1.5 flex-wrap">
                     <span>Main Online / Teman & Keluarga</span>
                     <span className="text-[9px] bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded-full font-black">REALTIME</span>
                   </div>
-                  <div className="text-xs opacity-90 font-normal">
+                  <div className="text-[11px] sm:text-xs opacity-90 font-normal">
                     Lawan anggota keluarga asli serempak antar perangkat!
                   </div>
                 </div>
@@ -746,12 +746,12 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
 
               <button
                 onClick={() => handleSelectMode('solo_bot')}
-                className="w-full p-4 rounded-2xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-display font-bold text-left shadow-md active:scale-95 transition-all flex items-center gap-3 border border-slate-200 dark:border-slate-600"
+                className="w-full p-3.5 sm:p-4 rounded-2xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-display font-bold text-left shadow-md active:scale-95 transition-all flex items-center gap-3 border border-slate-200 dark:border-slate-600"
               >
-                <div className="p-3 bg-slate-200 dark:bg-slate-600 rounded-xl text-2xl">🤖</div>
+                <div className="p-2.5 sm:p-3 bg-slate-200 dark:bg-slate-600 rounded-xl text-xl sm:text-2xl shrink-0">🤖</div>
                 <div>
-                  <div className="text-base font-black">Main Sendiri / Lawan BOT</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+                  <div className="text-sm sm:text-base font-black">Main Sendiri / Lawan BOT</div>
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal">
                     Latihan santai lawan AI Bot tanpa perlombaan online
                   </div>
                 </div>
@@ -760,7 +760,7 @@ export const FamilyMonopolyGame: React.FC<FamilyMonopolyGameProps> = ({
 
             <button
               onClick={onBack}
-              className="w-full py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              className="w-full py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 active:scale-95 transition-all"
             >
               Kembali ke Game Hub
             </button>
