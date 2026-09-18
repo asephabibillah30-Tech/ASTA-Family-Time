@@ -60,8 +60,8 @@ interface RateLimitRecord {
 
 class RateLimiter {
   private attemptsMap: Map<string, RateLimitRecord> = new Map();
-  private maxAttempts = 5;
-  private lockoutDurationSeconds = 30;
+  private defaultMaxAttempts = 3; // 3 failed attempts
+  private defaultLockoutSeconds = 60; // 60 seconds cooldown (1 minute)
 
   public checkLockout(key: string): { isLocked: boolean; remainingSeconds: number } {
     const record = this.attemptsMap.get(key);
@@ -82,7 +82,11 @@ class RateLimiter {
     return { isLocked: false, remainingSeconds: 0 };
   }
 
-  public recordFailedAttempt(key: string): { isLocked: boolean; attemptsLeft: number; remainingSeconds: number } {
+  public recordFailedAttempt(
+    key: string, 
+    maxAttempts: number = this.defaultMaxAttempts, 
+    lockoutDurationSeconds: number = this.defaultLockoutSeconds
+  ): { isLocked: boolean; attemptsLeft: number; remainingSeconds: number } {
     const now = Date.now();
     let record = this.attemptsMap.get(key);
 
@@ -92,16 +96,16 @@ class RateLimiter {
       record.attempts += 1;
     }
 
-    if (record.attempts >= this.maxAttempts) {
-      record.lockoutUntil = now + this.lockoutDurationSeconds * 1000;
+    if (record.attempts >= maxAttempts) {
+      record.lockoutUntil = now + lockoutDurationSeconds * 1000;
       this.attemptsMap.set(key, record);
-      return { isLocked: true, attemptsLeft: 0, remainingSeconds: this.lockoutDurationSeconds };
+      return { isLocked: true, attemptsLeft: 0, remainingSeconds: lockoutDurationSeconds };
     }
 
     this.attemptsMap.set(key, record);
     return {
       isLocked: false,
-      attemptsLeft: this.maxAttempts - record.attempts,
+      attemptsLeft: maxAttempts - record.attempts,
       remainingSeconds: 0
     };
   }

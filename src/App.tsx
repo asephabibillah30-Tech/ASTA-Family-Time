@@ -29,6 +29,7 @@ import { RegisterHeadModal } from './components/Auth/RegisterHeadModal';
 import { ManageFamilyModal } from './components/Auth/ManageFamilyModal';
 import { SecurityCenterModal } from './components/Auth/SecurityCenterModal';
 import { AuthGateScreen } from './components/Auth/AuthGateScreen';
+import { useAutoLock } from './hooks/useAutoLock';
 import { AdminLoginModal } from './components/Admin/AdminLoginModal';
 import { AdminDashboardScreen } from './components/Admin/AdminDashboardScreen';
 import { AstaAdminPortalScreen } from './components/Admin/AstaAdminPortalScreen';
@@ -39,6 +40,15 @@ export function App() {
   const auth = useAuth();
   // Pass familyId sehingga data dimuat dari Supabase per keluarga
   const family = useFamilyState(auth.currentFamily?.id ?? null);
+
+  // Automated Inactive Session Auto-Lock (Locks session after 15 minutes of inactivity)
+  useAutoLock({
+    isAuthenticated: Boolean(auth.isAuthenticated && auth.currentUser),
+    onLock: () => {
+      auth.logout();
+    },
+    timeoutMinutes: 15,
+  });
 
   // Standalone Route Detection for https://asta-family-time.vercel.app/administrator_asta
   const [isAdminRoute, setIsAdminRoute] = useState<boolean>(() => {

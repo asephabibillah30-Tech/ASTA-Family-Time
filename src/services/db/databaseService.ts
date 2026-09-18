@@ -623,7 +623,7 @@ class DatabaseService {
     const rateCheck = rateLimiter.checkLockout(rateKey);
     if (rateCheck.isLocked) {
       this.logSecurity('LOGIN_PIN_TERKUNCI', 'BLOCKED', `Batas percobaan PIN terlampaui. Kunci ${rateCheck.remainingSeconds}s.`, family.id, user.id, user.fullName);
-      throw new Error(`🔒 Akses Terkunci: 5x PIN Salah. Demi keamanan, harap tunggu ${rateCheck.remainingSeconds} detik.`);
+      throw new Error(`🔒 Akses Terkunci: 3x PIN Salah. Demi keamanan keluarga, harap tunggu ${rateCheck.remainingSeconds} detik.`);
     }
 
     const cleanPin = pin.trim();
@@ -631,14 +631,14 @@ class DatabaseService {
     const isValid = (user.pin && (user.pin === inputHash || user.pin === cleanPin));
 
     if (!isValid) {
-      const res = rateLimiter.recordFailedAttempt(rateKey);
+      const res = rateLimiter.recordFailedAttempt(rateKey, 3, 60);
       this.logSecurity('LOGIN_ANGGOTA_GAGAL', 'FAILED', `PIN anggota salah. Percobaan sisa: ${res.attemptsLeft}`, family.id, user.id, user.fullName);
 
       if (res.isLocked) {
-        throw new Error(`🔒 Akses Terkunci: 5x PIN Salah. Demi keamanan keluarga, harap tunggu ${res.remainingSeconds} detik.`);
+        throw new Error(`🔒 Akses Terkunci: 3x PIN Salah. Demi keamanan keluarga, harap tunggu ${res.remainingSeconds} detik.`);
       }
 
-      throw new Error(`PIN Keamanan salah. Sisa percobaan: ${res.attemptsLeft}`);
+      throw new Error(`PIN Keamanan salah. Sisa percobaan: ${res.attemptsLeft} kali`);
     }
 
     rateLimiter.resetAttempts(rateKey);
@@ -670,9 +670,16 @@ class DatabaseService {
     try {
       if (typeof window === 'undefined') return;
       if (session) {
-        const json = JSON.stringify(session);
+        // Zero Plaintext Credentials in Storage: Strip password and pin
+        const safeUser = { ...session.user };
+        delete (safeUser as any).password;
+        delete (safeUser as any).pin;
+        const safeSession: AuthSession = { user: safeUser, family: session.family };
+
+        const json = JSON.stringify(safeSession);
         localStorage.setItem('asta_active_session_v2', json);
         sessionStorage.setItem('asta_active_session_v2', json);
+        localStorage.setItem('asta_last_activity_time', Date.now().toString());
         this.sendHeartbeat(session.family.id, session.user.id);
       } else {
         this.clearSession();
