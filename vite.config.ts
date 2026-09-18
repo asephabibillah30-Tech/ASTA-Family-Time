@@ -3,7 +3,8 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const isVercel = Boolean(process.env.VERCEL);
-const basePath = isVercel ? '/' : '/ASTA-Family-Time/';
+const isCapacitor = Boolean(process.env.CAPACITOR);
+const basePath = (isVercel || isCapacitor) ? '/' : '/ASTA-Family-Time/';
 
 // https://vite.dev/config/
 export default defineConfig({
