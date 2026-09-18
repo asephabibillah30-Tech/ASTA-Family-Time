@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { FamilyRoleTitle, UserAccount, FamilyAccount } from '../../types/auth';
 import { db } from '../../services/db/databaseService';
 import { postgresService } from '../../services/db/postgresService';
@@ -79,7 +79,26 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   const [familyName, setFamilyName] = useState('');
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(true);
   const [regAvatar, setRegAvatar] = useState('👨‍💼');
+
+  // Password Strength Calculation
+  const passwordStrength = useMemo(() => {
+    if (!regPassword) return { score: 0, label: '', color: 'bg-slate-200', text: 'text-slate-400' };
+    let score = 0;
+    if (regPassword.length >= 8) score += 1;
+    if (/[A-Za-z]/.test(regPassword)) score += 1;
+    if (/[0-9]/.test(regPassword)) score += 1;
+    if (/[^A-Za-z0-9]/.test(regPassword)) score += 1;
+
+    if (score <= 1) return { score: 1, label: 'Lemah (min. 8 karakter)', color: 'bg-rose-500', text: 'text-rose-500' };
+    if (score === 2) return { score: 2, label: 'Cukup (tambahkan angka/simbol)', color: 'bg-amber-500', text: 'text-amber-500' };
+    if (score === 3) return { score: 3, label: 'Kuat', color: 'bg-teal-500', text: 'text-teal-500' };
+    return { score: 4, label: 'Sangat Kuat & Aman', color: 'bg-emerald-500', text: 'text-emerald-500' };
+  }, [regPassword]);
   
   // Step 2 Register State
   const [regFamilyCode, setRegFamilyCode] = useState('');
@@ -224,13 +243,48 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
     e.preventDefault();
     setErrorMsg('');
 
+    if (!agreePrivacy) {
+      setErrorMsg('Harap setujui Syarat & Ketentuan serta Kebijakan Privasi ASTA.');
+      sound.playClick();
+      return;
+    }
+
     const cleanHeadName = sanitizeInput(headFullName);
     const cleanFamName = sanitizeInput(familyName);
-    const cleanUser = sanitizeInput(regUsername);
+    const cleanUser = sanitizeInput(regUsername).trim();
 
     if (!cleanHeadName || !cleanFamName || !cleanUser || !regPassword.trim()) {
       setErrorMsg('Harap lengkapi semua data pendaftaran kepala keluarga.');
+      sound.playClick();
       return;
+    }
+
+    if (cleanFamName.length < 3) {
+      setErrorMsg('Nama Keluarga (Grup) minimal 3 karakter.');
+      sound.playClick();
+      return;
+    }
+
+    if (regPassword.length < 8) {
+      setErrorMsg('Kata sandi minimal 8 karakter demi keamanan keluarga.');
+      sound.playClick();
+      return;
+    }
+
+    if (regPassword !== regConfirmPassword) {
+      setErrorMsg('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
+      sound.playClick();
+      return;
+    }
+
+    // Email format validation for account recovery
+    if (cleanUser.includes('@')) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanUser)) {
+        setErrorMsg('Format email pemulihan akun tidak valid (contoh: ayah@email.com).');
+        sound.playClick();
+        return;
+      }
     }
 
     try {
@@ -816,10 +870,11 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
           {activeTab === 'register' && (
             <div className="space-y-4 animate-pop-in">
               {regStep === 1 ? (
-                <form onSubmit={handleRegisterHead} className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <form onSubmit={handleRegisterHead} className="space-y-3.5">
+                  {/* Row 1: Nama Kepala & Panggilan Peran (Mobile-friendly Stack) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
                         Nama Kepala Keluarga *
                       </label>
                       <input
@@ -827,17 +882,17 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                         placeholder="misal: Ayah Asep"
                         value={headFullName}
                         onChange={e => setHeadFullName(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold outline-none focus:border-amber-500 text-slate-900 dark:text-white"
+                        className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none focus:border-teal-500 text-slate-900 dark:text-white transition-all"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
                         Panggilan Peran
                       </label>
                       <select
                         value={roleTitle}
                         onChange={e => setRoleTitle(e.target.value as FamilyRoleTitle)}
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold outline-none focus:border-amber-500 text-slate-900 dark:text-white"
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none focus:border-teal-500 text-slate-900 dark:text-white transition-all"
                       >
                         <option value="Ayah">Ayah</option>
                         <option value="Ibu">Ibu</option>
@@ -847,58 +902,149 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                     </div>
                   </div>
 
+                  {/* Row 2: Nama Keluarga (Grup) */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Nama Keluarga (Grup) *
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                        Nama Keluarga (Grup) *
+                      </label>
+                      <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold">
+                        Tersanitasi & Bebas XSS
+                      </span>
+                    </div>
                     <input
                       type="text"
                       placeholder="misal: Keluarga Harmonis ASTA"
                       value={familyName}
                       onChange={e => setFamilyName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold outline-none focus:border-amber-500 text-slate-900 dark:text-white"
+                      className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none focus:border-teal-500 text-slate-900 dark:text-white transition-all"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div className="space-y-1">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        Email / Username *
+                  {/* Row 3: Email Pemulihan Akun & Login */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                        Email Pemulihan Akun & Login Utama *
                       </label>
-                      <input
-                        type="text"
-                        placeholder="ayah@asta.com"
-                        value={regUsername}
-                        onChange={e => setRegUsername(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold outline-none focus:border-amber-500 text-slate-900 dark:text-white"
-                      />
+                      <span className="text-[10px] text-slate-400 font-bold">
+                        Untuk Pemulihan Akun (Forgot Password)
+                      </span>
                     </div>
+                    <input
+                      type="text"
+                      placeholder="ayah@asta.com atau username unik"
+                      value={regUsername}
+                      onChange={e => setRegUsername(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none focus:border-teal-500 text-slate-900 dark:text-white transition-all"
+                    />
+                  </div>
+
+                  {/* Row 4: Password & Konfirmasi Password (Grid Mobile Stack) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Password Field with Eye Toggle */}
                     <div className="space-y-1">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        Password *
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                        Kata Sandi *
                       </label>
-                      <input
-                        type="password"
-                        placeholder="Password"
-                        value={regPassword}
-                        onChange={e => setRegPassword(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold outline-none focus:border-amber-500 text-slate-900 dark:text-white"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showRegPassword ? "text" : "password"}
+                          placeholder="Minimal 8 karakter"
+                          value={regPassword}
+                          onChange={e => setRegPassword(e.target.value)}
+                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none focus:border-teal-500 text-slate-900 dark:text-white transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowRegPassword(!showRegPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-600 p-1"
+                          title={showRegPassword ? 'Sembunyikan sandi' : 'Lihat sandi'}
+                        >
+                          {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Confirm Password Field with Eye Toggle & Matching Indicator */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                          Konfirmasi Kata Sandi *
+                        </label>
+                        {regConfirmPassword && (
+                          <span className={`text-[10px] font-bold ${regPassword === regConfirmPassword ? 'text-emerald-500' : 'text-rose-500'}`}>
+                            {regPassword === regConfirmPassword ? '✓ Cocok' : '✗ Tidak cocok'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showRegConfirmPassword ? "text" : "password"}
+                          placeholder="Ulangi kata sandi"
+                          value={regConfirmPassword}
+                          onChange={e => setRegConfirmPassword(e.target.value)}
+                          className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border-2 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none text-slate-900 dark:text-white transition-all ${
+                            regConfirmPassword
+                              ? regPassword === regConfirmPassword
+                                ? 'border-emerald-400 focus:border-emerald-500'
+                                : 'border-rose-400 focus:border-rose-500'
+                              : 'border-slate-200 dark:border-slate-700 focus:border-teal-500'
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-600 p-1"
+                          title={showRegConfirmPassword ? 'Sembunyikan sandi' : 'Lihat sandi'}
+                        >
+                          {showRegConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
+                  {/* Password Strength Meter */}
+                  {regPassword && (
+                    <div className="space-y-1 p-2 bg-slate-100/70 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center justify-between text-[10px] font-bold">
+                        <span className="text-slate-500">Kekuatan Sandi:</span>
+                        <span className={passwordStrength.text}>{passwordStrength.label}</span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-1 h-1.5 w-full">
+                        {[1, 2, 3, 4].map((step) => (
+                          <div
+                            key={step}
+                            className={`h-full rounded-full transition-all ${
+                              step <= passwordStrength.score ? passwordStrength.color : 'bg-slate-200 dark:bg-slate-700'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="text-[9px] text-slate-400 font-medium">
+                        *Minimal 8 karakter, mencakup kombinasi huruf besar/kecil, angka, dan simbol.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Row 5: Avatar Picker */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Pilih Avatar Kepala Keluarga
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                      PILIH AVATAR KEPALA KELUARGA
                     </label>
-                    <div className="flex gap-1.5 overflow-x-auto pb-1">
+                    <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5 pr-1">
                       {AVATARS.map((av) => (
                         <button
                           key={av}
                           type="button"
-                          onClick={() => setRegAvatar(av)}
-                          className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-transform shrink-0 ${
-                            regAvatar === av ? 'bg-amber-500 text-white scale-110 shadow-xs' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200'
+                          onClick={() => {
+                            setRegAvatar(av);
+                            sound.playClick();
+                          }}
+                          className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all shrink-0 border-2 ${
+                            regAvatar === av 
+                              ? 'border-teal-500 bg-teal-100 dark:bg-teal-950 scale-110 shadow-sm ring-2 ring-teal-400/40' 
+                              : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100'
                           }`}
                         >
                           {av}
@@ -907,11 +1053,25 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                     </div>
                   </div>
 
+                  {/* Row 6: Persetujuan Privasi (TOS & Privacy Policy) */}
+                  <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={agreePrivacy}
+                      onChange={(e) => setAgreePrivacy(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 accent-teal-600 cursor-pointer shrink-0"
+                    />
+                    <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                      Dengan mendaftar, Anda menyetujui <strong className="text-slate-900 dark:text-white">Syarat & Ketentuan Layanan</strong> serta <strong className="text-slate-900 dark:text-white">Kebijakan Perlindungan Privasi Data Keluarga</strong> ASTA.
+                    </span>
+                  </label>
+
+                  {/* Row 7: Tombol Aksi Bernuansa Positif & Ramah (Constructive Emerald/Teal) */}
                   <button
                     type="submit"
-                    className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-600 text-white font-display font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-display font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
-                    <span>BUAT KELUARGA & LANJUT KE ANGGOTA</span>
+                    <span>BUAT RUANG KELUARGA & LANJUT KE ANGGOTA</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </form>
