@@ -10,6 +10,7 @@ import {
 import { sound } from '../../utils/sound';
 import { fireBurstConfetti } from '../../utils/confetti';
 import { sanitizeInput, rateLimiter } from '../../utils/security';
+import { TermsAndPrivacyModal } from './TermsAndPrivacyModal';
 
 interface AuthGateScreenProps {
   auth?: any;
@@ -83,6 +84,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(true);
+  const [policyModal, setPolicyModal] = useState<'tos' | 'privacy' | null>(null);
   const [regAvatar, setRegAvatar] = useState('👨‍💼');
 
   // Password Strength Calculation
@@ -1054,17 +1056,44 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                   </div>
 
                   {/* Row 6: Persetujuan Privasi (TOS & Privacy Policy) */}
-                  <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer select-none">
+                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 select-none">
                     <input
                       type="checkbox"
+                      id="agreePrivacyCheckbox"
                       checked={agreePrivacy}
                       onChange={(e) => setAgreePrivacy(e.target.checked)}
                       className="mt-0.5 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 accent-teal-600 cursor-pointer shrink-0"
                     />
-                    <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                      Dengan mendaftar, Anda menyetujui <strong className="text-slate-900 dark:text-white">Syarat & Ketentuan Layanan</strong> serta <strong className="text-slate-900 dark:text-white">Kebijakan Perlindungan Privasi Data Keluarga</strong> ASTA.
-                    </span>
-                  </label>
+                    <label htmlFor="agreePrivacyCheckbox" className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed cursor-pointer">
+                      Dengan mendaftar, Anda menyetujui{' '}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setPolicyModal('tos');
+                        }}
+                        className="font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 underline underline-offset-2 decoration-teal-500/50 hover:decoration-teal-600 transition-colors inline-block cursor-pointer"
+                        title="Klik untuk membaca Syarat & Ketentuan Layanan"
+                      >
+                        Syarat & Ketentuan Layanan
+                      </button>{' '}
+                      serta{' '}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setPolicyModal('privacy');
+                        }}
+                        className="font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 underline underline-offset-2 decoration-teal-500/50 hover:decoration-teal-600 transition-colors inline-block cursor-pointer"
+                        title="Klik untuk membaca Kebijakan Perlindungan Privasi Data Keluarga"
+                      >
+                        Kebijakan Perlindungan Privasi Data Keluarga
+                      </button>{' '}
+                      ASTA.
+                    </label>
+                  </div>
 
                   {/* Row 7: Tombol Aksi Bernuansa Positif & Ramah (Constructive Emerald/Teal) */}
                   <button
@@ -1177,8 +1206,35 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
         <p className="text-[10px] text-slate-400 dark:text-slate-500">
           Data tersimpan sangat aman dan terlindungi secara privat khusus untuk keluarga Anda.
         </p>
+        <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400 dark:text-slate-500 pt-0.5">
+          <button
+            type="button"
+            onClick={() => setPolicyModal('tos')}
+            className="hover:text-teal-600 dark:hover:text-teal-400 underline decoration-slate-300 dark:decoration-slate-700 transition-colors cursor-pointer"
+          >
+            Syarat & Ketentuan Layanan
+          </button>
+          <span>&bull;</span>
+          <button
+            type="button"
+            onClick={() => setPolicyModal('privacy')}
+            className="hover:text-teal-600 dark:hover:text-teal-400 underline decoration-slate-300 dark:decoration-slate-700 transition-colors cursor-pointer"
+          >
+            Kebijakan Privasi Data Keluarga
+          </button>
+        </div>
       </footer>
 
+      {/* Syarat & Ketentuan Layanan serta Kebijakan Privasi Data Modal */}
+      <TermsAndPrivacyModal
+        isOpen={!!policyModal}
+        initialTab={policyModal || 'tos'}
+        onClose={() => setPolicyModal(null)}
+        onAgreeAndClose={() => {
+          setAgreePrivacy(true);
+          setPolicyModal(null);
+        }}
+      />
     </div>
   );
 };
