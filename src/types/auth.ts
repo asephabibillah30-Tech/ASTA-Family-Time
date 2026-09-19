@@ -42,6 +42,8 @@ export interface FamilyAccount {
 export interface AuthSession {
   user: UserAccount;
   family: FamilyAccount;
+  sessionToken?: string;
+  createdAt?: number;
 }
 
 export interface RegisterHeadDTO {

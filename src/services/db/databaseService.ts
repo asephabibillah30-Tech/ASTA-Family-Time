@@ -545,24 +545,48 @@ class DatabaseService {
 
   // --- AUTHENTICATION: LOGIN AS HEAD ---
   public loginHead(usernameOrEmail: string, passwordOrPin: string): AuthSession {
+    if (typeof usernameOrEmail !== 'string' || typeof passwordOrPin !== 'string') {
+      throw new Error('Format kredensial tidak valid.');
+    }
+
     const cleanUser = sanitizeInput(usernameOrEmail).toLowerCase();
     const cleanPass = passwordOrPin.trim();
+
+    if (!cleanUser || !cleanPass) {
+      throw new Error('Email/Username dan Password/PIN wajib diisi.');
+    }
 
     const user = this.users.find(u => 
       u.usernameOrEmail?.toLowerCase() === cleanUser || u.fullName.toLowerCase() === cleanUser
     );
 
     if (!user) {
-      this.logSecurity('LOGIN_KEPALA_GAGAL', 'FAILED', `Username ${cleanUser} tidak ditemukan.`);
+      this.logSecurity('LOGIN_KEPALA_GAGAL', 'FAILED', `Akun ${cleanUser} tidak ditemukan.`);
       throw new Error('Akun tidak ditemukan. Pastikan email atau username benar.');
     }
 
+    // Role Check: Pastikan akun berstatus Kepala Keluarga (Head)
+    if (!user.isHead && user.role !== 'head_family') {
+      this.logSecurity('LOGIN_KEPALA_DITOLAK', 'BLOCKED', `Pengguna ${user.fullName} bukan Kepala Keluarga.`, user.familyId, user.id, user.fullName);
+      throw new Error('Akun ini adalah Anggota Keluarga. Silakan gunakan tab "Anggota Keluarga" untuk masuk.');
+    }
+
+    // Pemisahan Logika Kredensial: Deteksi format PIN (4-6 digit angka murni) vs Kata Sandi
+    const isPinFormat = /^\d{4,6}$/.test(cleanPass);
     const inputHash = fastHashSync(cleanPass);
-    const isValid = (user.password && (user.password === inputHash || user.password === cleanPass)) ||
-                    (user.pin && (user.pin === inputHash || user.pin === cleanPass));
+
+    let isValid = false;
+    if (isPinFormat && user.pin) {
+      isValid = (user.pin === inputHash || user.pin === cleanPass);
+    }
+    
+    // Jika belum valid atau bukan format PIN, periksa password utama
+    if (!isValid && user.password) {
+      isValid = (user.password === inputHash || user.password === cleanPass);
+    }
 
     if (!isValid) {
-      this.logSecurity('LOGIN_KEPALA_GAGAL', 'FAILED', 'Password/PIN salah.', user.familyId, user.id, user.fullName);
+      this.logSecurity('LOGIN_KEPALA_GAGAL', 'FAILED', 'Password atau PIN salah.', user.familyId, user.id, user.fullName);
       throw new Error('Password atau PIN salah.');
     }
 
@@ -574,6 +598,121 @@ class DatabaseService {
     const session: AuthSession = { user, family };
     this.saveSession(session);
     return session;
+  }
+
+  // --- RECOVERY: LUPA PASSWORD / PIN KEPALA KELUARGA ---
+  public async resetHeadPasswordByRecovery(
+    identifier: string,
+    familyCode: string,
+    newPasswordOrPin: string
+  ): Promise<{ success: boolean; message: string }> {
+    if (typeof identifier !== 'string' || typeof familyCode !== 'string' || typeof newPasswordOrPin !== 'string') {
+      throw new Error('Data input pemulihan tidak valid.');
+    }
+
+    const cleanId = sanitizeInput(identifier).toLowerCase();
+    const cleanCode = sanitizeInput(familyCode).toUpperCase();
+    const cleanPass = newPasswordOrPin.trim();
+
+    if (!cleanId || !cleanCode) {
+      throw new Error('Email/Username dan Kode Keluarga wajib diisi.');
+    }
+    if (cleanPass.length < 4) {
+      throw new Error('Password atau PIN baru minimal 4 karakter.');
+    }
+
+    // 1. Cari keluarga berdasarkan Kode Keluarga
+    let family = this.getFamilyByCode(cleanCode);
+    const supabase = postgresService.getClient();
+
+    if (!family && supabase) {
+      try {
+        const { data: cloudFam } = await supabase
+          .from('families')
+          .select('*')
+          .eq('family_code', cleanCode)
+          .maybeSingle();
+
+        if (cloudFam) {
+          await this.syncActiveFamily(cloudFam.id);
+          family = this.getFamilyById(cloudFam.id);
+        }
+      } catch (err) {
+        console.warn('Error fetching family in recovery:', err);
+      }
+    }
+
+    if (!family) {
+      throw new Error('Kode Keluarga tidak ditemukan. Pastikan kode benar.');
+    }
+
+    // 2. Cari akun Kepala Keluarga yang cocok dengan identifier
+    let headUser = this.users.find(u => 
+      u.familyId === family!.id && 
+      (u.isHead || u.role === 'head_family') &&
+      (u.usernameOrEmail?.toLowerCase() === cleanId || u.fullName.toLowerCase() === cleanId)
+    );
+
+    if (!headUser && supabase) {
+      try {
+        const { data: cloudUsers } = await supabase
+          .from('users')
+          .select('*')
+          .eq('family_id', family.id)
+          .or('is_head.eq.true,role.eq.head_family');
+
+        if (cloudUsers && cloudUsers.length > 0) {
+          const matched = cloudUsers.find(cu => 
+            cu.username?.toLowerCase() === cleanId || 
+            cu.full_name?.toLowerCase() === cleanId
+          );
+          if (matched) {
+            await this.syncActiveFamily(family.id);
+            headUser = this.getUserById(matched.id);
+          }
+        }
+      } catch (err) {
+        console.warn('Error fetching cloud head user in recovery:', err);
+      }
+    }
+
+    if (!headUser) {
+      this.logSecurity('PEMULIHAN_GAGAL', 'FAILED', `Pemulihan gagal: Akun Kepala Keluarga tidak cocok untuk ${cleanId} di ${cleanCode}`, family.id);
+      throw new Error('Kredensial tidak cocok. Pastikan Email/Username dan Kode Keluarga sesuai.');
+    }
+
+    // 3. Simpan kata sandi / PIN baru dengan hash
+    const newHash = fastHashSync(cleanPass);
+    const isPinOnly = /^\d{4,6}$/.test(cleanPass);
+
+    this.users = this.users.map(u => {
+      if (u.id === headUser!.id) {
+        return {
+          ...u,
+          password: newHash,
+          ...(isPinOnly ? { pin: newHash } : {})
+        };
+      }
+      return u;
+    });
+    saveData(USERS_KEY, this.users);
+
+    if (supabase) {
+      try {
+        const updatePayload: Record<string, any> = { password_hash: newHash };
+        if (isPinOnly) updatePayload.pin = newHash;
+        await supabase.from('users').update(updatePayload).eq('id', headUser.id);
+      } catch (err) {
+        console.warn('Error updating password in cloud:', err);
+      }
+    }
+
+    this.logSecurity('PEMULIHAN_SUKSES', 'SUCCESS', `Password/PIN Kepala Keluarga berhasil diperbarui untuk ${headUser.fullName}`, family.id, headUser.id, headUser.fullName);
+
+    return { 
+      success: true, 
+      message: `Password/PIN untuk ${headUser.fullName} (${family.familyName}) berhasil diperbarui! Silakan masuk kembali.` 
+    };
   }
 
   public async loginHeadAsync(usernameOrEmail: string, passwordOrPin: string): Promise<AuthSession> {
@@ -649,21 +788,54 @@ class DatabaseService {
     return session;
   }
 
-  // --- PERSISTENT SESSION MANAGEMENT ---
+  // --- PERSISTENT SESSION MANAGEMENT WITH SECURE TOKENS & TTL ---
   public getSavedSession(): AuthSession | null {
     try {
       if (typeof window === 'undefined') return null;
       const raw = localStorage.getItem('asta_active_session_v2') || sessionStorage.getItem('asta_active_session_v2');
-      if (raw) {
-        const parsed: AuthSession = JSON.parse(raw);
-        if (parsed && parsed.user && parsed.user.id && parsed.family && parsed.family.id) {
-          return parsed;
-        }
+      if (!raw) return null;
+
+      const parsed: AuthSession = JSON.parse(raw);
+      if (!parsed || !parsed.user || !parsed.user.id || !parsed.family || !parsed.family.id) {
+        return null;
       }
+
+      // TTL and Inactivity Checks
+      const lastActivityRaw = localStorage.getItem('asta_last_activity_time');
+      const lastActivity = lastActivityRaw ? parseInt(lastActivityRaw, 10) : 0;
+      const sessionCreatedRaw = localStorage.getItem('asta_session_created_time');
+      const sessionCreated = sessionCreatedRaw ? parseInt(sessionCreatedRaw, 10) : (parsed.createdAt || 0);
+      const now = Date.now();
+
+      // Total Session Max Lifetime (24 Jam)
+      const MAX_TOTAL_LIFETIME = 24 * 60 * 60 * 1000;
+      if (sessionCreated > 0 && (now - sessionCreated > MAX_TOTAL_LIFETIME)) {
+        sessionStorage.setItem('asta_autolock_notice', 'true');
+        this.clearSession();
+        return null;
+      }
+
+      // Inactivity Timeout: 30 menit untuk Kepala Keluarga (administrasi), 4 jam untuk Anggota
+      const INACTIVITY_TIMEOUT = (parsed.user.isHead || parsed.user.role === 'head_family') 
+        ? 30 * 60 * 1000 
+        : 4 * 60 * 60 * 1000;
+
+      if (lastActivity > 0 && (now - lastActivity > INACTIVITY_TIMEOUT)) {
+        sessionStorage.setItem('asta_autolock_notice', 'true');
+        this.clearSession();
+        return null;
+      }
+
+      return parsed;
     } catch {
       return null;
     }
-    return null;
+  }
+
+  public updateActivity(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('asta_last_activity_time', Date.now().toString());
+    }
   }
 
   public saveSession(session: AuthSession | null): void {
@@ -674,12 +846,28 @@ class DatabaseService {
         const safeUser = { ...session.user };
         delete (safeUser as any).password;
         delete (safeUser as any).pin;
-        const safeSession: AuthSession = { user: safeUser, family: session.family };
+
+        // Generate cryptographically secure session token
+        let sessionToken = '';
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          sessionToken = crypto.randomUUID();
+        } else {
+          sessionToken = `asta_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+        }
+
+        const now = Date.now();
+        const safeSession: AuthSession = { 
+          user: safeUser, 
+          family: session.family,
+          sessionToken,
+          createdAt: now
+        };
 
         const json = JSON.stringify(safeSession);
         localStorage.setItem('asta_active_session_v2', json);
         sessionStorage.setItem('asta_active_session_v2', json);
-        localStorage.setItem('asta_last_activity_time', Date.now().toString());
+        localStorage.setItem('asta_last_activity_time', now.toString());
+        localStorage.setItem('asta_session_created_time', now.toString());
         this.sendHeartbeat(session.family.id, session.user.id);
       } else {
         this.clearSession();

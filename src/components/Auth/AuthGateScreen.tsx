@@ -11,6 +11,7 @@ import { sound } from '../../utils/sound';
 import { fireBurstConfetti } from '../../utils/confetti';
 import { sanitizeInput, rateLimiter } from '../../utils/security';
 import { TermsAndPrivacyModal } from './TermsAndPrivacyModal';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 interface AuthGateScreenProps {
   auth?: any;
@@ -25,6 +26,9 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   // Head Login State
   const [headUsername, setHeadUsername] = useState('');
   const [headPassword, setHeadPassword] = useState('');
+  const [showHeadPassword, setShowHeadPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [headLockoutRemaining, setHeadLockoutRemaining] = useState<number>(0);
   
   // Member Login State
   const [familyCode, setFamilyCode] = useState('');
@@ -39,13 +43,31 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   const [lockoutRemaining, setLockoutRemaining] = useState<number>(0);
   const [autoLockNotice, setAutoLockNotice] = useState<boolean>(false);
 
-  // Check for auto-lock session timeout notice
+  // Check for head_login lockout and auto-lock notice on mount
   useEffect(() => {
+    const status = rateLimiter.checkLockout('head_login');
+    setHeadLockoutRemaining(status.isLocked ? status.remainingSeconds : 0);
+
     if (typeof window !== 'undefined' && sessionStorage.getItem('asta_autolock_notice') === 'true') {
       setAutoLockNotice(true);
       sessionStorage.removeItem('asta_autolock_notice');
     }
   }, []);
+
+  // Live countdown timer for head login lockout cooldown
+  useEffect(() => {
+    if (headLockoutRemaining <= 0) return;
+    const interval = setInterval(() => {
+      setHeadLockoutRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [headLockoutRemaining]);
 
   // Monitor lockout state for selected family member profile
   useEffect(() => {
@@ -115,14 +137,17 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
   const [errorMsg, setErrorMsg] = useState('');
   const pgConfig = postgresService.getConfig();
 
-  // 1. Submit Head Login
+  // 1. Submit Head Login (Rate-limited: 5 attempts -> 5 minutes / 300s cooldown)
   const handleHeadLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
     const rateCheck = rateLimiter.checkLockout('head_login');
     if (rateCheck.isLocked) {
-      setErrorMsg(`Batas keamanan terlampaui. Harap tunggu ${rateCheck.remainingSeconds} detik.`);
+      setHeadLockoutRemaining(rateCheck.remainingSeconds);
+      const mins = Math.floor(rateCheck.remainingSeconds / 60);
+      const secs = rateCheck.remainingSeconds % 60;
+      setErrorMsg(`🔒 Akses Terkunci: 5x Percobaan Gagal. Demi keamanan ruang keluarga, silakan tunggu ${mins > 0 ? `${mins} menit ` : ''}${secs} detik.`);
       return;
     }
 
@@ -139,15 +164,18 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
         await db.loginHeadAsync(cleanUser, headPassword);
       }
       rateLimiter.resetAttempts('head_login');
+      setHeadLockoutRemaining(0);
       sound.playSuccess();
       fireBurstConfetti();
       onLoginSuccess();
     } catch (err: any) {
-      const res = rateLimiter.recordFailedAttempt('head_login');
+      // 5 attempts = 300 seconds lockout (5 minutes)
+      const res = rateLimiter.recordFailedAttempt('head_login', 5, 300);
       if (res.isLocked) {
-        setErrorMsg(`Keamanan: Terlalu banyak percobaan. Harap tunggu ${res.remainingSeconds} detik.`);
+        setHeadLockoutRemaining(res.remainingSeconds);
+        setErrorMsg(`🔒 Akses Terkunci: 5x Percobaan Gagal. Demi keamanan ruang keluarga, silakan tunggu 5 menit (${res.remainingSeconds} detik) sebelum mencoba kembali.`);
       } else {
-        setErrorMsg(err.message || 'Gagal masuk. Periksa kembali username dan password.');
+        setErrorMsg(err.message || `Gagal masuk. Sisa percobaan: ${res.attemptsLeft}`);
       }
       sound.playClick();
     }
@@ -535,7 +563,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
               <form onSubmit={handleHeadLogin} className="space-y-4">
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/60">
                   <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Ruang Masuk Terlindungi — Data login Anda terenkripsi aman & bebas peretasan.</span>
+                  <span>Ruang Masuk Terlindungi — Data login Anda dilindungi dengan enkripsi keamanan tingkat tinggi.</span>
                 </div>
 
                 <div className="space-y-1">
@@ -546,30 +574,73 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                     type="text"
                     placeholder="Masukkan Email atau Username"
                     value={headUsername}
+                    disabled={headLockoutRemaining > 0}
                     onChange={e => setHeadUsername(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none focus:border-family-coral focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white transition-all shadow-2xs"
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none focus:border-family-coral focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white transition-all shadow-2xs disabled:opacity-60"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Password / PIN Keamanan
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="Masukkan password atau PIN"
-                    value={headPassword}
-                    onChange={e => setHeadPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none focus:border-family-coral focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white transition-all shadow-2xs"
-                  />
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Password / PIN Keamanan
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsForgotPasswordOpen(true);
+                        sound.playClick();
+                      }}
+                      className="text-[11px] font-bold text-family-coral dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:underline transition-colors cursor-pointer"
+                    >
+                      Lupa Password / PIN?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showHeadPassword ? "text" : "password"}
+                      placeholder="Masukkan password atau PIN"
+                      value={headPassword}
+                      disabled={headLockoutRemaining > 0}
+                      onChange={e => setHeadPassword(e.target.value)}
+                      className="w-full pl-4 pr-11 py-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm font-bold outline-none focus:border-family-coral focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white transition-all shadow-2xs disabled:opacity-60"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowHeadPassword(!showHeadPassword);
+                        sound.playClick();
+                      }}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1"
+                      title={showHeadPassword ? 'Sembunyikan password' : 'Lihat password'}
+                    >
+                      {showHeadPassword ? <EyeOff className="w-4 h-4 text-family-coral" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-family-coral to-rose-600 hover:from-rose-600 hover:to-family-coral text-white font-display font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
+                  disabled={headLockoutRemaining > 0}
+                  className={`w-full py-3.5 sm:py-4 rounded-2xl font-display font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 ${
+                    headLockoutRemaining > 0
+                      ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-family-coral to-rose-600 hover:from-rose-600 hover:to-family-coral text-white active:scale-95'
+                  }`}
                 >
-                  <span>MASUK SEBAGAI KEPALA KELUARGA</span>
-                  <ArrowRight className="w-4 h-4" />
+                  {headLockoutRemaining > 0 ? (
+                    <>
+                      <Clock className="w-4 h-4 animate-spin" />
+                      <span>
+                        TERKUNCI SEMENTARA ({Math.floor(headLockoutRemaining / 60)}m {headLockoutRemaining % 60}s)
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span>MASUK SEBAGAI KEPALA KELUARGA</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </form>
 
@@ -1233,6 +1304,15 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
         onAgreeAndClose={() => {
           setAgreePrivacy(true);
           setPolicyModal(null);
+        }}
+      />
+
+      {/* Modal Pemulihan Akses / Lupa Password */}
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+        onSuccess={() => {
+          setErrorMsg('');
         }}
       />
     </div>
