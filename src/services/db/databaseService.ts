@@ -562,7 +562,7 @@ class DatabaseService {
 
     if (!user) {
       this.logSecurity('LOGIN_KEPALA_GAGAL', 'FAILED', `Akun ${cleanUser} tidak ditemukan.`);
-      throw new Error('Akun tidak ditemukan. Pastikan email atau username benar.');
+      throw new Error('Email/username atau kata sandi belum sesuai. Silakan periksa kembali.');
     }
 
     // Role Check: Pastikan akun berstatus Kepala Keluarga (Head)
@@ -587,7 +587,7 @@ class DatabaseService {
 
     if (!isValid) {
       this.logSecurity('LOGIN_KEPALA_GAGAL', 'FAILED', 'Password atau PIN salah.', user.familyId, user.id, user.fullName);
-      throw new Error('Password atau PIN salah.');
+      throw new Error('Email/username atau kata sandi belum sesuai. Silakan periksa kembali.');
     }
 
     const family = this.getFamilyById(user.familyId);
@@ -643,7 +643,7 @@ class DatabaseService {
     }
 
     if (!family) {
-      throw new Error('Kode Keluarga tidak ditemukan. Pastikan kode benar.');
+      throw new Error('Data pemulihan belum cocok. Silakan periksa kembali email dan Kode Keluarga Anda.');
     }
 
     // 2. Cari akun Kepala Keluarga yang cocok dengan identifier
@@ -678,7 +678,7 @@ class DatabaseService {
 
     if (!headUser) {
       this.logSecurity('PEMULIHAN_GAGAL', 'FAILED', `Pemulihan gagal: Akun Kepala Keluarga tidak cocok untuk ${cleanId} di ${cleanCode}`, family.id);
-      throw new Error('Kredensial tidak cocok. Pastikan Email/Username dan Kode Keluarga sesuai.');
+      throw new Error('Data pemulihan belum cocok. Silakan periksa kembali email dan Kode Keluarga Anda.');
     }
 
     // 3. Simpan kata sandi / PIN baru dengan hash
@@ -750,7 +750,7 @@ class DatabaseService {
     const family = this.getFamilyByCode(cleanCode);
     if (!family) {
       this.logSecurity('LOGIN_ANGGOTA_GAGAL', 'FAILED', `Kode keluarga ${cleanCode} tidak valid.`);
-      throw new Error('Kode Keluarga tidak valid.');
+      throw new Error('Kode Keluarga belum sesuai. Silakan periksa kembali.');
     }
 
     const user = this.users.find(u => u.id === userId && u.familyId === family.id);
@@ -762,7 +762,7 @@ class DatabaseService {
     const rateCheck = rateLimiter.checkLockout(rateKey);
     if (rateCheck.isLocked) {
       this.logSecurity('LOGIN_PIN_TERKUNCI', 'BLOCKED', `Batas percobaan PIN terlampaui. Kunci ${rateCheck.remainingSeconds}s.`, family.id, user.id, user.fullName);
-      throw new Error(`🔒 Akses Terkunci: 3x PIN Salah. Demi keamanan keluarga, harap tunggu ${rateCheck.remainingSeconds} detik.`);
+      throw new Error(`🔒 Demi kenyamanan dan privasi keluarga, akses masuk dijeda sementara. Harap tunggu ${rateCheck.remainingSeconds} detik.`);
     }
 
     const cleanPin = pin.trim();
@@ -774,10 +774,10 @@ class DatabaseService {
       this.logSecurity('LOGIN_ANGGOTA_GAGAL', 'FAILED', `PIN anggota salah. Percobaan sisa: ${res.attemptsLeft}`, family.id, user.id, user.fullName);
 
       if (res.isLocked) {
-        throw new Error(`🔒 Akses Terkunci: 3x PIN Salah. Demi keamanan keluarga, harap tunggu ${res.remainingSeconds} detik.`);
+        throw new Error(`🔒 Demi kenyamanan dan privasi keluarga, akses masuk dijeda sementara. Harap tunggu ${res.remainingSeconds} detik.`);
       }
 
-      throw new Error(`PIN Keamanan salah. Sisa percobaan: ${res.attemptsLeft} kali`);
+      throw new Error('PIN belum sesuai. Silakan periksa kembali.');
     }
 
     rateLimiter.resetAttempts(rateKey);

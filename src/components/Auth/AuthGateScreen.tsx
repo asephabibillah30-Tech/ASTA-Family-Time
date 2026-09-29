@@ -147,7 +147,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
       setHeadLockoutRemaining(rateCheck.remainingSeconds);
       const mins = Math.floor(rateCheck.remainingSeconds / 60);
       const secs = rateCheck.remainingSeconds % 60;
-      setErrorMsg(`🔒 Akses Terkunci: 5x Percobaan Gagal. Demi keamanan ruang keluarga, silakan tunggu ${mins > 0 ? `${mins} menit ` : ''}${secs} detik.`);
+      setErrorMsg(`🔒 Akses Masuk Dijeda: Demi menjaga privasi ruang keluarga, silakan tunggu ${mins > 0 ? `${mins} menit ` : ''}${secs} detik sebelum mencoba kembali.`);
       return;
     }
 
@@ -173,9 +173,9 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
       const res = rateLimiter.recordFailedAttempt('head_login', 5, 300);
       if (res.isLocked) {
         setHeadLockoutRemaining(res.remainingSeconds);
-        setErrorMsg(`🔒 Akses Terkunci: 5x Percobaan Gagal. Demi keamanan ruang keluarga, silakan tunggu 5 menit (${res.remainingSeconds} detik) sebelum mencoba kembali.`);
+        setErrorMsg(`🔒 Akses Masuk Dijeda: Demi menjaga privasi ruang keluarga, silakan tunggu 5 menit (${res.remainingSeconds} detik) sebelum mencoba kembali.`);
       } else {
-        setErrorMsg(err.message || `Gagal masuk. Sisa percobaan: ${res.attemptsLeft}`);
+        setErrorMsg(err.message || 'Email/username atau kata sandi belum sesuai. Silakan periksa kembali.');
       }
       sound.playClick();
     }
@@ -432,7 +432,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
           </h2>
 
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-            Nikmati 350+ kartu interaktif, game UNO, Ludo, Ular Tangga, Obrolan privat terenkripsi, Jurnal Kenangan, dan Perencana Kegiatan Keluarga dalam 1 aplikasi.
+            Nikmati 350+ kartu interaktif, game UNO, Ludo, Ular Tangga, Obrolan Privat Keluarga, Jurnal Kenangan, dan Perencana Kegiatan Keluarga dalam 1 aplikasi.
           </p>
 
           <div className="grid grid-cols-2 gap-3 pt-2">
@@ -470,9 +470,9 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
               <div className="flex items-start gap-2">
                 <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-black text-amber-950 dark:text-white">🛡️ Kunci Otomatis (Auto-Lock) Aktif</div>
+                  <div className="font-black text-amber-950 dark:text-white">🛡️ Sesi Dilindungi Demi Privasi</div>
                   <div className="text-[11px] font-medium text-amber-800 dark:text-amber-300 mt-0.5">
-                    Sesi Anda telah dikunci kembali setelah tidak ada aktivitas demi melindungi privasi keluarga. Masukkan PIN untuk melanjutkan.
+                    Sesi otomatis dikunci setelah tidak ada aktivitas untuk menjaga privasi ruang keluarga. Silakan masuk kembali.
                   </div>
                 </div>
               </div>
@@ -563,7 +563,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
               <form onSubmit={handleHeadLogin} className="space-y-4">
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/60">
                   <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Ruang Masuk Terlindungi — Data login Anda dilindungi dengan enkripsi keamanan tingkat tinggi.</span>
+                  <span>Ruang Keluarga Privat — Akses masuk aman dan terlindungi khusus untuk keluarga Anda.</span>
                 </div>
 
                 <div className="space-y-1">
@@ -632,7 +632,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                     <>
                       <Clock className="w-4 h-4 animate-spin" />
                       <span>
-                        TERKUNCI SEMENTARA ({Math.floor(headLockoutRemaining / 60)}m {headLockoutRemaining % 60}s)
+                        DIJEDA SEMENTARA ({Math.floor(headLockoutRemaining / 60)}m {headLockoutRemaining % 60}s)
                       </span>
                     </>
                   ) : (
@@ -740,23 +740,23 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                     </button>
                   </div>
 
-                  {/* Anti-Brute Force Lockout Banner */}
+                  {/* Privacy Guard Lockout Banner */}
                   {lockoutRemaining > 0 && (
                     <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/90 border-2 border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-200 text-xs font-bold flex items-start gap-2.5 animate-shake shadow-sm">
                       <Clock className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5 animate-spin" />
                       <div className="min-w-0 flex-1">
-                        <div className="font-black text-rose-950 dark:text-white">🛑 Proteksi Anti-Brute Force Aktif</div>
+                        <div className="font-black text-rose-950 dark:text-white">🔒 Akses Masuk Dijeda Sementara</div>
                         <div className="text-[11px] font-medium text-rose-700 dark:text-rose-300 mt-0.5">
-                          PIN salah 3 kali berturut-turut. Akses profil ini dikunci sementara selama <strong>{lockoutRemaining} detik</strong> untuk mencegah tebakan tidak sah.
+                          Demi kenyamanan dan privasi keluarga, silakan tunggu <strong>{lockoutRemaining} detik</strong> sebelum mencoba memasukkan PIN kembali.
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Zero Data Leakage Privacy Notice */}
+                  {/* Privacy Notice */}
                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700">
                     <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>Perlindungan Privasi: Identitas & nama asli anggota disembunyikan sampai PIN terverifikasi.</span>
+                    <span>Privasi Terlindungi: Nama dan profil anggota dirahasiakan sampai PIN terverifikasi.</span>
                   </div>
 
                   {/* 3. VISUAL ACCESSIBILITY: Enhanced Profile Slot Cards with High Contrast */}
@@ -925,7 +925,7 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                     {lockoutRemaining > 0 ? (
                       <>
                         <Clock className="w-4 h-4 animate-spin" />
-                        <span>TERKUNCI SEMENTARA ({lockoutRemaining}s)</span>
+                        <span>DIJEDA SEMENTARA ({lockoutRemaining}s)</span>
                       </>
                     ) : (
                       <>
@@ -981,8 +981,9 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                       <label className="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
                         Nama Keluarga (Grup) *
                       </label>
-                      <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold">
-                        Tersanitasi & Bebas XSS
+                      <span className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3" />
+                        <span>Tersimpan aman & privat</span>
                       </span>
                     </div>
                     <input
@@ -1000,8 +1001,8 @@ export const AuthGateScreen: React.FC<AuthGateScreenProps> = ({ auth, onLoginSuc
                       <label className="block text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
                         Email Pemulihan Akun & Login Utama *
                       </label>
-                      <span className="text-[10px] text-slate-400 font-bold">
-                        Untuk Pemulihan Akun (Forgot Password)
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        Untuk pemulihan kata sandi
                       </span>
                     </div>
                     <input
